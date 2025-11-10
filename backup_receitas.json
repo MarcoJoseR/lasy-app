@@ -1,0 +1,247 @@
+[
+  {
+    "id": 11,
+    "nome": "Bolo Teste",
+    "ingredientes": [
+      "farinha",
+      "acucar",
+      "ovos"
+    ],
+    "modo_preparo": "Misture tudo e asse",
+    "created_at": "2025-10-14T12:47:00.947+00:00",
+    "origem": "lasy",
+    "slug": null,
+    "categoria": "Doces",
+    "tempo": "45 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1578985545062-69928b1d9587"
+  },
+  {
+    "id": 12,
+    "nome": "Bolo de Cenoura",
+    "ingredientes": [
+      "3 cenouras medias",
+      "4 ovos",
+      "1 xicara de oleo",
+      "2 xicaras de acucar",
+      "2 e 1/2 xicaras de farinha de trigo",
+      "1 colher de sopa de fermento em po"
+    ],
+    "modo_preparo": "Bata as cenouras, ovos e óleo no liquidificador. Misture com o açúcar e a farinha. Adicione o fermento. Asse em forno preaquecido a 180°C por 40 minutos.",
+    "created_at": "2025-10-14T17:47:54.419397+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Doces",
+    "tempo": "45 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1578985545062-69928b1d9587"
+  },
+  {
+    "id": 4,
+    "nome": "Biscoito de Aveia",
+    "ingredientes": [
+      "aveia",
+      "acucar",
+      "manteiga",
+      "ovos"
+    ],
+    "modo_preparo": "Misture tudo e asse a 180°C por 20 minutos",
+    "created_at": "2025-10-13T01:43:42.140612+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Biscoitos",
+    "tempo": "35 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1608759470058-d74bb1f7c74e"
+  },
+  {
+    "id": 1,
+    "nome": "Bolo de Chocolate",
+    "ingredientes": [
+      "farinha",
+      "ovos",
+      "chocolate",
+      "acucar",
+      "manteiga"
+    ],
+    "modo_preparo": "Misture todos os ingredientes e asse a 180°C por 35 minutos.",
+    "created_at": "2025-10-12T00:26:05.03056+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Doces",
+    "tempo": "45 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1578985545062-69928b1d9587"
+  },
+  {
+    "id": 9,
+    "nome": "Bolo de Chocolate",
+    "ingredientes": [
+      "farinha",
+      "ovos",
+      "chocolate",
+      "acucar",
+      "manteiga"
+    ],
+    "modo_preparo": "Misture todos os ingredientes e asse a 180°C por 35 minutos.",
+    "created_at": "2025-10-14T04:03:29.903496+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Doces",
+    "tempo": "45 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1578985545062-69928b1d9587"
+  },
+  {
+    "id": 13,
+    "nome": "Panqueca Simples",
+    "ingredientes": [
+      "1 xicara de farinha de trigo",
+      "1 xicara de leite",
+      "1 ovo",
+      "1 pitada de sal",
+      "1 colher de sopa de oleo"
+    ],
+    "modo_preparo": "Misture todos os ingredientes até obter uma massa homogênea. Cozinhe em frigideira antiaderente até dourar dos dois lados.",
+    "created_at": "2025-10-14T17:47:54.419397+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Massas",
+    "tempo": "30 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1608759261191-14cb9e1d6141"
+  },
+  {
+    "id": 2,
+    "nome": "Panqueca",
+    "ingredientes": [
+      "farinha",
+      "ovos",
+      "leite",
+      "sal",
+      "acucar"
+    ],
+    "modo_preparo": "Misture tudo e frite em frigideira antiaderente até dourar.",
+    "created_at": "2025-10-12T00:26:53.525563+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Massas",
+    "tempo": "30 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1608759261191-14cb9e1d6141"
+  },
+  {
+    "id": 10,
+    "nome": "Panqueca",
+    "ingredientes": [
+      "farinha",
+      "ovos",
+      "leite",
+      "sal",
+      "acucar"
+    ],
+    "modo_preparo": "Misture tudo e frite em frigideira antiaderente até dourar.",
+    "created_at": "2025-10-14T04:03:30.506914+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Massas",
+    "tempo": "30 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1608759261191-14cb9e1d6141"
+  },
+  {
+    "id": 14,
+    "nome": "Brigadeiro",
+    "ingredientes": [
+      "1 lata de leite condensado",
+      "2 colheres de sopa de chocolate em po",
+      "1 colher de sopa de manteiga",
+      "chocolate granulado para enrolar"
+    ],
+    "modo_preparo": "Misture leite condensado, chocolate em pó e manteiga. Cozinhe em fogo baixo até desgrudar da panela. Deixe esfriar e enrole no chocolate granulado.",
+    "created_at": "2025-10-14T17:47:54.419397+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Doces",
+    "tempo": "25 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1605475128013-3e93dfbfb39f"
+  },
+  {
+    "id": 3,
+    "nome": "Salada de Frutas",
+    "ingredientes": [
+      "maca",
+      "banana",
+      "laranja",
+      "uva",
+      "morango"
+    ],
+    "modo_preparo": "Corte todas as frutas, misture e sirva gelada.",
+    "created_at": "2025-10-12T00:27:42.064367+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Sobremesas",
+    "tempo": "20 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1607972739886-f64cc03e50ae"
+  },
+  {
+    "id": 5,
+    "nome": "Canelone ao forno",
+    "ingredientes": [
+      "massa de canelone com queijo parmesao"
+    ],
+    "modo_preparo": "Forno a 180 graus, 20 minutos",
+    "created_at": "2025-10-13T02:04:56.91209+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Massas",
+    "tempo": "50 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1601050690597-9d47c789c4ec"
+  },
+  {
+    "id": 6,
+    "nome": "Torta de Maçã",
+    "ingredientes": [
+      "maca",
+      "acucar",
+      "farinha",
+      "ovos",
+      "manteiga"
+    ],
+    "modo_preparo": "Misture, asse por 40 minutos a 180°C",
+    "created_at": "2025-10-14T00:27:14.48671+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Doces",
+    "tempo": "40 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1608198093002-ad4e005484d2"
+  },
+  {
+    "id": 7,
+    "nome": "Torta de Maçã",
+    "ingredientes": [
+      "maca",
+      "acucar",
+      "farinha",
+      "ovos",
+      "manteiga"
+    ],
+    "modo_preparo": "Misture, asse por 40 minutos a 180°C",
+    "created_at": "2025-10-14T00:36:58.344051+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Doces",
+    "tempo": "40 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1608198093002-ad4e005484d2"
+  },
+  {
+    "id": 8,
+    "nome": "Pizza de Calabresa",
+    "ingredientes": [
+      "farinha",
+      "fermento",
+      "calabresa",
+      "queijo",
+      "molho"
+    ],
+    "modo_preparo": "Misture a massa, adicione a cobertura e asse por 25 minutos.",
+    "created_at": "2025-10-14T02:05:37.826759+00:00",
+    "origem": null,
+    "slug": null,
+    "categoria": "Massas",
+    "tempo": "25 minutos",
+    "imagem_url": "https://images.unsplash.com/photo-1601924928376-3e3e923c6d5a"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "nome": "Bolo de Chocolate",
+    "ingredientes": "Farinha, Ovos, Chocolate, Açúcar, Manteiga",
+    "modo_preparo": "Misture todos os ingredientes e asse a 180°C por 35 minutos."
+  },
+  {
+    "nome": "Panqueca",
+    "ingredientes": "Farinha, Ovos, Leite, Sal, Açúcar",
+    "modo_preparo": "Misture tudo e frite em frigideira antiaderente até dourar."
+  }
+]

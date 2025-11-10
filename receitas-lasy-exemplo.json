@@ -1,0 +1,17 @@
+[
+  {
+    "nome": "Bolo de Cenoura",
+    "ingredientes": ["3 cenouras médias", "4 ovos", "1 xícara de óleo", "2 xícaras de açúcar", "2 e 1/2 xícaras de farinha de trigo", "1 colher de sopa de fermento em pó"],
+    "modo_preparo": "Bata as cenouras, ovos e óleo no liquidificador. Misture com o açúcar e a farinha. Adicione o fermento. Asse em forno preaquecido a 180°C por 40 minutos."
+  },
+  {
+    "nome": "Panqueca Simples",
+    "ingredientes": ["1 xícara de farinha de trigo", "1 xícara de leite", "1 ovo", "1 pitada de sal", "1 colher de sopa de óleo"],
+    "modo_preparo": "Misture todos os ingredientes até obter uma massa homogênea. Cozinhe em frigideira antiaderente até dourar dos dois lados."
+  },
+  {
+    "nome": "Brigadeiro",
+    "ingredientes": ["1 lata de leite condensado", "2 colheres de sopa de chocolate em pó", "1 colher de sopa de manteiga", "Chocolate granulado para enrolar"],
+    "modo_preparo": "Misture leite condensado, chocolate em pó e manteiga. Cozinhe em fogo baixo até desgrudar da panela. Deixe esfriar e enrole no chocolate granulado."
+  }
+]
