@@ -1,32 +1,79 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useMeuDia } from "@/app/context/MeuDiaContext";
 
-export default function CardReceita({ receita, onToggleFav }) {
+interface Receita {
+  id: number;
+  nome: string;
+  imagem?: string;
+  categoria?: string;
+  tempo?: number;
+}
+
+export default function CardReceita({
+  receita,
+  onToggleFav,
+}: {
+  receita: Receita;
+  onToggleFav?: (id: number) => void;
+}) {
+  const { adicionarRefeicao } = useMeuDia();
+
+  // Caminho da imagem
+  const categoriaPath = receita.categoria
+    ? receita.categoria.toLowerCase().replace(/\s+/g, "-")
+    : "geral";
+
+  const imagemSrc = receita.imagem_url && receita.imagem_url.trim() !== ""
+  ? receita.imagem_url.startsWith("/")
+    ? receita.imagem_url
+    : `/${receita.imagem_url}`
+  : `/images/receitas/${categoriaPath}/sem-imagem.jpg`;
+
+  const formatTempo = (minutos?: number) =>
+    minutos ? `${minutos} min` : "—";
+
   return (
-    <article className="card">
-      <Link href={`/receita/${receita.id}`} className="card-link" aria-label={receita.nome}>
-        {/* imagem com fallback handled na seção 2 */}
-        <div className="card-thumb">
+    <article className="bg-white rounded-2xl shadow-md p-4 flex flex-col gap-3">
+      <Link href={`/receita/${receita.id}`} className="block">
+        {/* IMAGEM + TÍTULO */}
+        <div className="relative w-full h-40 rounded-xl overflow-hidden">
           <Image
-            src={receita.imagem || "/images/receitas/sem-imagem.jpg"}
+            src={imagemSrc}
             alt={receita.nome}
-            width={400}
-            height={250}
-            style={{ objectFit: "cover" }}
-            onError={(e) => { /* fallback se necessário — ver seção 2 */ }}
+            fill
+            className="object-cover"
           />
+
+          <div className="absolute inset-x-0 bottom-0 bg-black/60 px-3 py-2">
+            <h3 className="text-white text-sm font-semibold leading-tight">
+              {receita.nome}
+            </h3>
+          </div>
         </div>
-        <h3 className="card-title">{receita.nome}</h3>
       </Link>
 
-      <div className="card-meta">
+      {/* META + AÇÕES */}
+      <div className="flex justify-between items-center text-sm text-gray-600">
         <span>{receita.categoria}</span>
-        <span>{receita.tempo ? formatTempo(receita.tempo) : "—"}</span>
-        <button onClick={(e) => { e.stopPropagation(); onToggleFav(receita.id); }}>
-          {receita.favorito ? "Favorito" : "Favoritar"}
-        </button>
+        <span>{formatTempo(receita.tempo)}</span>
       </div>
+
+      {/* BOTÃO MEU DIA */}
+      <button
+        onClick={() =>
+          adicionarRefeicao("almoco", {
+            id: receita.id,
+            nome: receita.nome,
+            imagem: receita.imagem ?? "",
+          })
+        }
+        className="mt-2 w-full rounded-xl bg-emerald-600 text-white py-2 text-sm font-medium hover:bg-emerald-700 transition"
+      >
+        Adicionar ao Meu Dia
+      </button>
     </article>
   );
 }
-

@@ -1,27 +1,45 @@
-// components/RecipeCard.tsx
+"use client";
+
+import Image from "next/image";
 import Link from "next/link";
 
-interface ReceitaProps {
-  receita: {
+function sanitizeImagePath(path?: string | null): string {
+  if (!path || path.trim() === "") return "/logo.png";
+
+  let p = path.replace(/\\/g, "/"); // remove '\' do Windows
+  p = p.replace(/^\/+/, "");        // remove barras duplicadas no início
+  return "/" + p;                   // garante caminho absoluto
+}
+
+interface RecipeCardProps {
+  recipe: {
     id: number;
-    nome: string;
-    descricao: string;
-    imagem_url?: string;
+    slug?: string | null;
+    titulo: string;
+    image_url?: string | null;
   };
 }
 
-export default function RecipeCard({ receita }: ReceitaProps) {
+export default function RecipeCard({ recipe }: RecipeCardProps) {
+  const imagePath = sanitizeImagePath(recipe.image_url);
+
+  const slugPath = recipe.slug
+    ? `/receita/${recipe.slug}`
+    : `/receita/${recipe.id}`;
+
   return (
-    <Link href={`/receita/${receita.id}`}>
-      <div className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition cursor-pointer">
-        <img
-          src={receita.imagem_url || "/fallback-img.jpg"}
-          alt={receita.nome}
-          className="w-full h-48 object-cover"
-        />
+    <Link href={slugPath}>
+      <div className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden cursor-pointer">
+        <div className="relative w-full h-48">
+          <Image
+            src={imagePath}
+            alt={recipe.titulo}
+            fill
+            className="object-cover"
+          />
+        </div>
         <div className="p-4">
-          <h3 className="text-xl font-semibold mb-2">{receita.nome}</h3>
-          <p className="text-gray-600 text-sm">{receita.descricao}</p>
+          <h2 className="text-lg font-semibold">{recipe.titulo}</h2>
         </div>
       </div>
     </Link>

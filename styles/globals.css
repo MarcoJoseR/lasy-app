@@ -12,3 +12,14 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/* Remove bullets automáticos herdados */
+ul,
+ol {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+/* Remove QUALQUER marker automático de listas */
+li::marker {
+  content: '';
+}

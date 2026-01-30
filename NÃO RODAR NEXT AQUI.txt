@@ -1,0 +1,3 @@
+Este NÃO é o projeto Next.
+O projeto está em:
+C:\supabase-app\app
