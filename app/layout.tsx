@@ -1,6 +1,4 @@
-import { MeuDiaProvider } from "@/app/context/MeuDiaContext";
-import { FavoritosProvider } from "@/app/context/FavoritosContext";
-import { ReceitasProvider } from "./context/ReceitasContext";
+import './globals.css';
 
 export default function RootLayout({
   children,
@@ -9,15 +7,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>
-     <FavoritosProvider>
-       <ReceitasProvider>
-         <MeuDiaProvider>
-           {children}
-         </MeuDiaProvider>
-       </ReceitasProvider>
-    </FavoritosProvider>
-   
+      <body className="bg-black text-white min-h-screen">
+        {children}
       </body>
     </html>
   );
