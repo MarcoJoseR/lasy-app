@@ -1,29 +1,24 @@
 import Link from "next/link";
 
-export function CardReceita({ receita, busca }: any) {
+export default function CardReceita({ receita }: any) {
   return (
     <Link href={`/receita/${receita.id}`}>
-      <div className="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden hover:scale-[1.02] transition">
+      <div className="relative rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition duration-300">
 
         {/* IMAGEM */}
         <img
-          src={receita.imagem || "/images/receitas/sem-imagem.jpg"}
-          alt={receita.nome}
-          className="w-full h-40 object-cover"
-          onError={(e) => {
-            e.currentTarget.src = "/images/receitas/sem-imagem.jpg";
-          }}
+          src={receita.imagem}
+          className="w-full h-48 object-cover"
         />
 
-        {/* TEXTO */}
-        <div className="p-3">
-          <p className="text-xs text-zinc-400">
-            {receita.categoria}
-          </p>
+        {/* OVERLAY (gradiente escuro) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent" />
 
-          <h3 className="text-white font-semibold">
+        {/* TEXTO SOBRE IMAGEM */}
+        <div className="absolute bottom-0 p-4">
+          <h2 className="text-white font-bold text-xl drop-shadow-md">
             {receita.nome}
-          </h3>
+          </h2>
         </div>
 
       </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { receitas as receitasIniciais } from "./data/receitas";
-import { CardReceita } from "./components/CardReceita";
+import CardReceita from "./components/CardReceita";
+import Link from "next/link";
 
 export default function Page() {
   // 🔹 estados principais
@@ -11,6 +12,38 @@ export default function Page() {
 
   const [receitas, setReceitas] = useState(receitasIniciais);
 
+ 
+  // ✅ 👉 ADICIONE AQUI 👇
+  const [entradaIngredientes, setEntradaIngredientes] = useState("");
+  const [sugestoes, setSugestoes] = useState([]);
+
+  // 🔹 função nova
+  function sugerirReceitas(ingredientesUsuario, receitas) {
+    return receitas.filter((receita) =>
+      receita.ingredientes.some((ing) => {
+        const ingLimpo = ing
+          .toLowerCase()
+          .replace(/[0-9]/g, "")
+          .replace(/g|ml/g, "")
+          .trim();
+
+        return ingredientesUsuario.some((userIng) =>
+          ingLimpo.includes(userIng)
+        );
+      })
+    );
+  }
+
+  function buscarSugestoes() {
+  const ingredientesUsuario = entradaIngredientes
+    .toLowerCase()
+    .split(",")
+    .map(i => i.trim());
+
+  const resultado = sugerirReceitas(ingredientesUsuario, receitas);
+
+  setSugestoes(resultado);
+}
   // 🔹 tipo
   const [tipo, setTipo] = useState("comida");
   const [tipoAtivo, setTipoAtivo] = useState("comida");
@@ -19,6 +52,24 @@ export default function Page() {
   const [nome, setNome] = useState("");
   const [categoria, setCategoria] = useState("");
   const [imagem, setImagem] = useState("");
+
+  // 🔹 carregar do localStorage ao iniciar
+  useEffect(() => {
+    const dadosSalvos = localStorage.getItem("receitas");
+
+    if (dadosSalvos) {
+      setReceitas(JSON.parse(dadosSalvos));
+    } else {
+      setReceitas(receitasIniciais);
+    }
+  }, []);
+
+  // 🔹 salvar no localStorage sempre que mudar
+  useEffect(() => {
+    if (receitas.length > 0) {
+      localStorage.setItem("receitas", JSON.stringify(receitas));
+    }
+  }, [receitas]);
 
   // 🔹 categorias dinâmicas
   const categorias = [
@@ -45,45 +96,67 @@ export default function Page() {
   }
 
   // 🔹 filtros
-  const receitasFiltradas = receitas
-    .filter((r) => r.tipo === tipoAtivo)
-    .filter((r) =>
-      categoriaAtiva === "Todas" ? true : r.categoria === categoriaAtiva
-    )
-    .filter((r) =>
-      r.nome.toLowerCase().includes(busca.toLowerCase())
-    );
+const receitasFiltradas = receitas.filter((receita) => {
+  const matchCategoria =
+    categoriaAtiva === "Todas" || receita.categoria === categoriaAtiva;
 
+  const matchBusca =
+    !busca || receita.nome.toLowerCase().includes(busca.toLowerCase());
+
+  return matchCategoria && matchBusca;
+});
+
+console.log("Receitas:", receitas);
+console.log("Filtradas:", receitasFiltradas);
   return (
-    <main className="p-6 max-w-4xl mx-auto">
-
-      {/* TÍTULO */}
-      <h1 className="text-3xl font-bold mb-2 text-white">
-        🍳 Lasy Receitas
-      </h1>
-
-      <p className="text-zinc-400 mb-6">
-        Descubra pratos incríveis todos os dias
-      </p>
+    <main className="p-6 max-w-4xl mx-auto space-y-6">
 
       {/* 🔍 BUSCA */}
-      <input
-        type="text"
-        placeholder="Buscar receita..."
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-        className="w-full p-3 mb-6 rounded-xl bg-zinc-800 text-white"
-      />
+      <div className="relative mb-6">
+        <input
+          type="text"
+          placeholder="Buscar receita..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          className="w-full p-3 rounded-xl bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-green-600"
+        />
+{/* 🍳 BUSCA POR INGREDIENTES */}
+<div className="mb-6 space-y-2">
+  <input
+    type="text"
+    placeholder="Buscar por ingredientes (ex: feijão, arroz)"
+    value={entradaIngredientes}
+    onChange={(e) => setEntradaIngredientes(e.target.value)}
+    className="w-full p-3 rounded-xl bg-zinc-800 text-white"
+  />
+
+  <button
+    onClick={buscarSugestoes}
+    className="bg-green-600 text-white px-4 py-2 rounded"
+  >
+    Buscar por ingredientes
+  </button>
+</div>
+
+        {busca && (
+          <button
+            onClick={() => setBusca("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
       {/* ➕ FORMULÁRIO */}
-      <div className="mb-6 p-4 bg-zinc-900 rounded-xl space-y-3">
-        <h2 className="text-white font-semibold">Adicionar Receita</h2>
+      <div className="bg-zinc-900 p-5 rounded-xl space-y-4 shadow-md">
+        <h2 className="text-xl font-semibold">Adicionar Receita</h2>
 
         <input
           placeholder="Nome"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className="w-full p-2 rounded bg-zinc-800 text-white"
+          className="w-full p-3 rounded-lg bg-zinc-800 text-white"
         />
 
         <input
@@ -101,7 +174,6 @@ export default function Page() {
         />
 
         {/* TIPO */}
-        <label className="text-zinc-400 text-sm">Tipo</label>
         <select
           value={tipo}
           onChange={(e) => setTipo(e.target.value)}
@@ -153,6 +225,14 @@ export default function Page() {
         ))}
       </div>
 
+{sugestoes.length > 0 && (
+  <div>
+    <h2>🍳 Sugestões:</h2>
+    {sugestoes.map((r) => (
+      <p key={r.id}>{r.nome}</p>
+    ))}
+  </div>
+)}
       {/* 📦 LISTA */}
       {receitasFiltradas.length === 0 ? (
         <p className="text-zinc-400">

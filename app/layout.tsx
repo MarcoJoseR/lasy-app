@@ -1,4 +1,5 @@
 import './globals.css';
+import Navbar from "./components/Navbar";
 
 export default function RootLayout({
   children,
@@ -6,10 +7,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
-      <body className="bg-black text-white min-h-screen">
-        {children}
-      </body>
-    </html>
+<html lang="pt-BR">
+    <body className="bg-black text-white min-h-screen">
+      <Navbar />
+      {children}
+    </body>
+  </html>
   );
 }
