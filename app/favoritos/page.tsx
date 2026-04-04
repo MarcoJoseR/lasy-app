@@ -1,36 +1,42 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function FavoritosPage() {
-  const [favoritos, setFavoritos] = useState<any[]>([])
-  const router = useRouter()
+  const [receitas, setReceitas] = useState<any[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("favoritos") || "[]")
-    setFavoritos(data)
-  }, [])
+    const data = localStorage.getItem("receitas");
+    if (data) {
+      setReceitas(JSON.parse(data));
+    }
+  }, []);
 
-  const removerFavorito = (id: any) => {
-    const novos = favoritos.filter((item) => item.id !== id)
-    setFavoritos(novos)
-    localStorage.setItem("favoritos", JSON.stringify(novos))
-  }
+  const handleFavorito = (r: any) => {
+    const atualizadas = receitas.map((rec) =>
+      rec.id === r.id ? { ...rec, favorito: !rec.favorito } : rec
+    );
+
+    setReceitas(atualizadas);
+    localStorage.setItem("receitas", JSON.stringify(atualizadas));
+  };
+
+  const favoritos = receitas.filter((r) => r.favorito);
 
   return (
     <main className="p-6 max-w-4xl mx-auto text-white">
-<div className="flex items-center gap-4 mb-4">
-  <button
-    onClick={() => router.back()}
-    className="bg-zinc-800 px-3 py-2 rounded hover:bg-zinc-700"
-  >
-    ← Voltar
-  </button>
+      <div className="flex items-center gap-4 mb-4">
+        <button
+          onClick={() => router.back()}
+          className="bg-zinc-800 px-3 py-2 rounded hover:bg-zinc-700"
+        >
+          ← Voltar
+        </button>
 
-  <h1 className="text-2xl font-bold">⭐ Favoritos</h1>
-</div>
-
+        <h1 className="text-2xl font-bold">⭐ Favoritos</h1>
+      </div>
 
       {favoritos.length === 0 ? (
         <p className="text-zinc-400">
@@ -44,7 +50,7 @@ export default function FavoritosPage() {
               className="bg-zinc-900 rounded-xl overflow-hidden"
             >
               <img
-                src={receita.imagem}
+                src={receita.imagem || "/default.jpg"}
                 className="w-full h-40 object-cover"
               />
 
@@ -54,7 +60,6 @@ export default function FavoritosPage() {
                 </h2>
 
                 <div className="flex gap-2">
-
                   <button
                     onClick={() => router.push(`/receita/${receita.id}`)}
                     className="text-sm bg-green-600 px-3 py-1 rounded"
@@ -62,20 +67,18 @@ export default function FavoritosPage() {
                     Ver
                   </button>
 
-                  <button
-                    onClick={() => removerFavorito(receita.id)}
-                    className="text-sm bg-red-600 px-3 py-1 rounded"
+                 <button
+                    onClick={() => onFavoritar(receita.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
                   >
-                    Remover
+                    ❌ Desfavoritar
                   </button>
-
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
-
     </main>
-  )
+  );
 }
