@@ -1,11 +1,3 @@
-// types/recipe.ts
-
-export interface IngredientItem {
-  name: string;          // Ex: "Farinha de trigo"
-  quantity: string;      // Ex: "2 xícaras"
-  optional?: boolean;    // Ex: true/false
-}
-
 export interface NutritionInfo {
   calories?: number;
   protein?: number;
@@ -13,35 +5,34 @@ export interface NutritionInfo {
   fat?: number;
 }
 
-export interface RecipeData {
-  id: number;
-  titulo: string;
-  slug: string;
+export interface Receita {
+  id: string;
+  nome: string;
+  slug?: string;
+
   categoria: string;
-  subcategoria?: string;
+  subCategoria?: string;
 
-  // Ingredientes estruturados (jsonb)
-  ingredientes: IngredientItem[];
+  ingredientes: string[];
+  modoPreparo: string[];
 
-  // Ingredientes em texto corrido (reduz tokens)
-  ingredientes_text?: string;
+  tempo?: string;
+  porcoes?: string;
 
-  // Modo de preparo em texto
-  preparo_text: string;
+  imagem?: string;
+  video?: string;
 
-  // Campo adicional para SEO, IA, e buscas otimizadas
+  tags?: string[];
+
   resumo?: string;
-
-  // Nutrição opcional
-  nutricao?: NutritionInfo;
-
-  // País/região da receita (Brasil, EUA, LatAm, Europa)
   origem?: string;
 
-  // Imagem padrão
-  imagem_url?: string;
+  nutricao?: NutritionInfo;
 
-  // Controle de datas
-  criado_em?: string;
-  atualizado_em?: string;
+  favorito: boolean;
+
+  tipo?: "oficial" | "pessoal" | "candidata";
+
+  criadoEm?: string;
+  atualizadoEm?: string;
 }

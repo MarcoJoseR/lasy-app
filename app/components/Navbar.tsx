@@ -1,32 +1,66 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
+  const pathname = usePathname();
+  
   return (
     <nav className="bg-zinc-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
 
-      {/* LOGO */}
-      <Link href="/">
-        <h1 className="text-xl font-bold cursor-pointer">
-          🍳 Lasy Receitas
-        </h1>
-      </Link>
+      {/* ===== INÍCIO DA ALTERAÇÃO ===== */}
 
-      {/* MENU */}
-      <div className="flex gap-4">
-
-        <Link href="/">
-          <button className="bg-zinc-800 px-3 py-2 rounded hover:bg-zinc-700">
-            Home
-          </button>
+        <Link href="/recepcao">
+          <h1 className="text-xl font-bold cursor-pointer">
+            🍳 Health Receitas
+          </h1>
         </Link>
 
-        <Link href="/favoritos">
-          <button className="bg-yellow-500 text-black px-3 py-2 rounded hover:bg-yellow-400">
-            ⭐ Favoritos
-          </button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/recepcao">
+            <button
+              className={
+                "px-3 py-2 rounded border transition " +
+                (pathname === "/recepcao"
+                  ? "border-white bg-green-900 text-white"
+                  : "border-transparent bg-green-700 text-white hover:bg-green-800")
+              }
+            >
+              🍳 Home
+            </button>
+          </Link>
 
-      </div>
+          <Link href="/">
+            <button
+              className={
+                "px-3 py-2 rounded border transition " +
+                (pathname === "/"
+                  ? "border-white bg-green-900 text-white"
+                  : "border-transparent bg-green-700 text-white hover:bg-green-800")
+              }
+            >
+              🔎 Pesquisar Receitas
+            </button>
+          </Link>
+
+          <Link href="/favoritos">
+            <button
+              className={
+                "px-3 py-2 rounded border transition " +
+                (pathname === "/favoritos"
+                  ? "border-white bg-green-900 text-white"
+                  : "border-transparent bg-green-800 text-white hover:bg-green-700")
+              }
+            >
+              📚 Minha Biblioteca
+            </button>
+          </Link>
+        </div>
+
+      {/* ===== FIM DA ALTERAÇÃO ===== */}
+
     </nav>
   );
 }

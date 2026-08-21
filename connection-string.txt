@@ -1,2 +1,0 @@
-
-postgres://postgres:postgresmarcojose@db.supabase.co:5432/postgres

@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+
+# arquivos locais do projeto
+/Back-up LocalStorage/
+/_legado_verificar/
