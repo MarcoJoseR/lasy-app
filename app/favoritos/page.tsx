@@ -29,6 +29,16 @@ export default function FavoritosPage() {
     null
   );
 
+function mostrarMensagemRealizada(id: string) {
+  setMensagemRealizadaId(id);
+
+  setTimeout(() => {
+    setMensagemRealizadaId((idAtual) =>
+      idAtual === id ? null : idAtual
+    );
+  }, 2000);
+}
+
 useEffect(() => {
   const deveRestaurar =
     sessionStorage.getItem("restaurarMinhaBiblioteca") === "1";
@@ -181,44 +191,6 @@ useEffect(() => {
     new Date(a.criadoEm || 0).getTime()
   );
 });
-
-function mostrarMensagemRealizada(id: string) {
-  setMensagemRealizadaId(id);
-
-  setTimeout(() => {
-    setMensagemRealizadaId((idAtual) =>
-      idAtual === id ? null : idAtual
-    );
-  }, 2000);
-}
-
-useEffect(() => {
-  function fecharAoClicarFora(event: MouseEvent) {
-    const alvo = event.target as Node;
-
-    if (
-      recentesRef.current &&
-      !recentesRef.current.contains(alvo)
-    ) {
-      setMostrarRecentes(false);
-    }
-
-    if (
-      maisPreparadasRef.current &&
-      !maisPreparadasRef.current.contains(alvo)
-    ) {
-      setMostrarMaisPreparadas(false);
-    }
-  }
-
-  if (mostrarRecentes || mostrarMaisPreparadas) {
-    document.addEventListener("mousedown", fecharAoClicarFora);
-  }
-
-  return () => {
-    document.removeEventListener("mousedown", fecharAoClicarFora);
-  };
-}, [mostrarRecentes, mostrarMaisPreparadas]);
 
 const receitasRecentes = receitas
   .filter(

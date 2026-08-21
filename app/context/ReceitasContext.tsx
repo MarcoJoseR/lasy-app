@@ -129,6 +129,39 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
     }
   }, [receitas, carregado]);
 
+useEffect(() => {
+  if (!carregado) return;
+
+  function recarregarReceitas() {
+    try {
+      const dadosSalvos = localStorage.getItem(STORAGE_KEY);
+
+      if (!dadosSalvos) return;
+
+      const receitasSalvas = JSON.parse(dadosSalvos) as Receita[];
+      setReceitas(receitasSalvas);
+    } catch (error) {
+      console.error("Erro ao atualizar receitas:", error);
+    }
+  }
+
+  function aoFicarVisivel() {
+    if (document.visibilityState === "visible") {
+      recarregarReceitas();
+    }
+  }
+
+  window.addEventListener("pageshow", recarregarReceitas);
+  window.addEventListener("popstate", recarregarReceitas);
+  document.addEventListener("visibilitychange", aoFicarVisivel);
+
+  return () => {
+    window.removeEventListener("pageshow", recarregarReceitas);
+    window.removeEventListener("popstate", recarregarReceitas);
+    document.removeEventListener("visibilitychange", aoFicarVisivel);
+  };
+}, [carregado]);
+
   function adicionarReceita(
     receita: Omit<Receita, "id" | "tipo" | "criadoEm" | "atualizadoEm">
   ) {
