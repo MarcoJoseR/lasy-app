@@ -66,7 +66,7 @@ export default function CardReceita({
   }`}
   title={String(receita.favorito)}
 >
-  {receita.favorito ? "✓ FAVORITA" : "☆ Favoritar"}
+  {receita.favorito ? "✓ Favorita" : "☆Favoritar"}
 </button>
 
         {/* TEXTO SOBRE A IMAGEM */}
