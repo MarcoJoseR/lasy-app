@@ -496,6 +496,7 @@ router.push(`/receita/${receitaId}`);
 
                     <div className="flex flex-wrap gap-2">
                       <button
+                        type="button"
                         onClick={() => handleVerReceita(String(receita.id))}
                         className="text-sm bg-green-600 px-3 py-1 rounded hover:scale-105 transition"
                       >
@@ -540,7 +541,7 @@ router.push(`/receita/${receitaId}`);
                             : "Adicionar aos favoritos"
                         }
                       >
-                        {receita.favorito ? "✓ FAVORITA TESTE" : "☆ TESTE"}
+                        {receita.favorito ? "✓ Favorita" : "☆Favoritar"}
                       </button>
                     </div>
                   </div>
