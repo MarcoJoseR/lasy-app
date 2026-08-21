@@ -494,9 +494,8 @@ router.push(`/receita/${receitaId}`);
                       {receita.categoria}
                     </p>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                       <button
-                        type="button"
                         onClick={() => handleVerReceita(String(receita.id))}
                         className="text-sm bg-green-600 px-3 py-1 rounded hover:scale-105 transition"
                       >
@@ -530,7 +529,7 @@ router.push(`/receita/${receitaId}`);
 
                       <button
                         onClick={() => toggleFavorito(receita.id)}
-                        className={`px-3 py-1 rounded font-semibold transition hover:scale-105 ${
+                        className={`text-sm px-3 py-1 rounded font-semibold transition hover:scale-105 ${
                           receita.favorito
                             ? "bg-green-600 text-white hover:bg-green-700"
                             : "bg-zinc-700 text-zinc-200 hover:bg-zinc-600"
@@ -541,7 +540,7 @@ router.push(`/receita/${receitaId}`);
                             : "Adicionar aos favoritos"
                         }
                       >
-                        {receita.favorito ? "✓ Favorita" : "☆ Favoritar"}
+                        {receita.favorito ? "✓ FAVORITA TESTE" : "☆ TESTE"}
                       </button>
                     </div>
                   </div>
