@@ -1,4 +1,4 @@
-const VERSION = "v18";
+const VERSION = "v21";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -148,32 +148,15 @@ const requisicaoNext =
   request.headers.get("RSC") === "1";
 
 if (requisicaoNext) {
-  const chaveCache = new Request(
-    `${url.origin}${url.pathname}?health-rsc=1`
-  );
-
-  event.respondWith(
-    caches.match(chaveCache).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(request).then((response) => {
-        if (response && response.status === 200) {
-          const copia = response.clone();
-
-          caches.open(CACHE_NEXT).then((cache) => {
-            cache.put(chaveCache, copia);
-          });
-        }
-
-        return response;
-      });
-    })
-  );
-
+  event.respondWith(fetch(request));
   return;
 }
+
+if (url.pathname.startsWith("/_next/")) {
+  event.respondWith(fetch(request));
+  return;
+}
+
   // ==========================================
   // 3. IMAGENS, JS, CSS E DEMAIS RECURSOS
   // ==========================================
