@@ -8,6 +8,7 @@ const APP_SHELL = [
   "/",
   "/recepcao",
   "/favoritos",
+  "/minha-receita",
   "/listas-compras/offline",
   "/receita/offline",
   "/manifest.webmanifest",
