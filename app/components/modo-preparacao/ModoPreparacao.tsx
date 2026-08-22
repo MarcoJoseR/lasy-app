@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { useTimer } from "@/app/context/TimerContext";
 import { useReceitas } from "@/app/context/ReceitasContext";

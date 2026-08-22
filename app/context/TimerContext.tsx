@@ -58,7 +58,10 @@ export function TimerProvider({
     2: null,
   });
 
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioRef = useRef<Record<1 | 2, HTMLAudioElement | null>>({
+  1: null,
+  2: null,
+});
 
   const intervaloAlarmeRef = useRef<
     Record<number, ReturnType<typeof setInterval> | null>
@@ -117,36 +120,51 @@ useEffect(() => {
   );
 }, [timers, receitaTimerId, timerRestaurado]);
 
-  function prepararAudio() {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
+  async function prepararAudio(id: 1 | 2) {
+  try {
+    if (!audioRef.current[id]) {
+      const audio = new Audio("/sounds/alarme-timer.wav");
+
+      audio.preload = "auto";
+      audio.volume = 1;
+
+      audioRef.current[id] = audio;
     }
 
-    if (audioContextRef.current.state === "suspended") {
-      audioContextRef.current.resume();
-    }
+    const audio = audioRef.current[id];
+
+    if (!audio) return;
+
+    // O clique em "Iniciar" autoriza o áudio no celular/PWA.
+    audio.volume = 0;
+
+    await audio.play();
+
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = 1;
+  } catch (error) {
+    console.error("Não foi possível preparar o áudio:", error);
   }
+}
 
-  function tocarBip() {
-    const audioContext = audioContextRef.current;
+function tocarBip(id: 1 | 2) {
+  const audio = audioRef.current[id];
 
-    if (!audioContext) return;
+  if (!audio) return;
 
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
+  try {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = 1;
 
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-
-    oscillator.frequency.value = 880;
-    gain.gain.value = 0.3;
-
-    oscillator.start();
-
-    setTimeout(() => {
-      oscillator.stop();
-    }, 350);
+    void audio.play().catch((error) => {
+      console.error("Não foi possível tocar o alarme:", error);
+    });
+  } catch (error) {
+    console.error("Erro ao tocar o alarme:", error);
   }
+}
 
  function atualizarTimer(
   id: 1 | 2,
@@ -179,11 +197,11 @@ useEffect(() => {
       avisoVisivel: true,
     });
 
-    tocarBip();
+    tocarBip(id);
 
     intervaloAlarmeRef.current[id] = setInterval(() => {
-      tocarBip();
-    }, 900);
+      tocarBip(id);
+    }, 2000);
   }
 
   function pararAlarme(id: 1 | 2) {
@@ -201,20 +219,21 @@ useEffect(() => {
     });
   }
 
-  function iniciarTimer(id: 1 | 2, segundos: number) {
-    prepararAudio();
-    pararAlarme(id);
+  async function iniciarTimer(id: 1 | 2, segundos: number) {
+  await prepararAudio(id);
 
-    if (segundos <= 0) return;
+  pararAlarme(id);
 
-    fimTimerRef.current[id] = Date.now() + segundos * 1000;
+  if (segundos <= 0) return;
 
-    atualizarTimer(id, {
-      tempoRestante: segundos,
-      rodando: true,
-      avisoVisivel: false,
-    });
-  }
+  fimTimerRef.current[id] = Date.now() + segundos * 1000;
+
+  atualizarTimer(id, {
+    tempoRestante: segundos,
+    rodando: true,
+    avisoVisivel: false,
+  });
+}
 
   function pausarTimer(id: 1 | 2) {
     const timer = timers.find((item) => item.id === id);
@@ -246,7 +265,7 @@ useEffect(() => {
 
     if (!timer || timer.tempoRestante <= 0) return;
 
-    prepararAudio();
+    void prepararAudio(id);
 
     fimTimerRef.current[id] =
       Date.now() + timer.tempoRestante * 1000;
@@ -379,9 +398,12 @@ useEffect(() => {
         }
       );
 
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
+      Object.values(audioRef.current).forEach((audio) => {
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      });
     };
   }, []);
 

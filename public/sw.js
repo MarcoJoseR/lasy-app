@@ -1,4 +1,4 @@
-const VERSION = "v21";
+const VERSION = "v22";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -11,6 +11,7 @@ const APP_SHELL = [
   "/listas-compras/offline",
   "/receita/offline",
   "/manifest.webmanifest",
+  "/sounds/alarme-timer.wav",
 ];
 
 self.addEventListener("install", (event) => {
