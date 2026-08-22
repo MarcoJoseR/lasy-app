@@ -390,9 +390,16 @@ function handleVoltar() {
         
         {receita.tipo === "pessoal" && (
           <button
-            onClick={() =>
-              router.push(`/minha-receita?id=${receita.id}`)
-            }
+            onClick={() => {
+              const destino = `/minha-receita?id=${receita.id}`;
+
+              if (!navigator.onLine) {
+                window.location.href = destino;
+                return;
+              }
+
+              router.push(destino);
+            }}
             className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition"
           >
             ✏️ Editar Receita

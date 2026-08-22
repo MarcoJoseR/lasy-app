@@ -1,4 +1,4 @@
-const VERSION = "v22";
+const VERSION = "v23";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -122,6 +122,16 @@ self.addEventListener("fetch", (event) => {
               return receitaOffline;
             }
           }
+
+          if (url.pathname === "/minha-receita") {
+              const minhaReceitaOffline = await caches.match(
+                "/minha-receita"
+              );
+
+              if (minhaReceitaOffline) {
+                return minhaReceitaOffline;
+              }
+            }
 
           const paginaCache = await caches.match(request);
 
