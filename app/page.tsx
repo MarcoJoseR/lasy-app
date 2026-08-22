@@ -343,17 +343,16 @@ function iniciarEdicao(r: Receita) {
   categorias={categorias}
 />
 
-<PainelOrdenacao
-  ordenacao={ordenacao}
-  setOrdenacao={setOrdenacao}
-/>
-
 <PainelIngredientes
   buscaIngredientes={buscaIngredientes}
   setBuscaIngredientes={setBuscaIngredientes}
   receitasPorIngredientes={receitasPorIngredientes}
 />
 
+<PainelOrdenacao
+  ordenacao={ordenacao}
+  setOrdenacao={setOrdenacao}
+/>
     <ListaReceitas
   receitasFiltradas={receitasOrdenadas}
   totalReceitas={receitasOficiais.length}
