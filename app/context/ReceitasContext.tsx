@@ -40,6 +40,14 @@ export interface Receita {
   imagem?: string;
   video?: string;
 
+  tipoConteudo?: "receita" | "carrossel";
+
+  carrossel?: {
+    imagens: string[];
+    titulo?: string;
+    origemUrl?: string;
+  };
+
   tags?: string[];
 
   resumo?: string;
@@ -90,9 +98,10 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [carregado, setCarregado] = useState(false);
 
-  useEffect(() => {
+ useEffect(() => {
   try {
     const CHAVE_INICIALIZACAO = "healthReceitasInicializadoV1";
+
     const jaInicializado =
       localStorage.getItem(CHAVE_INICIALIZACAO) === "1";
 

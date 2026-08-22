@@ -2564,6 +2564,36 @@ export const RECEITAS_INICIAIS: Receita[] = [
     "colecaoInicial": true,
     "criadoEm": "2026-08-19T23:07:43.336Z",
     "atualizadoEm": "2026-08-19T23:07:43.336Z"
+  },
+
+  {
+    id: "carrossel-teste-semana-001",
+    nome: "Carrossel Teste – Pratos da Semana",
+    categoria: "outros",
+
+    imagem: "/images/carrosseis/teste-semana/capa.jpg",
+
+    tipoConteudo: "carrossel",
+
+    carrossel: {
+      titulo: "Carrossel Teste – Pratos da Semana",
+      imagens: [
+        "/images/carrosseis/teste-semana/capa.jpg",
+        "/images/carrosseis/teste-semana/card2.jpg",
+        "/images/carrosseis/teste-semana/card3.jpg",
+        "/images/carrosseis/teste-semana/card4.jpg",
+      ],
+    },
+
+    ingredientes: [],
+    modoPreparo: [],
+
+    tipo: "oficial",
+    colecaoInicial: true,
+
+    criadoEm: "2026-08-22T18:00:00.000Z",
+    atualizadoEm: "2026-08-22T18:00:00.000Z",
+  
   }
 ];
 

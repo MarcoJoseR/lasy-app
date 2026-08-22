@@ -458,7 +458,18 @@ router.push(`/receita/${receitaId}`);
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {receitasOrdenadas.map((receita) => (
+              {receitasOrdenadas.map((receita) => {
+                const ehCarrossel = receita.tipoConteudo === "carrossel";
+
+                const totalImagensCarrossel =
+                  receita.carrossel?.imagens?.length ?? 0;
+
+                const imagemCapa =
+                  ehCarrossel && totalImagensCarrossel > 0
+                    ? receita.carrossel!.imagens[0]
+                    : receita.imagem || "/images/categorias/sem-imagem.jpg";
+
+                return (
                 <div
                   key={receita.id}
                   className="relative bg-zinc-900 rounded-xl overflow-hidden"
@@ -482,10 +493,16 @@ router.push(`/receita/${receitaId}`);
               )}
 
                   <img
-                    src={receita.imagem || "/images/categorias/sem-imagem.jpg"}
+                    src={imagemCapa}
                     className="w-full h-40 object-cover"
                     alt={receita.nome}
                   />
+
+                  {ehCarrossel && (
+                    <div className="absolute left-3 top-3 z-10 rounded-full bg-black/80 px-3 py-1 text-xs font-semibold text-white shadow">
+                      📚 Carrossel
+                    </div>
+                  )}
 
                   <div className="p-4">
                     <h2 className="font-semibold mb-1">{receita.nome}</h2>
@@ -494,7 +511,13 @@ router.push(`/receita/${receitaId}`);
                       {receita.categoria}
                     </p>
 
-                    <div className="flex flex-wrap gap-2">
+                  {ehCarrossel && (
+                    <p className="text-sm text-yellow-400 mb-3">
+                      📚 {totalImagensCarrossel} imagens
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => handleVerReceita(String(receita.id))}
@@ -546,7 +569,8 @@ router.push(`/receita/${receitaId}`);
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>

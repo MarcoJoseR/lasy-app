@@ -37,6 +37,8 @@ export default function ReceitaDetalhe() {
   (r) => String(r.id) === String(idReceita)
 );
 
+  const [imagemCarrosselAtual, setImagemCarrosselAtual] = useState(0);
+
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [modoPreparacao, setModoPreparacao] = useState(false);
   const [mostrarMensagemRealizada, setMostrarMensagemRealizada] =
@@ -303,6 +305,13 @@ function handleVoltar() {
   router.back();
 }
 
+const ehCarrossel =
+  receita.tipoConteudo === "carrossel" &&
+  (receita.carrossel?.imagens?.length ?? 0) > 0;
+
+
+const imagensCarrossel = receita.carrossel?.imagens ?? [];
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="relative h-72 w-full">
@@ -361,7 +370,9 @@ function handleVoltar() {
           {mensagemSucesso}
         </div>
       )}
-        
+
+      {!ehCarrossel && (
+        <>
           <button
             type="button"
             onClick={handleIniciarPreparacao}
@@ -377,6 +388,8 @@ function handleVoltar() {
           >
             🛒 Gerar Lista de Compras
           </button>
+        </>
+        )}
 
         {receita.tipo === "oficial" && (
           <button
@@ -466,6 +479,57 @@ function handleVoltar() {
           </div>
         )}
 
+        {ehCarrossel && (
+          <div className="space-y-4">
+            <div
+              className="
+                flex
+                snap-x
+                snap-mandatory
+                overflow-x-auto
+                rounded-xl
+                bg-zinc-900
+              "
+              onScroll={(event) => {
+                const elemento = event.currentTarget;
+
+                if (elemento.clientWidth === 0) return;
+
+                const indice = Math.round(
+                  elemento.scrollLeft / elemento.clientWidth
+                );
+
+                setImagemCarrosselAtual(indice);
+              }}
+            >
+              {imagensCarrossel.map((imagem, index) => (
+                <div
+                  key={`${imagem}-${index}`}
+                  className="flex w-full shrink-0 snap-start justify-center"
+                >
+                  <img
+                    src={imagem}
+                    alt={`${receita.nome} - imagem ${index + 1}`}
+                    className="block max-h-[75vh] max-w-full object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <span className="inline-block rounded-full bg-zinc-800 px-4 py-2 text-sm font-semibold text-white">
+                {imagemCarrosselAtual + 1} / {imagensCarrossel.length}
+              </span>
+            </div>
+
+            <p className="text-center text-sm text-zinc-400">
+              Arraste para o lado para ver as próximas imagens.
+            </p>
+          </div>
+        )}
+
+        {!ehCarrossel && (
+          <>
             <div>
               <h2 className="text-lg font-semibold mb-3">
                 🧾 Ingredientes
@@ -483,8 +547,7 @@ function handleVoltar() {
                 ))}
               </ul>
             </div>
-
-            <div>
+           <div>
               <h2 className="text-lg font-semibold mb-3">
                 👨🍳 Modo de preparo
               </h2>
@@ -521,6 +584,8 @@ function handleVoltar() {
                 )}
               </div>
             </div>
+              </>
+            )}
         </div>
     </main>
   );
