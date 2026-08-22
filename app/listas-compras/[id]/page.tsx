@@ -72,9 +72,13 @@ function handleRecarregar() {
     return;
   }
 
+console.log("Receita usada no recarregar:", receitaOriginal);
+
   const confirmou = window.confirm(
-    `Recarregar a Lista de Compras de ${lista.nomeReceita}? As alterações atuais serão substituídas pelos ingredientes da receita.`
-  );
+  `Recarregar a Lista de Compras de ${receitaOriginal.nome}?\n\n` +
+  `A lista será atualizada com o nome e os ingredientes atuais da receita.\n\n` +
+  `Marcações, alterações e itens acrescentados manualmente nesta lista serão substituídos.`
+);
 
   if (!confirmou) {
     return;
