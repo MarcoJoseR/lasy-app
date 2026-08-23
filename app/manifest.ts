@@ -24,7 +24,7 @@ export default function manifest() {
     // ===== INÍCIO - COMPARTILHAMENTO ANDROID =====
     share_target: {
       action: "/importar-receita",
-      method: "get",
+      method: "GET",
       params: {
         title: "title",
         text: "text",
