@@ -138,6 +138,97 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
     }
   }, [receitas, carregado]);
 
+// NOVO useEffect temporário do carrossel
+useEffect(() => {
+  if (!carregado) return;
+
+  const CHAVE_CARROSSEL_TESTE =
+    "healthCarrosselTesteInseridoV1";
+
+  try {
+    if (
+      localStorage.getItem(CHAVE_CARROSSEL_TESTE) === "1"
+    ) {
+      return;
+    }
+
+    const dadosSalvos =
+      localStorage.getItem(STORAGE_KEY);
+
+    if (!dadosSalvos) {
+      console.warn(
+        "Carrossel não inserido: biblioteca não encontrada."
+      );
+      return;
+    }
+
+    const receitasSalvas =
+      JSON.parse(dadosSalvos) as Receita[];
+
+    if (
+      !Array.isArray(receitasSalvas) ||
+      receitasSalvas.length === 0
+    ) {
+      console.warn(
+        "Carrossel não inserido: biblioteca vazia."
+      );
+      return;
+    }
+
+    const carrosselTeste = RECEITAS_INICIAIS.find(
+      (receita) =>
+        receita.id === "carrossel-teste-semana-001"
+    );
+
+    if (!carrosselTeste) {
+      console.warn(
+        "Carrossel de teste não encontrado em RECEITAS_INICIAIS."
+      );
+      return;
+    }
+
+    const jaExiste = receitasSalvas.some(
+      (receita) =>
+        String(receita.id) ===
+        String(carrosselTeste.id)
+    );
+
+    if (jaExiste) {
+      localStorage.setItem(
+        CHAVE_CARROSSEL_TESTE,
+        "1"
+      );
+      return;
+    }
+
+    const receitasAtualizadas = [
+      ...receitasSalvas,
+      carrosselTeste,
+    ];
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(receitasAtualizadas)
+    );
+
+    setReceitas(receitasAtualizadas);
+
+    localStorage.setItem(
+      CHAVE_CARROSSEL_TESTE,
+      "1"
+    );
+
+    console.log(
+      "Carrossel de teste acrescentado com segurança."
+    );
+  } catch (error) {
+    console.error(
+      "Erro ao acrescentar carrossel de teste:",
+      error
+    );
+  }
+}, [carregado]);
+
 useEffect(() => {
   if (!carregado) return;
 
