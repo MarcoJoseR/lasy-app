@@ -128,6 +128,18 @@ if (!carregado) {
 
   const novaReceita = adicionarNaBiblioteca(receita);
 
+if (receita.tipoConteudo === "carrossel") {
+  setMensagemSucesso(
+    "✅ Carrossel adicionado à Minha Biblioteca."
+  );
+
+  setTimeout(() => {
+    setMensagemSucesso("");
+  }, 2500);
+
+  return;
+}
+
   sessionStorage.setItem(
     "receitaAdicionada",
     novaReceita.id

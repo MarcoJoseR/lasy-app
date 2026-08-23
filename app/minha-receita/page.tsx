@@ -22,6 +22,7 @@ import BotaoVoltar from "@/app/components/BotaoVoltar";
 
 export default function MinhaReceitaPage() {
   const router = useRouter();
+
   const [nome, setNome] = useState("");
   const [imagem, setImagem] = useState("");
   const [erroNome, setErroNome] = useState("");
@@ -40,9 +41,21 @@ export default function MinhaReceitaPage() {
   const [tempo, setTempo] = useState("");
   const [porcoes, setPorcoes] = useState("");
   const [origem, setOrigem] = useState("");
-  
+
   const [ingredientesTexto, setIngredientesTexto] = useState("");
   const [modoPreparo, setModoPreparo] = useState("");
+
+  // ============================================================
+  // CARROSSEL
+  // ============================================================
+
+  const [tipoConteudo, setTipoConteudo] = useState<
+    "receita" | "carrossel"
+  >("receita");
+
+  const [imagensCarrossel, setImagensCarrossel] = useState<string[]>(
+    []
+  );
 
   const {
     receitas,
@@ -54,6 +67,10 @@ export default function MinhaReceitaPage() {
   const searchParams = useSearchParams();
   const receitaId = searchParams.get("id");
 
+  // ============================================================
+  // CARREGAR RECEITA PARA EDIÇÃO
+  // ============================================================
+
   useEffect(() => {
     if (!carregado || !receitaId) return;
 
@@ -62,7 +79,11 @@ export default function MinhaReceitaPage() {
     );
 
     if (!receitaEncontrada) return;
-    console.log("Receita carregada para edição:", receitaEncontrada);
+
+    console.log(
+      "Receita carregada para edição:",
+      receitaEncontrada
+    );
 
     setNome(receitaEncontrada.nome || "");
     setImagem(receitaEncontrada.imagem || "");
@@ -83,9 +104,28 @@ export default function MinhaReceitaPage() {
         ? receitaEncontrada.modoPreparo.join("\n")
         : receitaEncontrada.modoPreparo || ""
     );
+
+    // ==========================================================
+    // CARREGAR DADOS DE CARROSSEL EXISTENTE
+    // ==========================================================
+
+    if (receitaEncontrada.tipoConteudo === "carrossel") {
+      setTipoConteudo("carrossel");
+
+      setImagensCarrossel(
+        Array.isArray(receitaEncontrada.carrossel?.imagens)
+          ? receitaEncontrada.carrossel.imagens
+          : []
+      );
+    } else {
+      setTipoConteudo("receita");
+      setImagensCarrossel([]);
+    }
   }, [carregado, receitaId, receitas]);
 
-  // ===== INÍCIO - RECEBER DADOS DA IMPORTAÇÃO =====
+  // ============================================================
+  // RECEBER DADOS DA IMPORTAÇÃO DE RECEITA EM TEXTO
+  // ============================================================
 
   useEffect(() => {
     const importar = searchParams.get("importar");
@@ -102,122 +142,241 @@ export default function MinhaReceitaPage() {
       const dadosImportados = JSON.parse(dadosSalvos);
 
       setNome(dadosImportados.nome || "");
-      setIngredientesTexto(dadosImportados.ingredientesTexto || "");
+      setIngredientesTexto(
+        dadosImportados.ingredientesTexto || ""
+      );
       setModoPreparo(dadosImportados.modoPreparoTexto || "");
       setOrigem(dadosImportados.origem || "");
+
+      setTipoConteudo("receita");
+      setImagensCarrossel([]);
+
+      sessionStorage.removeItem("receitaImportadaPendente");
     } catch (error) {
-      console.error("Erro ao carregar receita importada:", error);
+      console.error(
+        "Erro ao carregar receita importada:",
+        error
+      );
     }
   }, [searchParams]);
 
-  // ===== FIM - RECEBER DADOS DA IMPORTAÇÃO =====
+  // ============================================================
+  // RECEBER DADOS DA IMPORTAÇÃO DE CARROSSEL
+  // ============================================================
 
-  const [mensagemSucesso, setMensagemSucesso] = useState("");
+  useEffect(() => {
+    const importarCarrossel =
+      searchParams.get("importarCarrossel");
 
-function limparFormulario() {
-  setNome("");
-  setCategoria("");
-  setSubCategoria("");
-  setImagem("");
-  setTempo("");
-  setPorcoes("");
-  setIngredientesTexto("");
-  setModoPreparo("");
+    if (importarCarrossel !== "1") return;
 
-  setErroNome("");
-  setErroCategoria("");
-  setMensagemSucesso("");
-}
-
-function salvarReceita() {
-  console.log("salvarReceita executada", {
-    nome,
-    categoria,
-    receitaId,
-  });
-
-  setErroNome("");
-  setErroCategoria("");
-
-  if (!nome.trim()) {
-    setErroNome("Insira o nome da receita");
-    return;
-  }
-
-  if (!categoria) {
-    setErroCategoria("Selecione uma categoria");
-    return;
-  }
-
-  const agora = new Date().toISOString();
-
-  if (receitaId) {
-    const receitaExistente = receitas.find(
-      (receita) => receita.id === receitaId
+    const dadosSalvos = sessionStorage.getItem(
+      "carrosselImportadoPendente"
     );
 
-    if (!receitaExistente) {
+    if (!dadosSalvos) return;
+
+    try {
+      const dadosImportados = JSON.parse(dadosSalvos);
+
+      const imagens =
+        Array.isArray(dadosImportados.carrossel?.imagens)
+          ? dadosImportados.carrossel.imagens
+          : [];
+
+      setNome(dadosImportados.nome || "");
+      setOrigem(dadosImportados.origem || "");
+
+      setTipoConteudo("carrossel");
+      setImagensCarrossel(imagens);
+
+      // A primeira imagem do Carrossel será também a capa
+      setImagem(imagens[0] || "");
+
+      // Carrossel não precisa nascer com ingredientes
+      // nem modo de preparo preenchidos
+      setIngredientesTexto("");
+      setModoPreparo("");
+
+      sessionStorage.removeItem(
+        "carrosselImportadoPendente"
+      );
+    } catch (error) {
+      console.error(
+        "Erro ao carregar carrossel importado:",
+        error
+      );
+    }
+  }, [searchParams]);
+
+  const [mensagemSucesso, setMensagemSucesso] =
+    useState("");
+
+  // ============================================================
+  // LIMPAR FORMULÁRIO
+  // ============================================================
+
+  function limparFormulario() {
+    setNome("");
+    setCategoria("");
+    setSubCategoria("");
+    setImagem("");
+    setTempo("");
+    setPorcoes("");
+    setOrigem("");
+    setIngredientesTexto("");
+    setModoPreparo("");
+
+    setTipoConteudo("receita");
+    setImagensCarrossel([]);
+
+    setErroNome("");
+    setErroCategoria("");
+    setMensagemSucesso("");
+  }
+
+  // ============================================================
+  // SALVAR RECEITA
+  // ============================================================
+
+  function salvarReceita() {
+    console.log("salvarReceita executada", {
+      nome,
+      categoria,
+      receitaId,
+      tipoConteudo,
+      imagensCarrossel: imagensCarrossel.length,
+    });
+
+    setErroNome("");
+    setErroCategoria("");
+
+    if (!nome.trim()) {
+      setErroNome("Insira o nome da receita");
       return;
     }
 
-    atualizarReceita(receitaId, {
-      ...montarReceita({
-        id: receitaId,
-        nome,
-        categoria,
-        subCategoria,
-        imagem,
-        ingredientesTexto,
-        modoPreparoTexto: modoPreparo,
-        tempo,
-        porcoes,
-        origem,
-        favorito: receitaExistente.favorito,
-      }),
-      atualizadoEm: agora,
-    });
+    if (!categoria) {
+      setErroCategoria("Selecione uma categoria");
+      return;
+    }
 
-    setMensagemSucesso("Receita atualizada com sucesso");
-  } else {
-    
-const novaReceitaId = gerarId();
+    const agora = new Date().toISOString();
 
-adicionarReceita({
-  ...montarReceita({
-    id: novaReceitaId,
-    nome,
-    categoria,
-    subCategoria,
-    imagem,
-    ingredientesTexto,
-    modoPreparoTexto: modoPreparo,
-    tempo,
-    porcoes,
-    origem,
-    favorito: false,
-  }),
-  });
+    // ==========================================================
+    // EDITAR RECEITA EXISTENTE
+    // ==========================================================
 
-router.push("/favoritos");
-return;
+    if (receitaId) {
+      const receitaExistente = receitas.find(
+        (receita) => receita.id === receitaId
+      );
+
+      if (!receitaExistente) {
+        return;
+      }
+
+      const receitaAtualizada = {
+        ...montarReceita({
+          id: receitaId,
+          nome,
+          categoria,
+          subCategoria,
+          imagem,
+          ingredientesTexto,
+          modoPreparoTexto: modoPreparo,
+          tempo,
+          porcoes,
+          origem,
+          favorito: receitaExistente.favorito,
+        }),
+
+        // Preservar os campos específicos de Carrossel
+        ...(tipoConteudo === "carrossel"
+          ? {
+              tipoConteudo: "carrossel" as const,
+
+              carrossel: {
+                imagens: imagensCarrossel,
+                titulo: nome,
+                origemUrl: origem,
+              },
+            }
+          : {}),
+
+        atualizadoEm: agora,
+      };
+
+      atualizarReceita(receitaId, receitaAtualizada);
+
+      setMensagemSucesso(
+        "Receita atualizada com sucesso"
+      );
+    } else {
+      // ========================================================
+      // CRIAR NOVA RECEITA
+      // ========================================================
+
+      const novaReceitaId = gerarId();
+
+      const novaReceita = {
+        ...montarReceita({
+          id: novaReceitaId,
+          nome,
+          categoria,
+          subCategoria,
+          imagem,
+          ingredientesTexto,
+          modoPreparoTexto: modoPreparo,
+          tempo,
+          porcoes,
+          origem,
+          favorito: false,
+        }),
+
+        // ======================================================
+        // CAMPOS EXCLUSIVOS DO CARROSSEL
+        // ======================================================
+
+        ...(tipoConteudo === "carrossel"
+          ? {
+              tipoConteudo: "carrossel" as const,
+
+              carrossel: {
+                imagens: imagensCarrossel,
+                titulo: nome,
+                origemUrl: origem,
+              },
+            }
+          : {}),
+      };
+
+      adicionarReceita(novaReceita);
+
+      router.push("/favoritos");
+      return;
+    }
+
+    setNome("");
+    setCategoria("");
+    setSubCategoria("");
+    setImagem("");
+    setTempo("");
+    setPorcoes("");
+    setOrigem("");
+    setIngredientesTexto("");
+    setModoPreparo("");
+
+    setTipoConteudo("receita");
+    setImagensCarrossel([]);
+
+    setErroNome("");
+    setErroCategoria("");
+
+    setTimeout(() => {
+      setMensagemSucesso("");
+    }, 4000);
   }
-
-  setNome("");
-  setCategoria("");
-  setSubCategoria("");
-  setImagem("");
-  setTempo("");
-  setPorcoes("");
-  setIngredientesTexto("");
-  setModoPreparo("");
-
-  setErroNome("");
-  setErroCategoria("");
-
-  setTimeout(() => {
-    setMensagemSucesso("");
-  }, 4000);
-}
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -225,6 +384,26 @@ return;
         <BotaoVoltar />
 
         <BlocoCriarReceita editando={receitaId !== null} />
+
+        {/* ====================================================
+            AVISO DE CARROSSEL IMPORTADO
+        ==================================================== */}
+
+        {tipoConteudo === "carrossel" &&
+          imagensCarrossel.length > 0 && (
+            <div className="mb-4 rounded-lg border border-emerald-700 bg-zinc-900 px-4 py-3">
+              <p className="font-semibold text-emerald-300">
+                📚 Carrossel com {imagensCarrossel.length}{" "}
+                {imagensCarrossel.length === 1
+                  ? "imagem"
+                  : "imagens"}
+              </p>
+
+              <p className="mt-1 text-sm text-zinc-400">
+                A primeira imagem será usada como capa.
+              </p>
+            </div>
+          )}
 
         <div className="-mt-4 mb-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex-1">
@@ -256,6 +435,7 @@ return;
               inputClassBase={inputClassBase}
               inputError={inputError}
             />
+
             <SecaoCategorias
               categoria={categoria}
               setCategoria={setCategoria}
@@ -284,7 +464,6 @@ return;
               modoPreparo={modoPreparo}
               setModoPreparo={setModoPreparo}
             />
-            
           </FormularioReceita>
         </FormReceita>
       </div>
