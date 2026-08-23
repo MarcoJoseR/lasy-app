@@ -25,6 +25,7 @@ export default function manifest() {
     share_target: {
       action: "/importar-receita",
       method: "GET",
+      enctype: "application/x-www-form-urlencoded",
       params: {
         title: "title",
         text: "text",
