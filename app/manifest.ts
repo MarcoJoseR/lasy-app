@@ -27,11 +27,11 @@ export default function manifest(): MetadataRoute.Manifest {
     share_target: {
       action: "/importar-receita",
       method: "get",
-      params: [
-        { name: "title", value: "title" },
-        { name: "text", value: "text" },
-        { name: "url", value: "url" },
-      ],
+      params: {
+        title: "title",
+        text: "text",
+        url: "url",
+      },
     },
     // ===== FIM - COMPARTILHAMENTO ANDROID =====
   };

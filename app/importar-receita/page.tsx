@@ -92,6 +92,7 @@ export default function ImportarReceitaPage() {
       ingredientesTexto: ingredientes,
       modoPreparoTexto: modoPreparo,
       origem: url,
+      video: url,
     };
 
     sessionStorage.setItem(
@@ -234,6 +235,7 @@ export default function ImportarReceitaPage() {
     const dadosCarrossel = {
       nome: title,
       origem: url,
+      video: url,
 
       tipoConteudo: "carrossel" as const,
 

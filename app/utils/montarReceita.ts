@@ -1,4 +1,5 @@
 import { limparTexto } from "./limparTexto";
+
 import {
   transformarIngredientes,
   transformarPassos,
@@ -15,6 +16,7 @@ export function montarReceita({
   tempo,
   porcoes,
   origem,
+  video,
   favorito = false,
 }: {
   id: string;
@@ -27,25 +29,26 @@ export function montarReceita({
   tempo: string;
   porcoes: string;
   origem?: string;
+  video?: string;
   favorito?: boolean;
 }) {
-
- const modoPreparoNormalizado = Array.isArray(modoPreparoTexto)
-  ? modoPreparoTexto.join("\n")
-  : modoPreparoTexto || "";
+  const modoPreparoNormalizado = Array.isArray(modoPreparoTexto)
+    ? modoPreparoTexto.join("\n")
+    : modoPreparoTexto || "";
 
   return {
-  id,
-  nome: limparTexto(nome),
-  categoria,
-  subCategoria: subCategoria || "",
-  imagem,
-  ingredientes: transformarIngredientes(ingredientesTexto),
-  modoPreparo: transformarPassos(modoPreparoNormalizado),
-  tempo,
-  porcoes,
-  origem: origem || "",
-  favorito,
-  tipo: "pessoal" as const,
-};
+    id,
+    nome: limparTexto(nome),
+    categoria,
+    subCategoria: subCategoria || "",
+    imagem,
+    ingredientes: transformarIngredientes(ingredientesTexto),
+    modoPreparo: transformarPassos(modoPreparoNormalizado),
+    tempo,
+    porcoes,
+    origem: origem || "",
+    video: video || "",
+    favorito,
+    tipo: "pessoal" as const,
+  };
 }

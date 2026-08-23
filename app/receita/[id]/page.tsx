@@ -459,6 +459,21 @@ const imagensCarrossel = receita.carrossel?.imagens ?? [];
               </p>
             )}
 
+            {/* VIDEO */}
+            {receita.video && (
+              <p className="text-white font-medium">
+                ▶️ Vídeo:{" "}
+                <a
+                  href={receita.video}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 underline hover:text-blue-300"
+                >
+                  Abrir vídeo
+                </a>
+              </p>
+            )}
+
         {/* TEMPO E RENDIMENTO */}
         {(receita.tempo || receita.porcoes) && (
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-white font-medium">

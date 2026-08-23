@@ -41,6 +41,7 @@ export default function MinhaReceitaPage() {
   const [tempo, setTempo] = useState("");
   const [porcoes, setPorcoes] = useState("");
   const [origem, setOrigem] = useState("");
+  const [video, setVideo] = useState("");
 
   const [ingredientesTexto, setIngredientesTexto] = useState("");
   const [modoPreparo, setModoPreparo] = useState("");
@@ -92,6 +93,7 @@ export default function MinhaReceitaPage() {
     setTempo(receitaEncontrada.tempo || "");
     setPorcoes(receitaEncontrada.porcoes || "");
     setOrigem(receitaEncontrada.origem || "");
+    setVideo(receitaEncontrada.video || "");
 
     setIngredientesTexto(
       Array.isArray(receitaEncontrada.ingredientes)
@@ -147,6 +149,7 @@ export default function MinhaReceitaPage() {
       );
       setModoPreparo(dadosImportados.modoPreparoTexto || "");
       setOrigem(dadosImportados.origem || "");
+      setVideo(dadosImportados.video || "");
 
       setTipoConteudo("receita");
       setImagensCarrossel([]);
@@ -186,6 +189,7 @@ export default function MinhaReceitaPage() {
 
       setNome(dadosImportados.nome || "");
       setOrigem(dadosImportados.origem || "");
+      setVideo(dadosImportados.video || "");
 
       setTipoConteudo("carrossel");
       setImagensCarrossel(imagens);
@@ -226,7 +230,7 @@ export default function MinhaReceitaPage() {
     setOrigem("");
     setIngredientesTexto("");
     setModoPreparo("");
-
+    setVideo("");
     setTipoConteudo("receita");
     setImagensCarrossel([]);
 
@@ -288,6 +292,7 @@ export default function MinhaReceitaPage() {
           tempo,
           porcoes,
           origem,
+          video,
           favorito: receitaExistente.favorito,
         }),
 
@@ -331,6 +336,7 @@ export default function MinhaReceitaPage() {
           tempo,
           porcoes,
           origem,
+          video,
           favorito: false,
         }),
 
