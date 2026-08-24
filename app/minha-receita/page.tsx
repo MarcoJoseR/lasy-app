@@ -2,6 +2,10 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import {
+  obterImagensCarrossel,
+  salvarImagensCarrossel,
+} from "@/app/utils/carrosselIndexedDB";
 
 import BlocoCriarReceita from "@/app/components/BlocoCriarReceita";
 import FormReceita from "@/app/components/FormReceita";
@@ -20,10 +24,6 @@ import { montarReceita } from "@/app/utils/montarReceita";
 import { gerarId } from "@/app/utils/gerarId";
 import BotaoVoltar from "@/app/components/BotaoVoltar";
 
-import {
-  obterImagensCarrossel,
-  salvarImagensCarrossel,
-} from "@/app/utils/carrosselIndexedDB";
 
 export default function MinhaReceitaPage() {
   const router = useRouter();
@@ -200,6 +200,13 @@ async function selecionarPrintsLegenda(
     setProcessandoPrints(false);
   }
 }
+
+function removerImagemCarrossel(indice: number) {
+  setImagensCarrossel((imagensAtuais) =>
+    imagensAtuais.filter((_, index) => index !== indice)
+  );
+}
+
   // ============================================================
   // CARREGAR RECEITA PARA EDIÇÃO
   // ============================================================
@@ -454,6 +461,16 @@ const [mensagemSucesso, setMensagemSucesso] =
       return;
     }
 
+    if (
+      tipoConteudo === "carrossel" &&
+      imagensCarrossel.length === 0
+    ) {
+      window.alert(
+        "O carrossel precisa manter pelo menos uma imagem."
+      );
+      return;
+    }
+
     const agora = new Date().toISOString();
 
     // ==========================================================
@@ -501,6 +518,21 @@ const [mensagemSucesso, setMensagemSucesso] =
 
         atualizadoEm: agora,
       };
+
+    if (
+      tipoConteudo === "carrossel" &&
+      chaveImagensCarrossel
+    ) {
+      salvarImagensCarrossel(
+        chaveImagensCarrossel,
+        imagensCarrossel
+      ).catch((erro) => {
+        console.error(
+          "Erro ao atualizar imagens do carrossel:",
+          erro
+        );
+      });
+    }
 
       atualizarReceita(receitaId, receitaAtualizada);
 
@@ -606,6 +638,37 @@ const [mensagemSucesso, setMensagemSucesso] =
               <p className="mt-1 text-sm text-zinc-400">
                 A primeira imagem será usada como capa.
               </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {imagensCarrossel.map((imagem, indice) => (
+                  <div
+                    key={`${indice}-${imagem}`}
+                    className="overflow-hidden rounded-lg bg-zinc-800"
+                  >
+                    <img
+                      src={imagem}
+                      alt={`Imagem ${indice + 1} do carrossel`}
+                      className="aspect-square w-full object-cover"
+                    />
+
+                    <div className="p-2">
+                      <p className="mb-2 text-center text-xs text-zinc-300">
+                        {indice + 1}/{imagensCarrossel.length}
+                      </p>
+
+                      {Boolean(receitaId) && (
+                        <button
+                          type="button"
+                          onClick={() => removerImagemCarrossel(indice)}
+                          className="w-full rounded bg-red-700 px-2 py-1 text-xs font-semibold text-white hover:bg-red-600"
+                        >
+                          Remover
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
