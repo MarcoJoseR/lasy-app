@@ -13,6 +13,14 @@ export default function ImportarReceitaPage() {
   const text = searchParams.get("text") || "";
   const url = searchParams.get("url") || "";
 
+  const textoLimpo = text.trim();
+
+  const textoEhUrl =
+    /^https?:\/\/\S+$/i.test(textoLimpo);
+
+  const linkRecebido =
+    url.trim() || (textoEhUrl ? textoLimpo : "");
+
   const [tipoImportacao, setTipoImportacao] =
     useState<TipoImportacao>("receita");
 
@@ -60,12 +68,13 @@ export default function ImportarReceitaPage() {
       .trim();
   }
 
-  if (indiceIngredientes === -1 && indicePreparo !== -1) {
-    ingredientes = linhas
-      .slice(0, indicePreparo)
-      .join("\n")
-      .trim();
-  }
+  if (
+  indiceIngredientes === -1 &&
+  indicePreparo === -1 &&
+  !textoEhUrl
+) {
+  ingredientes = text.trim();
+}
 
   if (indicePreparo !== -1) {
     modoPreparo = linhas
@@ -91,8 +100,8 @@ export default function ImportarReceitaPage() {
       nome: title,
       ingredientesTexto: ingredientes,
       modoPreparoTexto: modoPreparo,
-      origem: url,
-      video: url,
+      origem: linkRecebido,
+      video: linkRecebido,
     };
 
     sessionStorage.setItem(
@@ -234,15 +243,15 @@ export default function ImportarReceitaPage() {
 
     const dadosCarrossel = {
       nome: title,
-      origem: url,
-      video: url,
+      origem: linkRecebido,
+      video: linkRecebido,
 
       tipoConteudo: "carrossel" as const,
 
       carrossel: {
         imagens: imagensCarrossel,
         titulo: title,
-        origemUrl: url,
+        origemUrl: linkRecebido,
       },
     };
 
@@ -356,7 +365,7 @@ export default function ImportarReceitaPage() {
             </p>
 
             <div className="break-all rounded-lg bg-zinc-900 p-3">
-              {url || "Nenhum link recebido"}
+              {linkRecebido || "Nenhum link recebido"}
             </div>
           </div>
 
@@ -390,7 +399,7 @@ export default function ImportarReceitaPage() {
             </p>
 
             <p className="break-all">
-              {url || "Nenhum link recebido"}
+              {linkRecebido || "Nenhum link recebido"}
             </p>
           </div>
 
