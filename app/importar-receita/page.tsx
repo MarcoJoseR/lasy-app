@@ -374,6 +374,19 @@ ingredientes = ingredientes
             </div>
           </div>
 
+      {linkRecebido && !ingredientes && !modoPreparo && (
+        <div className="rounded-lg border border-amber-700 bg-amber-950/30 p-4">
+          <p className="font-semibold text-amber-300">
+            📄 A receita está escrita na legenda da publicação?
+          </p>
+
+          <p className="mt-2 text-sm text-zinc-300">
+            Faça prints do texto no Instagram e, na próxima tela,
+            anexe até 4 imagens em <strong>Prints da legenda</strong>.
+          </p>
+        </div>
+      )}
+
           <button
             type="button"
             onClick={continuarParaFormulario}
