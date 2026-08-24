@@ -15,11 +15,15 @@ export default function ImportarReceitaPage() {
 
   const textoLimpo = text.trim();
 
-  const textoEhUrl =
-    /^https?:\/\/\S+$/i.test(textoLimpo);
+  const urlEncontradaNoTexto =
+    textoLimpo.match(/https?:\/\/[^\s]+/i)?.[0] || "";
 
   const linkRecebido =
-    url.trim() || (textoEhUrl ? textoLimpo : "");
+    url.trim() || urlEncontradaNoTexto;
+
+  const textoParaAnalisar = urlEncontradaNoTexto
+    ? textoLimpo.replace(urlEncontradaNoTexto, "").trim()
+    : textoLimpo;
 
   const [tipoImportacao, setTipoImportacao] =
     useState<TipoImportacao>("receita");
@@ -37,7 +41,7 @@ export default function ImportarReceitaPage() {
   let ingredientes = "";
   let modoPreparo = "";
 
-  const linhas = text.split("\n");
+  const linhas = textoParaAnalisar.split("\n");
 
   const indiceIngredientes = linhas.findIndex((linha) => {
     const texto = linha
@@ -71,9 +75,9 @@ export default function ImportarReceitaPage() {
   if (
   indiceIngredientes === -1 &&
   indicePreparo === -1 &&
-  !textoEhUrl
+  textoParaAnalisar
 ) {
-  ingredientes = text.trim();
+  ingredientes = textoParaAnalisar;
 }
 
   if (indicePreparo !== -1) {
