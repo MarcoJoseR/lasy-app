@@ -427,6 +427,18 @@ export default function MinhaReceitaPage() {
           />
         </div>
 
+      {origem && (
+        <div className="mb-4 rounded-lg border border-emerald-700 bg-zinc-900 p-4">
+          <p className="mb-1 text-sm font-semibold text-emerald-300">
+            🔗 Link de origem recebido
+          </p>
+
+          <p className="break-all text-sm text-zinc-300">
+            {origem}
+          </p>
+        </div>
+      )}
+
         <FormReceita>
           <FormularioReceita>
             <SecaoDadosGerais
