@@ -38,6 +38,7 @@ export default function ReceitaDetalhe() {
 );
 
   const [imagemCarrosselAtual, setImagemCarrosselAtual] = useState(0);
+  const [printLegendaAtual, setPrintLegendaAtual] = useState(0);
 
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [modoPreparacao, setModoPreparacao] = useState(false);
@@ -324,6 +325,10 @@ const ehCarrossel =
 
 const imagensCarrossel = receita.carrossel?.imagens ?? [];
 
+const printsLegenda = receita.printsLegenda ?? [];
+
+const temPrintsLegenda = printsLegenda.length > 0;
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="relative h-72 w-full">
@@ -501,6 +506,61 @@ const imagensCarrossel = receita.carrossel?.imagens ?? [];
               <p>
                 Atualizada em:{" "}
                 {new Date(receita.atualizadoEm).toLocaleDateString("pt-BR")}
+              </p>
+            )}
+          </div>
+        )}
+
+        {temPrintsLegenda && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">
+              📄 Prints da legenda
+            </h2>
+
+            <div
+              className="
+                flex
+                snap-x
+                snap-mandatory
+                overflow-x-auto
+                rounded-xl
+                bg-zinc-900
+              "
+              onScroll={(event) => {
+                const elemento = event.currentTarget;
+
+                if (elemento.clientWidth === 0) return;
+
+                const indice = Math.round(
+                  elemento.scrollLeft / elemento.clientWidth
+                );
+
+                setPrintLegendaAtual(indice);
+              }}
+            >
+              {printsLegenda.map((imagem, index) => (
+                <div
+                  key={`${imagem}-${index}`}
+                  className="flex w-full shrink-0 snap-start justify-center"
+                >
+                  <img
+                    src={imagem}
+                    alt={`Print da legenda ${index + 1}`}
+                    className="block max-h-[75vh] max-w-full object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <span className="inline-block rounded-full bg-zinc-800 px-4 py-2 text-sm font-semibold text-white">
+                {printLegendaAtual + 1} / {printsLegenda.length}
+              </span>
+            </div>
+
+            {printsLegenda.length > 1 && (
+              <p className="text-center text-sm text-zinc-400">
+                Arraste para o lado para ver os próximos prints.
               </p>
             )}
           </div>
