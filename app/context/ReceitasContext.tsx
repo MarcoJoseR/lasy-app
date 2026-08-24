@@ -45,7 +45,8 @@ export interface Receita {
   carrossel?: {
     imagens: string[];
     titulo?: string;
-    origemUrl?: string;
+    chaveImagens?: string;
+    quantidadeImagens?: number;
   };
 
   printsLegenda?: string[];

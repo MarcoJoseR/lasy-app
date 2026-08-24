@@ -15,6 +15,7 @@ import {
 
 import ModoPreparacao from "@/app/components/modo-preparacao/ModoPreparacao";
 import { useListasCompras } from "../../context/ListasComprasContext";
+import { obterImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
 
 export default function ReceitaDetalhe() {
   const { id } = useParams();
@@ -38,6 +39,9 @@ export default function ReceitaDetalhe() {
 );
 
   const [imagemCarrosselAtual, setImagemCarrosselAtual] = useState(0);
+  const [imagensCarrosselIndexedDB, setImagensCarrosselIndexedDB] =
+  useState<string[]>([]);
+  
   const [printLegendaAtual, setPrintLegendaAtual] = useState(0);
 
   const [mensagemSucesso, setMensagemSucesso] = useState("");
@@ -85,8 +89,34 @@ useEffect(() => {
   setModoPreparacao(true);
 }, [receita?.id]);
 
+useEffect(() => {
+  if (!receita) return;
+
+  const chave =
+    receita.carrossel?.chaveImagens || "";
+
+  if (!chave) {
+    setImagensCarrosselIndexedDB([]);
+    return;
+  }
+
+  obterImagensCarrossel(chave)
+    .then((imagens) => {
+      setImagensCarrosselIndexedDB(imagens);
+    })
+    .catch((erro) => {
+      console.error(
+        "Erro ao carregar imagens do carrossel:",
+        erro
+      );
+
+      setImagensCarrosselIndexedDB([]);
+    });
+}, [receita?.id, receita?.carrossel?.chaveImagens]);
+
 if (!carregado) {
-    return <p className="p-6 text-white">Carregando receita...</p>;
+
+  return <p className="p-6 text-white">Carregando receita...</p>;
   }
 
   if (!receita) {
@@ -318,12 +348,14 @@ function handleVoltar() {
   router.back();
 }
 
+const imagensCarrossel =
+  imagensCarrosselIndexedDB.length > 0
+    ? imagensCarrosselIndexedDB
+    : receita.carrossel?.imagens ?? [];
+
 const ehCarrossel =
   receita.tipoConteudo === "carrossel" &&
-  (receita.carrossel?.imagens?.length ?? 0) > 0;
-
-
-const imagensCarrossel = receita.carrossel?.imagens ?? [];
+  imagensCarrossel.length > 0;
 
 const printsLegenda = receita.printsLegenda ?? [];
 

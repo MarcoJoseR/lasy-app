@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { salvarImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
 
 type TipoImportacao = "receita" | "carrossel";
 
@@ -32,6 +33,8 @@ export default function ImportarReceitaPage() {
   const [nomesImagens, setNomesImagens] = useState<string[]>([]);
   const [processandoImagens, setProcessandoImagens] = useState(false);
   const [erroCarrossel, setErroCarrossel] = useState("");
+  const [chaveImagensCarrossel, setChaveImagensCarrossel] =
+    useState("");
 
   // ============================================================
   // RECEITA EM TEXTO
@@ -238,11 +241,37 @@ ingredientes = ingredientes
   // TRANSFERÊNCIA DO CARROSSEL PARA O FORMULÁRIO
   // ============================================================
 
-  function continuarCarrosselParaFormulario() {
+  async function continuarCarrosselParaFormulario() {
     if (imagensCarrossel.length === 0) {
       setErroCarrossel(
         "Selecione pelo menos uma imagem para o carrossel."
       );
+      return;
+    }
+
+    const chaveImagens =
+      chaveImagensCarrossel ||
+      `carrossel-importacao-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}`;
+
+    try {
+      await salvarImagensCarrossel(
+        chaveImagens,
+        imagensCarrossel
+      );
+
+      setChaveImagensCarrossel(chaveImagens);
+    } catch (erro) {
+      console.error(
+        "Erro ao salvar imagens do carrossel no IndexedDB:",
+        erro
+      );
+
+      setErroCarrossel(
+        "Não foi possível preparar as imagens do carrossel."
+      );
+
       return;
     }
 
@@ -254,9 +283,11 @@ ingredientes = ingredientes
       tipoConteudo: "carrossel" as const,
 
       carrossel: {
-        imagens: imagensCarrossel,
+        imagens: [],
         titulo: title,
         origemUrl: linkRecebido,
+        chaveImagens,
+        quantidadeImagens: imagensCarrossel.length,
       },
     };
 

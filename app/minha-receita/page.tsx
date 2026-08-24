@@ -20,6 +20,11 @@ import { montarReceita } from "@/app/utils/montarReceita";
 import { gerarId } from "@/app/utils/gerarId";
 import BotaoVoltar from "@/app/components/BotaoVoltar";
 
+import {
+  obterImagensCarrossel,
+  salvarImagensCarrossel,
+} from "@/app/utils/carrosselIndexedDB";
+
 export default function MinhaReceitaPage() {
   const router = useRouter();
 
@@ -57,6 +62,10 @@ export default function MinhaReceitaPage() {
   const [imagensCarrossel, setImagensCarrossel] = useState<string[]>(
     []
   );
+
+  const [chaveImagensCarrossel, setChaveImagensCarrossel] =
+  useState("");
+
   // ============================================================
   // PRINTS DA LEGENDA
   // ============================================================
@@ -245,91 +254,134 @@ async function selecionarPrintsLegenda(
     if (receitaEncontrada.tipoConteudo === "carrossel") {
       setTipoConteudo("carrossel");
 
-      setImagensCarrossel(
-        Array.isArray(receitaEncontrada.carrossel?.imagens)
-          ? receitaEncontrada.carrossel.imagens
-          : []
-      );
+      const chave =
+        receitaEncontrada.carrossel?.chaveImagens || "";
+
+      setChaveImagensCarrossel(chave);
+
+      if (chave) {
+        obterImagensCarrossel(chave)
+          .then((imagens) => {
+            setImagensCarrossel(imagens);
+          })
+          .catch((erro) => {
+            console.error(
+              "Erro ao carregar imagens do carrossel:",
+              erro
+            );
+
+            setImagensCarrossel([]);
+          });
+      } else {
+        setImagensCarrossel(
+          Array.isArray(receitaEncontrada.carrossel?.imagens)
+            ? receitaEncontrada.carrossel.imagens
+            : []
+        );
+      }
     } else {
       setTipoConteudo("receita");
       setImagensCarrossel([]);
+      setChaveImagensCarrossel("");
     }
-  }, [carregado, receitaId, receitas]);
 
-  // ============================================================
-  // RECEBER DADOS DA IMPORTAÇÃO DE RECEITA EM TEXTO
-  // ============================================================
+    }, [carregado, receitaId, receitas]);
+    
+// ============================================================
+// RECEBER DADOS DA IMPORTAÇÃO DE RECEITA EM TEXTO
+// ============================================================
 
-  useEffect(() => {
-    const importar = searchParams.get("importar");
+useEffect(() => {
+  const importar = searchParams.get("importar");
 
-    if (importar !== "1") return;
+  if (importar !== "1") return;
 
-    const dadosSalvos = sessionStorage.getItem(
+  const dadosSalvos = sessionStorage.getItem(
+    "receitaImportadaPendente"
+  );
+
+  if (!dadosSalvos) return;
+
+  const dadosCarrosselSalvos = dadosSalvos;
+
+  try {
+    const dadosImportados = JSON.parse(dadosSalvos);
+
+    setNome(dadosImportados.nome || "");
+    setIngredientesTexto(
+      dadosImportados.ingredientesTexto || ""
+    );
+    setModoPreparo(
+      dadosImportados.modoPreparoTexto || ""
+    );
+    setOrigem(dadosImportados.origem || "");
+    setVideo(dadosImportados.video || "");
+
+    setTipoConteudo("receita");
+    setImagensCarrossel([]);
+    setChaveImagensCarrossel("");
+  
+    sessionStorage.removeItem(
       "receitaImportadaPendente"
     );
-
-    if (!dadosSalvos) return;
-
-    try {
-      const dadosImportados = JSON.parse(dadosSalvos);
-
-      setNome(dadosImportados.nome || "");
-      setIngredientesTexto(
-        dadosImportados.ingredientesTexto || ""
-      );
-      setModoPreparo(dadosImportados.modoPreparoTexto || "");
-      setOrigem(dadosImportados.origem || "");
-      setVideo(dadosImportados.video || "");
-
-      setTipoConteudo("receita");
-      setImagensCarrossel([]);
-
-      sessionStorage.removeItem("receitaImportadaPendente");
-    } catch (error) {
-      console.error(
-        "Erro ao carregar receita importada:",
-        error
-      );
-    }
-  }, [searchParams]);
-
-  // ============================================================
-  // RECEBER DADOS DA IMPORTAÇÃO DE CARROSSEL
-  // ============================================================
-
-  useEffect(() => {
-    const importarCarrossel =
-      searchParams.get("importarCarrossel");
-
-    if (importarCarrossel !== "1") return;
-
-    const dadosSalvos = sessionStorage.getItem(
-      "carrosselImportadoPendente"
+  } catch (error) {
+    console.error(
+      "Erro ao carregar receita importada:",
+      error
     );
+  }
+}, [searchParams]);
 
-    if (!dadosSalvos) return;
+// ============================================================
+// RECEBER DADOS DA IMPORTAÇÃO DE CARROSSEL
+// ============================================================
 
+useEffect(() => {
+  const importarCarrossel =
+    searchParams.get("importarCarrossel");
+
+  if (importarCarrossel !== "1") return;
+
+  const dadosSalvos = sessionStorage.getItem(
+    "carrosselImportadoPendente"
+  );
+
+  if (!dadosSalvos) return;
+
+  const dadosCarrosselSalvos = dadosSalvos;
+
+  async function carregarCarrosselImportado() {
     try {
-      const dadosImportados = JSON.parse(dadosSalvos);
+      const dadosImportados = JSON.parse(dadosCarrosselSalvos);
 
-      const imagens =
-        Array.isArray(dadosImportados.carrossel?.imagens)
-          ? dadosImportados.carrossel.imagens
-          : [];
+      const chave =
+        dadosImportados.carrossel?.chaveImagens || "";
 
       setNome(dadosImportados.nome || "");
       setOrigem(dadosImportados.origem || "");
       setVideo(dadosImportados.video || "");
 
       setTipoConteudo("carrossel");
-      setImagensCarrossel(imagens);
+      setChaveImagensCarrossel(chave);
 
-      // A primeira imagem do Carrossel será também a capa
-      setImagem(imagens[0] || "");
+      if (chave) {
+        const imagens =
+          await obterImagensCarrossel(chave);
 
-      // Carrossel não precisa nascer com ingredientes
-      // nem modo de preparo preenchidos
+        setImagensCarrossel(imagens);
+        setImagem(imagens[0] || "");
+      } else {
+        const imagens =
+          Array.isArray(
+            dadosImportados.carrossel?.imagens
+          )
+            ? dadosImportados.carrossel.imagens
+            : [];
+
+        setImagensCarrossel(imagens);
+        setImagem(imagens[0] || "");
+      }
+
       setIngredientesTexto("");
       setModoPreparo("");
 
@@ -342,11 +394,14 @@ async function selecionarPrintsLegenda(
         error
       );
     }
-  }, [searchParams]);
+  }
 
-  const [mensagemSucesso, setMensagemSucesso] =
-    useState("");
+  carregarCarrosselImportado();
+}, [searchParams]);
 
+const [mensagemSucesso, setMensagemSucesso] =
+  useState("");
+  
   // ============================================================
   // LIMPAR FORMULÁRIO
   // ============================================================
