@@ -48,6 +48,8 @@ export interface Receita {
     origemUrl?: string;
   };
 
+  printsLegenda?: string[];
+
   tags?: string[];
 
   resumo?: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import BlocoCriarReceita from "@/app/components/BlocoCriarReceita";
@@ -57,6 +57,14 @@ export default function MinhaReceitaPage() {
   const [imagensCarrossel, setImagensCarrossel] = useState<string[]>(
     []
   );
+  // ============================================================
+  // PRINTS DA LEGENDA
+  // ============================================================
+
+  const [printsLegenda, setPrintsLegenda] = useState<string[]>([]);
+  const [nomesPrintsLegenda, setNomesPrintsLegenda] = useState<string[]>([]);
+  const [processandoPrints, setProcessandoPrints] = useState(false);
+  const [erroPrints, setErroPrints] = useState("");
 
   const {
     receitas,
@@ -68,6 +76,121 @@ export default function MinhaReceitaPage() {
   const searchParams = useSearchParams();
   const receitaId = searchParams.get("id");
 
+// ============================================================
+// REDUZIR PRINT ANTES DE ARMAZENAR
+// ============================================================
+
+function reduzirPrint(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const imagem = new Image();
+
+      imagem.onload = () => {
+        const limite = 1080;
+
+        let largura = imagem.width;
+        let altura = imagem.height;
+
+        if (largura > limite || altura > limite) {
+          const proporcao = Math.min(
+            limite / largura,
+            limite / altura
+          );
+
+          largura = Math.round(largura * proporcao);
+          altura = Math.round(altura * proporcao);
+        }
+
+        const canvas = document.createElement("canvas");
+
+        canvas.width = largura;
+        canvas.height = altura;
+
+        const contexto = canvas.getContext("2d");
+
+        if (!contexto) {
+          reject(
+            new Error("Não foi possível processar a imagem.")
+          );
+          return;
+        }
+
+        contexto.drawImage(imagem, 0, 0, largura, altura);
+
+        const imagemReduzida = canvas.toDataURL(
+          "image/jpeg",
+          0.78
+        );
+
+        resolve(imagemReduzida);
+      };
+
+      imagem.onerror = () => {
+        reject(
+          new Error("Não foi possível carregar a imagem.")
+        );
+      };
+
+      imagem.src = String(reader.result);
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Não foi possível ler o arquivo."));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+async function selecionarPrintsLegenda(
+  event: ChangeEvent<HTMLInputElement>
+) {
+  setErroPrints("");
+
+  const arquivos = Array.from(event.target.files || []);
+
+  if (arquivos.length === 0) {
+    return;
+  }
+
+  if (arquivos.length > 4) {
+    setErroPrints(
+      "Selecione no máximo 4 prints da legenda."
+    );
+
+    event.target.value = "";
+    return;
+  }
+
+  setProcessandoPrints(true);
+
+  try {
+    const imagensProcessadas: string[] = [];
+
+    for (const arquivo of arquivos) {
+      const imagem = await reduzirPrint(arquivo);
+      imagensProcessadas.push(imagem);
+    }
+
+    setPrintsLegenda(imagensProcessadas);
+    setNomesPrintsLegenda(
+      arquivos.map((arquivo) => arquivo.name)
+    );
+  } catch (erro) {
+    console.error(erro);
+
+    setPrintsLegenda([]);
+    setNomesPrintsLegenda([]);
+
+    setErroPrints(
+      "Não foi possível preparar um ou mais prints."
+    );
+  } finally {
+    setProcessandoPrints(false);
+  }
+}
   // ============================================================
   // CARREGAR RECEITA PARA EDIÇÃO
   // ============================================================
@@ -94,6 +217,14 @@ export default function MinhaReceitaPage() {
     setPorcoes(receitaEncontrada.porcoes || "");
     setOrigem(receitaEncontrada.origem || "");
     setVideo(receitaEncontrada.video || "");
+
+    setPrintsLegenda(
+      Array.isArray(receitaEncontrada.printsLegenda)
+        ? receitaEncontrada.printsLegenda
+        : []
+    );
+
+    setNomesPrintsLegenda([]);
 
     setIngredientesTexto(
       Array.isArray(receitaEncontrada.ingredientes)
@@ -233,6 +364,9 @@ export default function MinhaReceitaPage() {
     setVideo("");
     setTipoConteudo("receita");
     setImagensCarrossel([]);
+    setPrintsLegenda([]);
+    setNomesPrintsLegenda([]);
+    setErroPrints("");
 
     setErroNome("");
     setErroCategoria("");
@@ -293,6 +427,7 @@ export default function MinhaReceitaPage() {
           porcoes,
           origem,
           video,
+          printsLegenda,
           favorito: receitaExistente.favorito,
         }),
 
@@ -337,6 +472,7 @@ export default function MinhaReceitaPage() {
           porcoes,
           origem,
           video,
+          printsLegenda,
           favorito: false,
         }),
 
@@ -375,6 +511,10 @@ export default function MinhaReceitaPage() {
 
     setTipoConteudo("receita");
     setImagensCarrossel([]);
+    setPrintsLegenda([]);
+    setNomesPrintsLegenda([]);
+    setErroPrints("");
+
 
     setErroNome("");
     setErroCategoria("");
@@ -438,6 +578,68 @@ export default function MinhaReceitaPage() {
           </p>
         </div>
       )}
+
+        <div className="mb-6 rounded-xl border border-zinc-700 bg-zinc-900 p-4">
+          <p className="mb-2 font-semibold text-white">
+            📄 Prints da legenda
+          </p>
+
+          <p className="mb-3 text-sm text-zinc-400">
+            Se a receita estiver escrita na legenda da publicação,
+            faça prints do texto e anexe aqui. Você pode selecionar
+            até 4 imagens.
+          </p>
+
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={selecionarPrintsLegenda}
+            className="block w-full rounded-lg bg-zinc-800 p-3"
+          />
+
+          {processandoPrints && (
+            <p className="mt-3 text-sm text-amber-400">
+              Preparando prints...
+            </p>
+          )}
+
+          {erroPrints && (
+            <div className="mt-3 rounded-lg border border-red-800 bg-red-950/40 p-3 text-sm text-red-300">
+              {erroPrints}
+            </div>
+          )}
+
+          {printsLegenda.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-3 font-semibold text-emerald-300">
+                {printsLegenda.length}{" "}
+                {printsLegenda.length === 1
+                  ? "print anexado"
+                  : "prints anexados"}
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {printsLegenda.map((imagem, indice) => (
+                  <div
+                    key={`${nomesPrintsLegenda[indice] || "print"}-${indice}`}
+                    className="overflow-hidden rounded-lg bg-zinc-800"
+                  >
+                    <img
+                      src={imagem}
+                      alt={`Print da legenda ${indice + 1}`}
+                      className="aspect-square w-full object-cover"
+                    />
+
+                    <div className="p-2 text-center text-xs text-zinc-300">
+                      {indice + 1}/{printsLegenda.length}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <FormReceita>
           <FormularioReceita>

@@ -17,6 +17,7 @@ export function montarReceita({
   porcoes,
   origem,
   video,
+  printsLegenda = [],
   favorito = false,
 }: {
   id: string;
@@ -30,8 +31,10 @@ export function montarReceita({
   porcoes: string;
   origem?: string;
   video?: string;
+  printsLegenda?: string[];
   favorito?: boolean;
 }) {
+
   const modoPreparoNormalizado = Array.isArray(modoPreparoTexto)
     ? modoPreparoTexto.join("\n")
     : modoPreparoTexto || "";
@@ -48,6 +51,7 @@ export function montarReceita({
     porcoes,
     origem: origem || "",
     video: video || "",
+    printsLegenda,
     favorito,
     tipo: "pessoal" as const,
   };
