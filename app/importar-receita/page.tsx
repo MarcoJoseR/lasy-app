@@ -130,7 +130,7 @@ ingredientes = ingredientes
         const imagem = new Image();
 
         imagem.onload = () => {
-          const limite = 1080;
+          const limite = 720;
 
           let largura = imagem.width;
           let altura = imagem.height;
@@ -161,7 +161,7 @@ ingredientes = ingredientes
 
           const imagemReduzida = canvas.toDataURL(
             "image/jpeg",
-            0.78
+            0.60
           );
 
           resolve(imagemReduzida);
