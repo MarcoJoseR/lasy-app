@@ -69,9 +69,15 @@ export interface Receita {
 interface ReceitasContextType {
   receitas: Receita[];
   carregado: boolean;
-  adicionarReceita: (receita: Omit<Receita, "id" | "tipo" | "criadoEm" | "atualizadoEm">) => void;
-  
-adicionarReceitaOficial: (
+
+  adicionarReceita: (
+    receita: Omit<
+      Receita,
+      "id" | "tipo" | "criadoEm" | "atualizadoEm"
+    >
+  ) => boolean;
+
+  adicionarReceitaOficial: (
     receita: Omit<
       Receita,
       "id" | "tipo" | "criadoEm" | "atualizadoEm"
@@ -135,10 +141,20 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
 }, []);
 
   useEffect(() => {
-    if (carregado) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(receitas));
-    }
-  }, [receitas, carregado]);
+  if (!carregado) return;
+
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(receitas)
+    );
+  } catch (error) {
+    console.error(
+      "Erro ao atualizar Minha Biblioteca no armazenamento local:",
+      error
+    );
+  }
+}, [receitas, carregado]);
 
 // NOVO useEffect temporário do carrossel
 useEffect(() => {
@@ -265,20 +281,49 @@ useEffect(() => {
 }, [carregado]);
 
   function adicionarReceita(
-    receita: Omit<Receita, "id" | "tipo" | "criadoEm" | "atualizadoEm">
-  ) {
-    const agora = new Date().toISOString();
+  receita: Omit<
+    Receita,
+    "id" | "tipo" | "criadoEm" | "atualizadoEm"
+  >
+): boolean {
+  const agora = new Date().toISOString();
 
-    const novaReceita: Receita = {
-      ...receita,
-      id: gerarId(),
-      tipo: "pessoal",
-      criadoEm: agora,
-      atualizadoEm: agora,
-    };
+  const novaReceita: Receita = {
+    ...receita,
+    id: gerarId(),
+    tipo: "pessoal",
+    criadoEm: agora,
+    atualizadoEm: agora,
+  };
 
-    setReceitas((receitasAtuais) => [...receitasAtuais, novaReceita]);
+  const receitasAtualizadas = [
+    ...receitas,
+    novaReceita,
+  ];
+
+  try {
+    // Grava imediatamente antes de qualquer navegação.
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(receitasAtualizadas)
+    );
+
+    setReceitas(receitasAtualizadas);
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Erro ao salvar receita no armazenamento local:",
+      error
+    );
+
+    window.alert(
+      "Não foi possível salvar a receita. As imagens podem estar ocupando mais espaço do que o disponível. Tente reduzir a quantidade de imagens."
+    );
+
+    return false;
   }
+}
 
 useEffect(() => {
   if (!carregado) return;

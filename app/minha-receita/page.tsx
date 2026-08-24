@@ -492,13 +492,16 @@ async function selecionarPrintsLegenda(
             }
           : {}),
       };
+    
+    const salvou = adicionarReceita(novaReceita);
 
-      adicionarReceita(novaReceita);
-
-      router.push("/favoritos");
+    if (!salvou) {
       return;
     }
 
+    router.push("/favoritos");
+    return;
+  }
     setNome("");
     setCategoria("");
     setSubCategoria("");
