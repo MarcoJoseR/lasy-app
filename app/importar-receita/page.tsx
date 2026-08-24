@@ -87,13 +87,14 @@ export default function ImportarReceitaPage() {
       .trim();
   }
 
-  // ============================================================
-  // FALLBACK FINAL - PRESERVAR CONTEÚDO
-  // ============================================================
+// ============================================================
+// FALLBACK FINAL - PRESERVAR CONTEÚDO
+// ============================================================
 
-  if (indiceIngredientes === -1 && indicePreparo === -1) {
-    ingredientes = text.trim();
-  }
+// Nunca tratar links compartilhados como ingredientes
+ingredientes = ingredientes
+  .replace(/https?:\/\/[^\s]+/gi, "")
+  .trim();
 
   // ============================================================
   // TRANSFERÊNCIA DA RECEITA EM TEXTO PARA O FORMULÁRIO
