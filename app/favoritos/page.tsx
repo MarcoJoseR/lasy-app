@@ -461,13 +461,20 @@ router.push(`/receita/${receitaId}`);
               {receitasOrdenadas.map((receita) => {
                 const ehCarrossel = receita.tipoConteudo === "carrossel";
 
+                const imagensCarrosselLegadas =
+                  receita.carrossel?.imagens ?? [];
+
                 const totalImagensCarrossel =
-                  receita.carrossel?.imagens?.length ?? 0;
+                  receita.carrossel?.quantidadeImagens ??
+                  imagensCarrosselLegadas.length;
 
                 const imagemCapa =
-                  ehCarrossel && totalImagensCarrossel > 0
-                    ? receita.carrossel!.imagens[0]
-                    : receita.imagem || "/images/categorias/sem-imagem.jpg";
+                  ehCarrossel
+                    ? receita.imagem ||
+                      imagensCarrosselLegadas[0] ||
+                      "/images/categorias/sem-imagem.jpg"
+                    : receita.imagem ||
+                      "/images/categorias/sem-imagem.jpg";
 
                 return (
                 <div
