@@ -509,9 +509,11 @@ const [mensagemSucesso, setMensagemSucesso] =
               tipoConteudo: "carrossel" as const,
 
               carrossel: {
-                imagens: imagensCarrossel,
+                imagens: [],
                 titulo: nome,
                 origemUrl: origem,
+                chaveImagens: chaveImagensCarrossel,
+                quantidadeImagens: imagensCarrossel.length,
               },
             }
           : {}),
@@ -571,11 +573,13 @@ const [mensagemSucesso, setMensagemSucesso] =
           ? {
               tipoConteudo: "carrossel" as const,
 
-              carrossel: {
-                imagens: imagensCarrossel,
-                titulo: nome,
-                origemUrl: origem,
-              },
+            carrossel: {
+              imagens: [],
+              titulo: nome,
+              origemUrl: origem,
+              chaveImagens: chaveImagensCarrossel,
+              quantidadeImagens: imagensCarrossel.length,
+            },  
             }
           : {}),
       };
