@@ -439,7 +439,7 @@ const [mensagemSucesso, setMensagemSucesso] =
   // SALVAR RECEITA
   // ============================================================
 
-  function salvarReceita() {
+  async function salvarReceita() {
     console.log("salvarReceita executada", {
       nome,
       categoria,
@@ -525,22 +525,41 @@ const [mensagemSucesso, setMensagemSucesso] =
       tipoConteudo === "carrossel" &&
       chaveImagensCarrossel
     ) {
-      salvarImagensCarrossel(
-        chaveImagensCarrossel,
-        imagensCarrossel
-      ).catch((erro) => {
+      try {
+        await salvarImagensCarrossel(
+          chaveImagensCarrossel,
+          imagensCarrossel
+        );
+
+      const imagensConferidas =
+        await obterImagensCarrossel(chaveImagensCarrossel);
+
+      window.alert(
+        `TESTE IndexedDB: enviadas ${imagensCarrossel.length} / encontradas ${imagensConferidas.length}`
+);
+
+      } catch (erro) {
         console.error(
           "Erro ao atualizar imagens do carrossel:",
           erro
         );
-      });
+
+        window.alert(
+          "Não foi possível salvar as imagens do carrossel."
+        );
+
+        return;
+      }
     }
 
-      atualizarReceita(receitaId, receitaAtualizada);
+    atualizarReceita(receitaId, receitaAtualizada);
 
-      setMensagemSucesso(
-        "Receita atualizada com sucesso"
-      );
+    setMensagemSucesso(
+      "Receita atualizada com sucesso"
+    );
+
+return;
+
     } else {
       // ========================================================
       // CRIAR NOVA RECEITA

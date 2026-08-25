@@ -132,9 +132,7 @@ useEffect(() => {
     termosIngredientes.length > 0 ||
     Boolean(filtroCategoria);
 
-  const receitasParaPesquisa = pesquisaAtiva
-    ? [...minhaBiblioteca, ...colecaoInicial]
-    : minhaBiblioteca;
+  const receitasParaPesquisa = minhaBiblioteca;
 
   const categoriasDisponiveis = Array.from(
     new Set(minhaBiblioteca.map((r) => r.categoria).filter(Boolean))
