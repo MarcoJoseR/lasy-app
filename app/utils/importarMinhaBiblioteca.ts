@@ -1,8 +1,12 @@
+import { salvarImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
+
 export type ResultadoValidacaoBackup = {
   valido: boolean;
   mensagem: string;
   receitasEncontradas: number;
   listasEncontradas: number;
+  carrosseisEncontrados: number;
+
   backup?: {
     app: string;
     tipo: string;
@@ -11,6 +15,7 @@ export type ResultadoValidacaoBackup = {
     dados: {
       receitas: unknown[];
       listasCompras: unknown[];
+      carrosseisIndexedDB?: Record<string, string[]>;
     };
   };
 };
@@ -22,16 +27,22 @@ export async function validarBackupMinhaBiblioteca(
     const texto = await arquivo.text();
     const dados = JSON.parse(texto);
 
+    const versaoValida =
+      dados?.versaoBackup === 1 ||
+      dados?.versaoBackup === 2;
+
     if (
       dados?.app !== "Receitas Health" ||
       dados?.tipo !== "backup-minha-biblioteca" ||
-      dados?.versaoBackup !== 1
+      !versaoValida
     ) {
+
       return {
         valido: false,
-        mensagem: "O arquivo não é um backup válido do Receitas Health V1.",
+        mensagem: "O arquivo não é um backup válido do Receitas Health.",
         receitasEncontradas: 0,
         listasEncontradas: 0,
+        carrosseisEncontrados: 0,
       };
     }
 
@@ -45,6 +56,7 @@ export async function validarBackupMinhaBiblioteca(
         mensagem: "O backup está incompleto ou possui estrutura inválida.",
         receitasEncontradas: 0,
         listasEncontradas: 0,
+        carrosseisEncontrados: 0,
       };
     }
 
@@ -59,6 +71,7 @@ export async function validarBackupMinhaBiblioteca(
           "O backup contém receitas que não pertencem à biblioteca pessoal.",
         receitasEncontradas: 0,
         listasEncontradas: 0,
+        carrosseisEncontrados: 0,
       };
     }
 
@@ -67,6 +80,14 @@ export async function validarBackupMinhaBiblioteca(
       mensagem: "Backup válido.",
       receitasEncontradas: dados.dados.receitas.length,
       listasEncontradas: dados.dados.listasCompras.length,
+      carrosseisEncontrados:
+        dados?.dados?.carrosseisIndexedDB &&
+        typeof dados.dados.carrosseisIndexedDB === "object"
+          ? Object.keys(
+              dados.dados.carrosseisIndexedDB
+            ).length
+          : 0,
+      
       backup: dados,
     };
   } catch (erro) {
@@ -77,15 +98,18 @@ export async function validarBackupMinhaBiblioteca(
       mensagem: "Não foi possível ler o arquivo de backup.",
       receitasEncontradas: 0,
       listasEncontradas: 0,
+      carrosseisEncontrados: 0,
     };
   }
 }
 
-export function restaurarMinhaBiblioteca(
+export async function restaurarMinhaBiblioteca(
+      
   backup: {
     dados: {
       receitas: unknown[];
       listasCompras: unknown[];
+      carrosseisIndexedDB?: Record<string, string[]>;
     };
   }
 ) {
@@ -117,6 +141,18 @@ export function restaurarMinhaBiblioteca(
       "listasCompras",
       JSON.stringify(backup.dados.listasCompras)
     );
+
+    const carrosseis =
+      backup.dados.carrosseisIndexedDB || {};
+
+    for (const [chave, imagens] of Object.entries(carrosseis)) {
+      if (!Array.isArray(imagens)) continue;
+
+      await salvarImagensCarrossel(
+        chave,
+        imagens
+      );
+    }
 
     return {
       sucesso: true,

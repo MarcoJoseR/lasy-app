@@ -11,14 +11,16 @@ import {
 
 export default function RecepcaoPage() {
   
-   function handleExportarBiblioteca() {
-    const resultado = exportarMinhaBiblioteca();
+  async function handleExportarBiblioteca() {
+    const resultado =
+      await exportarMinhaBiblioteca();
 
     if (resultado.sucesso) {
       alert(
         `Biblioteca exportada com sucesso.\n\n` +
           `${resultado.receitasExportadas} receitas\n` +
-          `${resultado.listasExportadas} listas de compras`
+          `${resultado.listasExportadas} listas de compras\n` +
+          `${resultado.carrosseisExportados} carrosséis com imagens`
       );
     } else {
       alert("Não foi possível exportar a Minha Biblioteca.");
@@ -45,8 +47,9 @@ export default function RecepcaoPage() {
         const confirmar = window.confirm(
       `Backup válido.\n\n` +
         `${resultado.receitasEncontradas} receitas encontradas\n` +
-        `${resultado.listasEncontradas} listas de compras encontradas\n\n` +
-        `ATENÇÃO:\n` +
+        `${resultado.listasEncontradas} listas de compras encontradas\n` +
+        `${resultado.carrosseisEncontrados} carrosséis com imagens encontrados\n\n` +
+       `ATENÇÃO:\n` +
         `Os dados atuais da Minha Biblioteca serão substituídos pelos dados deste backup.\n\n` +
         `Deseja continuar?`
     );
@@ -62,8 +65,8 @@ export default function RecepcaoPage() {
       return;
     }
 
-    const restauracao = restaurarMinhaBiblioteca(resultado.backup);
-
+    const restauracao =
+      await restaurarMinhaBiblioteca(resultado.backup);
     if (!restauracao.sucesso) {
       alert(restauracao.mensagem);
       event.target.value = "";

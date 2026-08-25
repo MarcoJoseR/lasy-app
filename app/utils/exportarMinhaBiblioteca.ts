@@ -1,15 +1,19 @@
-type BackupReceitasHealthV1 = {
+import { obterImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
+
+type BackupReceitasHealthV2 = {
   app: "Receitas Health";
   tipo: "backup-minha-biblioteca";
-  versaoBackup: 1;
+  versaoBackup: 2;
   exportadoEm: string;
   dados: {
-    receitas: unknown[];
+    receitas: any[];
     listasCompras: unknown[];
+    carrosseisIndexedDB: Record<string, string[]>;
   };
 };
 
-export function exportarMinhaBiblioteca() {
+export async function exportarMinhaBiblioteca() {
+
   try {
     const receitasSalvas = localStorage.getItem("minhaBiblioteca");
     const listasSalvas = localStorage.getItem("listasCompras");
@@ -23,17 +27,43 @@ export function exportarMinhaBiblioteca() {
       ? receitas.filter((receita) => receita?.tipo === "pessoal")
       : [];
 
-    const backup: BackupReceitasHealthV1 = {
+    const carrosseisIndexedDB: Record<string, string[]> = {};
+
+    for (const receita of receitasPessoais) {
+      const chaveImagens =
+        receita?.carrossel?.chaveImagens;
+
+      if (!chaveImagens) continue;
+
+      try {
+        const imagens =
+          await obterImagensCarrossel(chaveImagens);
+
+        if (imagens.length > 0) {
+          carrosseisIndexedDB[chaveImagens] = imagens;
+        }
+      } catch (erro) {
+        console.error(
+          `Erro ao incluir carrossel ${chaveImagens} no backup:`,
+          erro
+        );
+      }
+    }
+
+    const backup: BackupReceitasHealthV2 = {
       app: "Receitas Health",
       tipo: "backup-minha-biblioteca",
-      versaoBackup: 1,
+      versaoBackup: 2,
       exportadoEm: new Date().toISOString(),
 
       dados: {
         receitas: receitasPessoais,
-        listasCompras: Array.isArray(listasCompras) ? listasCompras : [],
+        listasCompras: Array.isArray(listasCompras)
+          ? listasCompras
+          : [],
+        carrosseisIndexedDB,
       },
-    };
+      };
 
     const conteudo = JSON.stringify(backup, null, 2);
 
@@ -62,6 +92,10 @@ export function exportarMinhaBiblioteca() {
       listasExportadas: Array.isArray(listasCompras)
         ? listasCompras.length
         : 0,
+
+    carrosseisExportados:
+      Object.keys(carrosseisIndexedDB).length,
+
     };
   } catch (erro) {
     console.error("Erro ao exportar Minha Biblioteca:", erro);
@@ -70,6 +104,7 @@ export function exportarMinhaBiblioteca() {
       sucesso: false,
       receitasExportadas: 0,
       listasExportadas: 0,
+      carrosseisExportados: 0,
     };
   }
 }
