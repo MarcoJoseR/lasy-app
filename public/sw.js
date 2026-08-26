@@ -1,4 +1,4 @@
-const VERSION = "v23";
+const VERSION = "v24";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
