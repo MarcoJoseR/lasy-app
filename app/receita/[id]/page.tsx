@@ -260,30 +260,18 @@ router.replace(`/receita/${receitaExistente.id}`);
     return;
   }
 
-  // Se ainda não existe, cria a cópia pessoal.
-  const novaReceita = adicionarNaBiblioteca(receita);
-
+  // Receita oficial ainda não está na Minha Biblioteca.
+// Pode iniciar a preparação sem criar a cópia pessoal.
   localStorage.setItem(
     "preparacaoPendente",
     JSON.stringify({
-      receitaId: String(novaReceita.id),
+      receitaId: String(receita.id),
       iniciadaEm: new Date().toISOString(),
     })
   );
 
-  sessionStorage.setItem(
-    "iniciarPreparacao",
-    String(novaReceita.id)
-  );
-
-  if (!navigator.onLine) {
-  window.location.href =
-    `/receita/offline?id=${novaReceita.id}`;
-  return;
-}
-
-router.replace(`/receita/${novaReceita.id}`);
-}
+  setModoPreparacao(true);
+  }
 
 function handleGerarListaCompras() {
   if (!receita) return;

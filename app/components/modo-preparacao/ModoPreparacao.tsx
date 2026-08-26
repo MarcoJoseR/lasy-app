@@ -74,7 +74,11 @@ useEffect(() => {
   definirReceitaTimer(String(receita.id));
 }, [receita.id, timerRestaurado]);
 
-  const { registrarPreparacao } = useReceitas();
+  const {
+  receitas,
+  adicionarNaBiblioteca,
+  registrarPreparacao,
+} = useReceitas();
 
   function iniciar(id: 1 | 2) {
   const dados = temposDigitados[id];
@@ -112,28 +116,59 @@ function formatarTempo(tempoRestante: number) {
 function marcarReceitaRealizada() {
   if (receitaRealizada) return;
 
-  registrarPreparacao(receita.id);
+  let receitaIdParaRegistrar = String(receita.id);
+
+  // Localiza a receita completa no contexto.
+  const receitaCompleta = receitas.find(
+    (r) => String(r.id) === String(receita.id)
+  );
+
+  // Se ainda pertence à Coleção Inicial,
+  // só agora passa para a Minha Biblioteca.
+  if (receitaCompleta?.colecaoInicial === true) {
+    const receitaExistente = receitas.find(
+      (r) =>
+        r.tipo === "pessoal" &&
+        r.colecaoInicial !== true &&
+        r.nome.trim().toLowerCase() ===
+          receitaCompleta.nome.trim().toLowerCase()
+    );
+
+    if (receitaExistente) {
+      receitaIdParaRegistrar = String(receitaExistente.id);
+    } else {
+      const novaReceita =
+        adicionarNaBiblioteca(receitaCompleta);
+
+      receitaIdParaRegistrar = String(novaReceita.id);
+    }
+  }
+
+  registrarPreparacao(receitaIdParaRegistrar);
 
   const realizadaEm = new Date().toISOString();
 
   try {
-    const dados = localStorage.getItem("preparacaoPendente");
+    const dados =
+      localStorage.getItem("preparacaoPendente");
 
     if (dados) {
       const preparacao = JSON.parse(dados);
 
-      if (String(preparacao.receitaId) === String(receita.id)) {
-        localStorage.setItem(
-          "preparacaoPendente",
-          JSON.stringify({
-            ...preparacao,
-            realizadaEm,
-          })
-        );
-      }
+      localStorage.setItem(
+        "preparacaoPendente",
+        JSON.stringify({
+          ...preparacao,
+          receitaId: receitaIdParaRegistrar,
+          realizadaEm,
+        })
+      );
     }
   } catch (error) {
-    console.error("Erro ao registrar preparação realizada:", error);
+    console.error(
+      "Erro ao registrar preparação realizada:",
+      error
+    );
   }
 
   setReceitaRealizada(true);
