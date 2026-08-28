@@ -27,19 +27,15 @@ export interface Receita {
   id: string;
   nome: string;
   slug?: string;
-
   categoria: string;
   subCategoria?: string;
-
   ingredientes: string[];
   modoPreparo: string[];
-
   tempo?: string;
   porcoes?: string;
-
   imagem?: string;
+  posicaoImagemY?: number;
   video?: string;
-
   tipoConteudo?: "receita" | "carrossel";
 
   carrossel?: {

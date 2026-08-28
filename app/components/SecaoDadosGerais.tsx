@@ -3,6 +3,9 @@ interface SecaoDadosGeraisProps {
   setNome: React.Dispatch<React.SetStateAction<string>>;
   imagem: string;
   setImagem: React.Dispatch<React.SetStateAction<string>>;
+  posicaoImagemY?: number;
+  setPosicaoImagemY?: React.Dispatch<React.SetStateAction<number>>;
+  
   // ===== INÍCIO DA ALTERAÇÃO =====
   permitirUploadImagem?: boolean;
   // ===== FIM DA ALTERAÇÃO =====
@@ -19,6 +22,8 @@ export default function SecaoDadosGerais({
   setNome,
   imagem,
   setImagem,
+  posicaoImagemY = 50,
+  setPosicaoImagemY = () => {},
   erroNome,
   setErroNome,
   limparTexto,
@@ -195,21 +200,47 @@ function handleSelecionarImagem(
         imagem.startsWith("/images/") ||
         imagem.startsWith("data:image/")) && (
 
-  <div className="mt-2">
-    <img
-      key={imagem}
-      src={imagem}
-      alt="Preview da receita"
-      className="h-40 w-full rounded border object-cover opacity-0 transition-opacity duration-500"
-      onLoad={(e) => {
-        e.currentTarget.style.display = "block";
-        e.currentTarget.style.opacity = "1";
+  <div className="mt-2 space-y-3">
+  <img
+    key={imagem}
+    src={imagem}
+    alt="Preview da receita"
+    className="h-40 w-full rounded border object-cover opacity-0 transition-opacity duration-500"
+    style={{
+      objectPosition: `center ${posicaoImagemY}%`,
+    }}
+    onLoad={(e) => {
+      e.currentTarget.style.display = "block";
+      e.currentTarget.style.opacity = "1";
+    }}
+    onError={(e) => {
+      e.currentTarget.style.display = "none";
+    }}
+  />
+
+  <div>
+    <label className="mb-1 block text-sm font-medium">
+      Ajustar posição vertical da capa
+    </label>
+
+    <input
+      type="range"
+      min="0"
+      max="100"
+      value={posicaoImagemY}
+      onChange={(e) => {
+        setPosicaoImagemY(Number(e.target.value));
       }}
-      onError={(e) => {
-        e.currentTarget.style.display = "none";
-      }}
+      className="w-full"
     />
+
+    <div className="flex justify-between text-xs text-zinc-500">
+      <span>Topo</span>
+      <span>Centro</span>
+      <span>Base</span>
+    </div>
   </div>
+</div>
 )}
  </>
   );

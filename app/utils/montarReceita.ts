@@ -11,6 +11,7 @@ export function montarReceita({
   categoria,
   subCategoria,
   imagem,
+  posicaoImagemY = 50,
   ingredientesTexto,
   modoPreparoTexto,
   tempo,
@@ -25,6 +26,7 @@ export function montarReceita({
   categoria: string;
   subCategoria?: string;
   imagem: string;
+  posicaoImagemY?: number;
   ingredientesTexto: string;
   modoPreparoTexto: string | string[];
   tempo: string;
@@ -45,6 +47,7 @@ export function montarReceita({
     categoria,
     subCategoria: subCategoria || "",
     imagem,
+    posicaoImagemY,
     ingredientes: transformarIngredientes(ingredientesTexto),
     modoPreparo: transformarPassos(modoPreparoNormalizado),
     tempo,

@@ -499,9 +499,12 @@ router.push(`/receita/${receitaId}`);
 
                   <img
                     src={imagemCapa}
-                    className="w-full h-40 object-cover"
                     alt={receita.nome}
-                  />
+                    style={{
+                      objectPosition: `center ${receita.posicaoImagemY ?? 50}%`,
+                    }}
+                    className="w-full h-40 object-cover"
+                   />
 
                   {ehCarrossel && (
                     <div className="absolute left-3 top-3 z-10 rounded-full bg-black/80 px-3 py-1 text-xs font-semibold text-white shadow">

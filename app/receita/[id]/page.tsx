@@ -389,6 +389,9 @@ const temPrintsLegenda = printsLegenda.length > 0;
         <img
           src={receita.imagem || "/images/categorias/sem-imagem.jpg"}
           alt={receita.nome}
+          style={{
+            objectPosition: `center ${receita.posicaoImagemY ?? 50}%`,
+          }}
           onError={(e) => {
             e.currentTarget.src = "/images/categorias/sem-imagem.jpg";
           }}

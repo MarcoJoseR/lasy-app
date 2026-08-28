@@ -52,6 +52,8 @@ export default function MinhaReceitaPage() {
 
   const [ingredientesTexto, setIngredientesTexto] = useState("");
   const [modoPreparo, setModoPreparo] = useState("");
+  
+  const [posicaoImagemY, setPosicaoImagemY] = useState(50);
 
   // ============================================================
   // CARROSSEL
@@ -229,6 +231,9 @@ function removerImagemCarrossel(indice: number) {
 
     setNome(receitaEncontrada.nome || "");
     setImagem(receitaEncontrada.imagem || "");
+    setPosicaoImagemY(
+      receitaEncontrada.posicaoImagemY ?? 50
+    );
     setCategoria(receitaEncontrada.categoria || "");
     setSubCategoria(receitaEncontrada.subCategoria || "");
     setTempo(receitaEncontrada.tempo || "");
@@ -454,6 +459,7 @@ const [mensagemSucesso, setMensagemSucesso] =
     setCategoria("");
     setSubCategoria("");
     setImagem("");
+    setPosicaoImagemY(50);
     setTempo("");
     setPorcoes("");
     setOrigem("");
@@ -482,6 +488,7 @@ const [mensagemSucesso, setMensagemSucesso] =
       receitaId,
       tipoConteudo,
       imagensCarrossel: imagensCarrossel.length,
+      posicaoImagemY,
     });
 
     setErroNome("");
@@ -529,6 +536,7 @@ const [mensagemSucesso, setMensagemSucesso] =
           categoria,
           subCategoria,
           imagem,
+          posicaoImagemY,
           ingredientesTexto,
           modoPreparoTexto: modoPreparo,
           tempo,
@@ -607,13 +615,6 @@ const [mensagemSucesso, setMensagemSucesso] =
           imagensCarrossel
         );
 
-      const imagensConferidas =
-        await obterImagensCarrossel(chaveImagensCarrossel);
-
-      window.alert(
-        `TESTE IndexedDB: enviadas ${imagensCarrossel.length} / encontradas ${imagensConferidas.length}`
-);
-
       } catch (erro) {
         console.error(
           "Erro ao atualizar imagens do carrossel:",
@@ -677,6 +678,7 @@ const novaReceita = {
     categoria,
     subCategoria,
     imagem,
+    posicaoImagemY,
     ingredientesTexto,
     modoPreparoTexto: modoPreparo,
     tempo,
@@ -908,6 +910,8 @@ printsLegenda.length > 0
               setNome={setNome}
               imagem={imagem}
               setImagem={setImagem}
+              posicaoImagemY={posicaoImagemY}
+              setPosicaoImagemY={setPosicaoImagemY}
               permitirUploadImagem={true}
               erroNome={erroNome}
               setErroNome={setErroNome}
