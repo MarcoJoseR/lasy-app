@@ -15,7 +15,10 @@ import {
 
 import ModoPreparacao from "@/app/components/modo-preparacao/ModoPreparacao";
 import { useListasCompras } from "../../context/ListasComprasContext";
-import { obterImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
+import {
+  obterImagensCarrossel,
+  obterPrintsReceita,
+} from "@/app/utils/carrosselIndexedDB";
 
 export default function ReceitaDetalhe() {
   const { id } = useParams();
@@ -43,6 +46,9 @@ export default function ReceitaDetalhe() {
   useState<string[]>([]);
   
   const [printLegendaAtual, setPrintLegendaAtual] = useState(0);
+
+  const [printsLegendaIndexedDB, setPrintsLegendaIndexedDB] =
+    useState<string[]>([]);
 
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [modoPreparacao, setModoPreparacao] = useState(false);
@@ -113,6 +119,31 @@ useEffect(() => {
       setImagensCarrosselIndexedDB([]);
     });
 }, [receita?.id, receita?.carrossel?.chaveImagens]);
+
+useEffect(() => {
+  if (!receita) return;
+
+  const chave =
+    receita.chavePrintsLegenda || "";
+
+  if (!chave) {
+    setPrintsLegendaIndexedDB([]);
+    return;
+  }
+
+  obterPrintsReceita(chave)
+    .then((imagens) => {
+      setPrintsLegendaIndexedDB(imagens);
+    })
+    .catch((erro) => {
+      console.error(
+        "Erro ao carregar prints da receita:",
+        erro
+      );
+
+      setPrintsLegendaIndexedDB([]);
+    });
+}, [receita?.id, receita?.chavePrintsLegenda]);
 
 if (!carregado) {
 
@@ -345,7 +376,10 @@ const ehCarrossel =
   receita.tipoConteudo === "carrossel" &&
   imagensCarrossel.length > 0;
 
-const printsLegenda = receita.printsLegenda ?? [];
+const printsLegenda =
+  printsLegendaIndexedDB.length > 0
+    ? printsLegendaIndexedDB
+    : receita.printsLegenda ?? [];
 
 const temPrintsLegenda = printsLegenda.length > 0;
 

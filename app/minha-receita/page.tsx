@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
   obterImagensCarrossel,
   salvarImagensCarrossel,
+  obterPrintsReceita,
+  salvarPrintsReceita,
 } from "@/app/utils/carrosselIndexedDB";
 
 import BlocoCriarReceita from "@/app/components/BlocoCriarReceita";
@@ -234,13 +236,47 @@ function removerImagemCarrossel(indice: number) {
     setOrigem(receitaEncontrada.origem || "");
     setVideo(receitaEncontrada.video || "");
 
-    setPrintsLegenda(
-      Array.isArray(receitaEncontrada.printsLegenda)
-        ? receitaEncontrada.printsLegenda
-        : []
-    );
+    // ============================================================
+// CARREGAR PRINTS DA RECEITA
+// ============================================================
 
-    setNomesPrintsLegenda([]);
+const chavePrints =
+  receitaEncontrada.chavePrintsLegenda || "";
+
+if (chavePrints) {
+  obterPrintsReceita(chavePrints)
+    .then((imagens) => {
+      if (imagens.length > 0) {
+        setPrintsLegenda(imagens);
+      } else {
+        setPrintsLegenda(
+          Array.isArray(receitaEncontrada.printsLegenda)
+            ? receitaEncontrada.printsLegenda
+            : []
+        );
+      }
+    })
+    .catch((erro) => {
+      console.error(
+        "Erro ao carregar prints da receita:",
+        erro
+      );
+
+      setPrintsLegenda(
+        Array.isArray(receitaEncontrada.printsLegenda)
+          ? receitaEncontrada.printsLegenda
+          : []
+      );
+    });
+} else {
+  setPrintsLegenda(
+    Array.isArray(receitaEncontrada.printsLegenda)
+      ? receitaEncontrada.printsLegenda
+      : []
+  );
+}
+
+setNomesPrintsLegenda([]);
 
     setIngredientesTexto(
       Array.isArray(receitaEncontrada.ingredientes)
@@ -499,9 +535,23 @@ const [mensagemSucesso, setMensagemSucesso] =
           porcoes,
           origem,
           video,
-          printsLegenda,
+          printsLegenda: [],
           favorito: receitaExistente.favorito,
         }),
+
+    // ========================================================
+    // REFERÊNCIA DOS PRINTS DA RECEITA EM TEXTO
+    // ========================================================
+
+    ...(tipoConteudo === "receita" &&
+    printsLegenda.length > 0
+      ? {
+          chavePrintsLegenda:
+            receitaExistente.chavePrintsLegenda || receitaId,
+          quantidadePrintsLegenda:
+            printsLegenda.length,
+        }
+      : {}),
 
         // Preservar os campos específicos de Carrossel
         ...(tipoConteudo === "carrossel"
@@ -520,6 +570,32 @@ const [mensagemSucesso, setMensagemSucesso] =
 
         atualizadoEm: agora,
       };
+
+      if (
+        tipoConteudo === "receita" &&
+        printsLegenda.length > 0
+      ) {
+        try {
+          const chavePrints =
+            receitaExistente.chavePrintsLegenda || receitaId;
+
+          await salvarPrintsReceita(
+            chavePrints,
+            printsLegenda
+          );
+        } catch (erro) {
+          console.error(
+            "Erro ao atualizar prints da receita:",
+            erro
+          );
+
+          window.alert(
+            "Não foi possível salvar as imagens da receita."
+          );
+
+          return;
+        }
+      }
 
     if (
       tipoConteudo === "carrossel" &&
@@ -567,22 +643,62 @@ return;
 
       const novaReceitaId = gerarId();
 
-      const novaReceita = {
-        ...montarReceita({
-          id: novaReceitaId,
-          nome,
-          categoria,
-          subCategoria,
-          imagem,
-          ingredientesTexto,
-          modoPreparoTexto: modoPreparo,
-          tempo,
-          porcoes,
-          origem,
-          video,
-          printsLegenda,
-          favorito: false,
-        }),
+// ========================================================
+// SALVAR PRINTS DA RECEITA EM TEXTO NO INDEXEDDB
+// ========================================================
+
+if (
+  tipoConteudo === "receita" &&
+  printsLegenda.length > 0
+) {
+  try {
+    await salvarPrintsReceita(
+      novaReceitaId,
+      printsLegenda
+    );
+  } catch (erro) {
+    console.error(
+      "Erro ao salvar prints da receita:",
+      erro
+    );
+
+    window.alert(
+      "Não foi possível salvar as imagens da receita."
+    );
+
+    return;
+  }
+}
+
+const novaReceita = {
+  ...montarReceita({
+    id: novaReceitaId,
+    nome,
+    categoria,
+    subCategoria,
+    imagem,
+    ingredientesTexto,
+    modoPreparoTexto: modoPreparo,
+    tempo,
+    porcoes,
+    origem,
+    video,
+    printsLegenda: [],
+    favorito: false,
+  }),
+
+// ======================================================
+// REFERÊNCIA DOS PRINTS DA RECEITA EM TEXTO
+// ======================================================
+
+...(tipoConteudo === "receita" &&
+printsLegenda.length > 0
+  ? {
+      chavePrintsLegenda: novaReceitaId,
+      quantidadePrintsLegenda:
+        printsLegenda.length,
+    }
+  : {}),
 
         // ======================================================
         // CAMPOS EXCLUSIVOS DO CARROSSEL

@@ -45,11 +45,14 @@ export interface Receita {
   carrossel?: {
     imagens: string[];
     titulo?: string;
+    origemUrl?: string;
     chaveImagens?: string;
     quantidadeImagens?: number;
   };
 
   printsLegenda?: string[];
+  chavePrintsLegenda?: string;
+  quantidadePrintsLegenda?: number;
 
   tags?: string[];
 
@@ -84,6 +87,13 @@ interface ReceitasContextType {
       "id" | "tipo" | "criadoEm" | "atualizadoEm"
     >
   ) => void;
+
+  adicionarReceitasOficiaisEmLote: (
+    receitas: Omit<
+      Receita,
+      "id" | "tipo" | "criadoEm" | "atualizadoEm"
+    >[]
+  ) => boolean;
 
   adicionarNaBiblioteca: (receita: Receita) => Receita;
   
@@ -394,6 +404,60 @@ function adicionarReceitaOficial(
   ]);
 }
 
+function adicionarReceitasOficiaisEmLote(
+  receitasParaImportar: Omit<
+    Receita,
+    "id" | "tipo" | "criadoEm" | "atualizadoEm"
+  >[]
+): boolean {
+  if (receitasParaImportar.length === 0) {
+    return false;
+  }
+
+  const agora = new Date().toISOString();
+
+  const novasReceitas: Receita[] = receitasParaImportar.map(
+    (receita) => ({
+      ...receita,
+      id: crypto.randomUUID(),
+      tipo: "oficial",
+      colecaoInicial: false,
+      favorito: false,
+      criadoEm: agora,
+      atualizadoEm: agora,
+    })
+  );
+
+  try {
+    setReceitas((receitasAtuais) => {
+      const receitasAtualizadas = [
+        ...receitasAtuais,
+        ...novasReceitas,
+      ];
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(receitasAtualizadas)
+      );
+
+      return receitasAtualizadas;
+    });
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Erro ao importar receitas para a Biblioteca Oficial:",
+      error
+    );
+
+    window.alert(
+      "Não foi possível importar as receitas selecionadas."
+    );
+
+    return false;
+  }
+}
+
 function adicionarNaBiblioteca(receita: Receita): Receita {
   const agora = new Date().toISOString();
 
@@ -488,6 +552,7 @@ return novaReceita;
         carregado,
         adicionarReceita,
         adicionarReceitaOficial,
+        adicionarReceitasOficiaisEmLote,
         adicionarNaBiblioteca,
         removerReceita,
         toggleFavorito,

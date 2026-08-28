@@ -1,19 +1,24 @@
 const DB_NAME = "health-receitas-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const STORE_CARROSSEL = "carrossel-imagens";
+const STORE_PRINTS_RECEITA = "receita-prints";
 
 function abrirBanco(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const requisicao = indexedDB.open(DB_NAME, DB_VERSION);
 
     requisicao.onupgradeneeded = () => {
-      const banco = requisicao.result;
+  const banco = requisicao.result;
 
-      if (!banco.objectStoreNames.contains(STORE_CARROSSEL)) {
-        banco.createObjectStore(STORE_CARROSSEL);
-      }
-    };
+  if (!banco.objectStoreNames.contains(STORE_CARROSSEL)) {
+    banco.createObjectStore(STORE_CARROSSEL);
+  }
+
+  if (!banco.objectStoreNames.contains(STORE_PRINTS_RECEITA)) {
+    banco.createObjectStore(STORE_PRINTS_RECEITA);
+  }
+};
 
     requisicao.onsuccess = () => {
       resolve(requisicao.result);
@@ -99,6 +104,99 @@ export async function removerImagensCarrossel(
     );
 
     const store = transacao.objectStore(STORE_CARROSSEL);
+
+    store.delete(receitaId);
+
+    transacao.oncomplete = () => {
+      banco.close();
+      resolve();
+    };
+
+    transacao.onerror = () => {
+      banco.close();
+      reject(transacao.error);
+    };
+  });
+}
+
+// ============================================================
+// PRINTS DAS RECEITAS EM TEXTO
+// ============================================================
+
+export async function salvarPrintsReceita(
+  receitaId: string,
+  imagens: string[]
+): Promise<void> {
+  const banco = await abrirBanco();
+
+  return new Promise((resolve, reject) => {
+    const transacao = banco.transaction(
+      STORE_PRINTS_RECEITA,
+      "readwrite"
+    );
+
+    const store = transacao.objectStore(STORE_PRINTS_RECEITA);
+
+    store.put(imagens, receitaId);
+
+    transacao.oncomplete = () => {
+      banco.close();
+      resolve();
+    };
+
+    transacao.onerror = () => {
+      banco.close();
+      reject(transacao.error);
+    };
+  });
+}
+
+export async function obterPrintsReceita(
+  receitaId: string
+): Promise<string[]> {
+  const banco = await abrirBanco();
+
+  return new Promise((resolve, reject) => {
+    const transacao = banco.transaction(
+      STORE_PRINTS_RECEITA,
+      "readonly"
+    );
+
+    const store = transacao.objectStore(STORE_PRINTS_RECEITA);
+
+    const requisicao = store.get(receitaId);
+
+    requisicao.onsuccess = () => {
+      banco.close();
+
+      const resultado = requisicao.result;
+
+      resolve(
+        Array.isArray(resultado)
+          ? resultado
+          : []
+      );
+    };
+
+    requisicao.onerror = () => {
+      banco.close();
+      reject(requisicao.error);
+    };
+  });
+}
+
+export async function removerPrintsReceita(
+  receitaId: string
+): Promise<void> {
+  const banco = await abrirBanco();
+
+  return new Promise((resolve, reject) => {
+    const transacao = banco.transaction(
+      STORE_PRINTS_RECEITA,
+      "readwrite"
+    );
+
+    const store = transacao.objectStore(STORE_PRINTS_RECEITA);
 
     store.delete(receitaId);
 
