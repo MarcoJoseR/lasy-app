@@ -30,6 +30,9 @@ export default function CardReceita({
         <img
           src={imagemReceita}
           alt={receita.nome}
+          style={{
+            objectPosition: `center ${receita.posicaoImagemY ?? 50}%`,
+          }}
           onError={(e) => {
             e.currentTarget.src = "/images/categorias/sem-imagem.jpg";
           }}
@@ -38,14 +41,14 @@ export default function CardReceita({
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
-      {/* CATEGORIA */}
-        {receita.categoria?.toLowerCase() !== "comida" && (
-          <div className="absolute top-3 left-3">
-            <span className="rounded-md bg-black/80 px-3 py-1 text-sm font-semibold text-white">
-              {receita.categoria}
-            </span>
-          </div>
-        )}
+      {/* TIPO DE CONTEÚDO / CATEGORIA */}
+        <div className="absolute top-3 left-3">
+          <span className="rounded-md bg-black/80 px-3 py-1 text-sm font-semibold text-white">
+            {receita.tipoConteudo === "carrossel"
+              ? "📚 Carrossel"
+              : receita.categoria}
+          </span>
+        </div>
         
       {/* EDITANDO */}
         {editando && (

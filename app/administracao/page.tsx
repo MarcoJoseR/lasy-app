@@ -1,8 +1,13 @@
 "use client";
 
 // React
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { backupCompletoLocalStorage } from "@/app/utils/backupCompletoLocalStorage";
+
+import {
+  obterImagensCarrossel,
+  salvarImagensCarrossel,
+} from "@/app/utils/carrosselIndexedDB";
 
 // ===== INÍCIO DA ALTERAÇÃO =====
 import Link from "next/link";
@@ -20,6 +25,7 @@ import {
   transformarIngredientes,
   transformarPassos,
 } from "@/app/utils/receitaHelpers";
+import { exportarBackupHomeAdm } from "@/app/utils/exportarHomeAdm";
 
 // Componentes
 import Header from "@/app/components/Header";
@@ -62,6 +68,17 @@ export default function Page() {
     const [ordenacao, setOrdenacao] = useState("recentes");  
     const [subCategoria, setSubCategoria] = useState("");
     const [colecaoInicial, setColecaoInicial] = useState(false);
+    
+    const [tipoConteudo, setTipoConteudo] = useState<
+      "receita" | "carrossel"
+    >("receita");
+
+    const [imagensCarrossel, setImagensCarrossel] = useState<string[]>([]);
+
+    const [chaveImagensCarrossel, setChaveImagensCarrossel] =
+      useState("");
+
+    const [posicaoImagemY, setPosicaoImagemY] = useState(50);
 
 async function handleBackupCompletoLocalStorage() {
   const resultado = await backupCompletoLocalStorage();
@@ -73,6 +90,25 @@ async function handleBackupCompletoLocalStorage() {
     );
   } else {
     alert("Não foi possível criar o backup completo do LocalStorage.");
+  }
+}
+
+async function handleBackupHomeAdm() {
+  const resultado = await exportarBackupHomeAdm();
+
+  if (resultado.sucesso) {
+    alert(
+      `Backup da Home ADM criado com sucesso.\n\n` +
+        `Receitas oficiais: ${resultado.quantidadeReceitas}\n` +
+        `Carrosséis com imagens: ${resultado.quantidadeCarrosseis}\n` +
+        `Arquivo: ${resultado.nomeArquivo}`
+    );
+  } else {
+    
+    alert(
+      resultado.mensagem ||
+        "Não foi possível criar o backup da Home ADM."
+    );
   }
 }
 
@@ -109,6 +145,121 @@ useEffect(() => {
 
   iniciarEdicao(receitaEncontrada);
 }, [carregado, receitaIdEdicao, receitas]);
+
+  function removerImagemCarrossel(indice: number) {
+    setImagensCarrossel((imagensAtuais) =>
+      imagensAtuais.filter((_, index) => index !== indice)
+    );
+  }
+
+function reduzirImagemCarrossel(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const imagemOriginal = new Image();
+
+      imagemOriginal.onload = () => {
+        const limite = 1080;
+
+        let largura = imagemOriginal.width;
+        let altura = imagemOriginal.height;
+
+        if (largura > limite || altura > limite) {
+          const proporcao = Math.min(
+            limite / largura,
+            limite / altura
+          );
+
+          largura = Math.round(largura * proporcao);
+          altura = Math.round(altura * proporcao);
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = largura;
+        canvas.height = altura;
+
+        const contexto = canvas.getContext("2d");
+
+        if (!contexto) {
+          reject(
+            new Error("Não foi possível processar a imagem.")
+          );
+          return;
+        }
+
+        contexto.drawImage(
+          imagemOriginal,
+          0,
+          0,
+          largura,
+          altura
+        );
+
+        resolve(canvas.toDataURL("image/jpeg", 0.78));
+      };
+
+      imagemOriginal.onerror = () => {
+        reject(
+          new Error("Não foi possível carregar a imagem.")
+        );
+      };
+
+      imagemOriginal.src = String(reader.result);
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Não foi possível ler a imagem."));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+async function adicionarImagensCarrossel(
+  event: ChangeEvent<HTMLInputElement>
+) {
+  const arquivos = Array.from(event.target.files || []);
+
+  if (arquivos.length === 0) return;
+
+  if (imagensCarrossel.length + arquivos.length > 15) {
+    window.alert(
+      "O carrossel pode manter no máximo 15 imagens."
+    );
+
+    event.target.value = "";
+    return;
+  }
+
+  try {
+    const novasImagens: string[] = [];
+
+    for (const arquivo of arquivos) {
+      const imagemProcessada =
+        await reduzirImagemCarrossel(arquivo);
+
+      novasImagens.push(imagemProcessada);
+    }
+
+    setImagensCarrossel((imagensAtuais) => [
+      ...imagensAtuais,
+      ...novasImagens,
+    ]);
+
+    event.target.value = "";
+  } catch (erro) {
+    console.error(
+      "Erro ao adicionar imagens ao carrossel:",
+      erro
+    );
+
+    window.alert(
+      "Não foi possível adicionar uma ou mais imagens."
+    );
+  }
+}
+  
 // ===== FIM DA ALTERAÇÃO =====
 
 const normalizarBusca = (texto: string) =>
@@ -263,6 +414,9 @@ function limparImportacao() {
   setTextoImportado("");
   setErroNome("");
   setErroCategoria("");
+  setTipoConteudo("receita");
+  setImagensCarrossel([]);
+  setChaveImagensCarrossel("");
 }
 
 function iniciarEdicao(r: Receita) {
@@ -288,12 +442,45 @@ function iniciarEdicao(r: Receita) {
   setTempo(r.tempo || "");
   setPorcoes(r.porcoes || "");
 
+    if (r.tipoConteudo === "carrossel") {
+      setTipoConteudo("carrossel");
+
+      const chaveImagens = r.carrossel?.chaveImagens || "";
+
+      setChaveImagensCarrossel(chaveImagens);
+
+      if (chaveImagens) {
+        obterImagensCarrossel(chaveImagens)
+          .then((imagens) => {
+            setImagensCarrossel(imagens);
+          })
+          .catch((erro) => {
+            console.error(
+              "Erro ao carregar imagens do carrossel na ADM:",
+              erro
+            );
+
+            setImagensCarrossel([]);
+          });
+      } else {
+        setImagensCarrossel(
+          Array.isArray(r.carrossel?.imagens)
+            ? r.carrossel.imagens
+            : []
+        );
+      }
+    } else {
+      setTipoConteudo("receita");
+      setImagensCarrossel([]);
+      setChaveImagensCarrossel("");
+    }
+
   if (typeof window !== "undefined") {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
 
-function salvarEdicao() {
+async function salvarEdicao() {
   if (!editandoId) return;
 
   setErroNome("");
@@ -309,6 +496,39 @@ function salvarEdicao() {
     return;
   }
 
+  if (
+  tipoConteudo === "carrossel" &&
+  imagensCarrossel.length === 0
+) {
+  window.alert(
+    "O carrossel precisa manter pelo menos uma imagem."
+  );
+  return;
+}
+
+if (
+  tipoConteudo === "carrossel" &&
+  chaveImagensCarrossel
+) {
+  try {
+    await salvarImagensCarrossel(
+      chaveImagensCarrossel,
+      imagensCarrossel
+    );
+  } catch (erro) {
+    console.error(
+      "Erro ao salvar imagens do carrossel na ADM:",
+      erro
+    );
+
+    window.alert(
+      "Não foi possível salvar as imagens do carrossel."
+    );
+
+    return;
+  }
+}
+
   atualizarReceita(editandoId, {
     nome,
     categoria,
@@ -319,6 +539,19 @@ function salvarEdicao() {
     tempo,
     porcoes,
     colecaoInicial,
+
+    ...(tipoConteudo === "carrossel"
+  ? {
+      tipoConteudo: "carrossel" as const,
+      carrossel: {
+        imagens: [],
+        titulo: nome,
+        chaveImagens: chaveImagensCarrossel,
+        quantidadeImagens: imagensCarrossel.length,
+      },
+    }
+  : {}),
+
   });
 
   limparImportacao();
@@ -356,7 +589,21 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
       
 <Header />
 
-<div className="mb-4 flex justify-end">
+<div className="mb-4 flex flex-wrap justify-end gap-3">
+  <Link
+    href="/administracao/importar-biblioteca"
+    className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white transition hover:border-yellow-500 hover:bg-gray-800"
+  >
+    📥 Importar para Biblioteca Oficial
+  </Link>
+
+<Link
+  href="/administracao/restaurar-backup"
+  className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white transition hover:border-red-500 hover:bg-gray-800"
+>
+  ♻️ Restaurar Backup Home ADM
+</Link>
+
   <button
     type="button"
     onClick={handleBackupCompletoLocalStorage}
@@ -364,6 +611,15 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
   >
     💾 Backup Completo
   </button>
+
+  <button
+    type="button"
+    onClick={handleBackupHomeAdm}
+    className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white transition hover:border-green-500 hover:bg-gray-800"
+  >
+    💾 Backup Home ADM
+  </button>
+
 </div>
 
 <BlocoPreparacaoReceita
@@ -381,6 +637,8 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
       setNome={setNome}
       imagem={imagem}
       setImagem={setImagem}
+      posicaoImagemY={posicaoImagemY}
+      setPosicaoImagemY={setPosicaoImagemY}
       erroNome={erroNome}
       setErroNome={setErroNome}
       limparTexto={limparTexto}
@@ -419,6 +677,66 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
     Marque apenas receitas revisadas e preparadas para representar a qualidade do aplicativo.
   </p>
 </div>
+
+{tipoConteudo === "carrossel" && imagensCarrossel.length > 0 && (
+  <div className="rounded-lg border border-emerald-700 bg-zinc-900 p-4">
+    <h3 className="mb-2 text-lg font-semibold text-emerald-300">
+      📚 Carrossel com {imagensCarrossel.length}{" "}
+      {imagensCarrossel.length === 1 ? "imagem" : "imagens"}
+    </h3>
+
+    <p className="mb-4 text-sm text-zinc-400">
+      Imagens armazenadas no carrossel.
+    </p>
+
+  <div className="mb-4">
+    <label className="mb-2 block text-sm font-semibold text-white">
+      Adicionar imagens ao carrossel
+    </label>
+
+    <input
+      type="file"
+      accept="image/*"
+      multiple
+      onChange={adicionarImagensCarrossel}
+      className="block w-full rounded-lg bg-zinc-800 p-3 text-sm text-white"
+    />
+
+    <p className="mt-2 text-xs text-zinc-400">
+      Máximo de 15 imagens no carrossel.
+    </p>
+  </div>
+
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {imagensCarrossel.map((imagemCarrossel, indice) => (
+        <div
+          key={indice}
+          className="overflow-hidden rounded-lg bg-zinc-800"
+        >
+          <img
+            src={imagemCarrossel}
+            alt={`Imagem ${indice + 1} do carrossel`}
+            className="aspect-square w-full object-cover"
+          />
+
+          <div className="p-2">
+            <p className="mb-2 text-center text-xs text-zinc-300">
+              {indice + 1}/{imagensCarrossel.length}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => removerImagemCarrossel(indice)}
+              className="w-full rounded bg-red-700 px-2 py-1 text-xs font-semibold text-white hover:bg-red-600"
+            >
+              Remover
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
     <SecaoTempoRendimento
       tempo={tempo}
