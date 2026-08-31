@@ -1,4 +1,7 @@
-import { salvarImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
+import {
+  salvarImagensCarrossel,
+  salvarPrintsReceita,
+} from "@/app/utils/carrosselIndexedDB";
 
 export type ResultadoValidacaoBackup = {
   valido: boolean;
@@ -16,6 +19,7 @@ export type ResultadoValidacaoBackup = {
       receitas: unknown[];
       listasCompras: unknown[];
       carrosseisIndexedDB?: Record<string, string[]>;
+	printsIndexedDB?: Record<string, string[]>;
     };
   };
 };
@@ -110,6 +114,7 @@ export async function restaurarMinhaBiblioteca(
       receitas: unknown[];
       listasCompras: unknown[];
       carrosseisIndexedDB?: Record<string, string[]>;
+	printsIndexedDB?: Record<string, string[]>;
     };
   }
 ) {
@@ -149,6 +154,18 @@ export async function restaurarMinhaBiblioteca(
       if (!Array.isArray(imagens)) continue;
 
       await salvarImagensCarrossel(
+        chave,
+        imagens
+      );
+    }
+
+    const prints =
+      backup.dados.printsIndexedDB || {};
+
+    for (const [chave, imagens] of Object.entries(prints)) {
+      if (!Array.isArray(imagens)) continue;
+
+      await salvarPrintsReceita(
         chave,
         imagens
       );

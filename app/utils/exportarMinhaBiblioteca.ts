@@ -1,4 +1,7 @@
-import { obterImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
+import {
+  obterImagensCarrossel,
+  obterPrintsReceita,
+} from "@/app/utils/carrosselIndexedDB";
 
 type BackupReceitasHealthV2 = {
   app: "Receitas Health";
@@ -6,10 +9,11 @@ type BackupReceitasHealthV2 = {
   versaoBackup: 2;
   exportadoEm: string;
   dados: {
-    receitas: any[];
-    listasCompras: unknown[];
-    carrosseisIndexedDB: Record<string, string[]>;
-  };
+  receitas: any[];
+  listasCompras: unknown[];
+  carrosseisIndexedDB: Record<string, string[]>;
+  printsIndexedDB: Record<string, string[]>;
+};
 };
 
 export async function exportarMinhaBiblioteca() {
@@ -50,6 +54,29 @@ export async function exportarMinhaBiblioteca() {
       }
     }
 
+    const printsIndexedDB: Record<string, string[]> = {};
+
+    for (const receita of receitasPessoais) {
+      const chavePrints =
+        receita?.chavePrintsLegenda;
+
+      if (!chavePrints) continue;
+
+      try {
+        const prints =
+          await obterPrintsReceita(chavePrints);
+
+        if (prints.length > 0) {
+          printsIndexedDB[chavePrints] = prints;
+        }
+      } catch (erro) {
+        console.error(
+          `Erro ao incluir prints ${chavePrints} no backup:`,
+          erro
+        );
+      }
+    }
+
     const backup: BackupReceitasHealthV2 = {
       app: "Receitas Health",
       tipo: "backup-minha-biblioteca",
@@ -62,6 +89,7 @@ export async function exportarMinhaBiblioteca() {
           ? listasCompras
           : [],
         carrosseisIndexedDB,
+	printsIndexedDB,
       },
       };
 
@@ -86,17 +114,20 @@ export async function exportarMinhaBiblioteca() {
 
     URL.revokeObjectURL(url);
 
-    return {
+        return {
       sucesso: true,
       receitasExportadas: receitasPessoais.length,
       listasExportadas: Array.isArray(listasCompras)
         ? listasCompras.length
         : 0,
 
-    carrosseisExportados:
-      Object.keys(carrosseisIndexedDB).length,
+      carrosseisExportados:
+        Object.keys(carrosseisIndexedDB).length,
 
+      printsExportados:
+        Object.keys(printsIndexedDB).length,
     };
+
   } catch (erro) {
     console.error("Erro ao exportar Minha Biblioteca:", erro);
 
@@ -105,6 +136,7 @@ export async function exportarMinhaBiblioteca() {
       receitasExportadas: 0,
       listasExportadas: 0,
       carrosseisExportados: 0,
+      printsExportados: 0,
     };
   }
 }
