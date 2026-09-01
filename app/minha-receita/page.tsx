@@ -101,7 +101,7 @@ function reduzirPrint(file: File): Promise<string> {
       const imagem = new Image();
 
       imagem.onload = () => {
-        const limite = 1080;
+        const limite = 2560;
 
         let largura = imagem.width;
         let altura = imagem.height;
@@ -130,12 +130,18 @@ function reduzirPrint(file: File): Promise<string> {
           return;
         }
 
-        contexto.drawImage(imagem, 0, 0, largura, altura);
+        contexto.imageSmoothingEnabled = true;
+        contexto.imageSmoothingQuality = "high";
 
-        const imagemReduzida = canvas.toDataURL(
-          "image/jpeg",
-          0.78
+        contexto.drawImage(
+          imagem,
+          0,
+          0,
+          largura,
+          altura
         );
+
+        const imagemReduzida = canvas.toDataURL("image/png");
 
         resolve(imagemReduzida);
       };
@@ -146,11 +152,13 @@ function reduzirPrint(file: File): Promise<string> {
         );
       };
 
-      imagem.src = String(reader.result);
+      imagem.src = reader.result as string;
     };
 
     reader.onerror = () => {
-      reject(new Error("Não foi possível ler o arquivo."));
+      reject(
+        new Error("Não foi possível ler o arquivo.")
+      );
     };
 
     reader.readAsDataURL(file);
@@ -183,9 +191,30 @@ async function selecionarPrintsLegenda(
     const imagensProcessadas: string[] = [];
 
     for (const arquivo of arquivos) {
-      const imagem = await reduzirPrint(arquivo);
-      imagensProcessadas.push(imagem);
-    }
+  console.log(
+    "PRINT ORIGINAL:",
+    arquivo.name,
+    (arquivo.size / 1024).toFixed(1),
+    "KB",
+    arquivo.type
+  );
+
+  const imagem = await reduzirPrint(arquivo);
+
+  const base64 = imagem.split(",")[1] ?? "";
+  const tamanhoProcessado =
+    Math.round((base64.length * 3) / 4 / 1024);
+
+  console.log(
+    "PRINT PROCESSADO:",
+    arquivo.name,
+    tamanhoProcessado,
+    "KB",
+    imagem.substring(0, 30)
+  );
+
+  imagensProcessadas.push(imagem);
+}
 
     setPrintsLegenda(imagensProcessadas);
     setNomesPrintsLegenda(
