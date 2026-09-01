@@ -167,7 +167,7 @@ ingredientes = ingredientes
 
           const imagemReduzida = canvas.toDataURL(
             "image/jpeg",
-            0.82
+            0.75
           );
 
           resolve(imagemReduzida);
