@@ -194,32 +194,13 @@ async function selecionarPrintsLegenda(
     const imagensProcessadas: string[] = [];
 
     for (const arquivo of arquivos) {
-  console.log(
-    "PRINT ORIGINAL:",
-    arquivo.name,
-    (arquivo.size / 1024).toFixed(1),
-    "KB",
-    arquivo.type
-  );
+  
+    const imagem = await reduzirPrint(arquivo);
 
-  const imagem = await reduzirPrint(arquivo);
+    imagensProcessadas.push(imagem);
+  }
 
-  const base64 = imagem.split(",")[1] ?? "";
-  const tamanhoProcessado =
-    Math.round((base64.length * 3) / 4 / 1024);
-
-  console.log(
-    "PRINT PROCESSADO:",
-    arquivo.name,
-    tamanhoProcessado,
-    "KB",
-    imagem.substring(0, 30)
-  );
-
-  imagensProcessadas.push(imagem);
-}
-
-    setPrintsLegenda(imagensProcessadas);
+  setPrintsLegenda(imagensProcessadas);
     setNomesPrintsLegenda(
       arquivos.map((arquivo) => arquivo.name)
     );
