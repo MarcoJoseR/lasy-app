@@ -141,7 +141,10 @@ function reduzirPrint(file: File): Promise<string> {
           altura
         );
 
-        const imagemReduzida = canvas.toDataURL("image/png");
+        const imagemReduzida = canvas.toDataURL(
+          "image/jpeg",
+          0.85
+        );
 
         resolve(imagemReduzida);
       };
