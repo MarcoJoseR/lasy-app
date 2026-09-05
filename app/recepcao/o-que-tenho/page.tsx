@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Receita,
   useReceitas,
 } from "@/app/context/ReceitasContext";
+
+import { obterCapaReceita } from "@/app/utils/carrosselIndexedDB";
 
 interface ResultadoBusca {
   receita: Receita;
@@ -30,10 +32,59 @@ function separarIngredientes(texto: string) {
 export default function OQueTenhoPage() {
   const { receitas, carregado } = useReceitas();
 
+  const [capasReceitas, setCapasReceitas] = useState<
+    Record<string, string>
+  >({});
+
   const [ingredientes, setIngredientes] = useState("");
   const [resultados, setResultados] = useState<ResultadoBusca[]>([]);
   const [buscaRealizada, setBuscaRealizada] = useState(false);
   const [mensagem, setMensagem] = useState("");
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregarCapasResultados() {
+      const novasCapas: Record<string, string> = {};
+
+      for (const resultado of resultados) {
+        const receita = resultado.receita;
+
+        if (receita.imagem) {
+          novasCapas[receita.id] = receita.imagem;
+          continue;
+        }
+
+        if (receita.chaveImagemCapa) {
+          try {
+            const capa = await obterCapaReceita(
+              receita.chaveImagemCapa
+            );
+
+            if (capa) {
+              novasCapas[receita.id] = capa;
+            }
+          } catch (error) {
+            console.error(
+              "Erro ao carregar miniatura da receita:",
+              receita.nome,
+              error
+            );
+          }
+        }
+      }
+
+      if (ativo) {
+        setCapasReceitas(novasCapas);
+      }
+    }
+
+    carregarCapasResultados();
+
+    return () => {
+      ativo = false;
+    };
+  }, [resultados]);
 
   function procurarReceitas() {
     const ingredientesInformados = separarIngredientes(ingredientes);
@@ -47,32 +98,38 @@ export default function OQueTenhoPage() {
 
         const receitasEncontradas = receitas
           .map((receita) => {
-        const ingredientesDaReceita = receita.ingredientes.map(normalizarTexto);
+            const ingredientesDaReceita =
+              receita.ingredientes.map(normalizarTexto);
 
-        const ingredientesEncontrados = ingredientesInformados.filter(
-          (ingredienteInformado) =>
-            ingredientesDaReceita.some((ingredienteDaReceita) =>
-              ingredienteDaReceita.includes(ingredienteInformado)
-            )
-        );
+            const ingredientesEncontrados =
+              ingredientesInformados.filter(
+                (ingredienteInformado) =>
+                  ingredientesDaReceita.some(
+                    (ingredienteDaReceita) =>
+                      ingredienteDaReceita.includes(
+                        ingredienteInformado
+                      )
+                  )
+              );
 
-        return {
-          receita,
-          ingredientesEncontrados,
-        };
-      })
-      .filter(
-        (resultado) => resultado.ingredientesEncontrados.length > 0
-      )
-      .sort(
-        (resultadoA, resultadoB) =>
-          resultadoB.ingredientesEncontrados.length -
-          resultadoA.ingredientesEncontrados.length
-      );
+            return {
+              receita,
+              ingredientesEncontrados,
+            };
+          })
+          .filter(
+            (resultado) =>
+              resultado.ingredientesEncontrados.length > 0
+          )
+          .sort(
+            (resultadoA, resultadoB) =>
+              resultadoB.ingredientesEncontrados.length -
+              resultadoA.ingredientesEncontrados.length
+          );
 
-    setResultados(receitasEncontradas);
-    setBuscaRealizada(true);
-    setMensagem("");
+        setResultados(receitasEncontradas);
+        setBuscaRealizada(true);
+        setMensagem("");
   }
 
   return (
@@ -166,9 +223,9 @@ export default function OQueTenhoPage() {
                       key={receita.id}
                       className="flex gap-4 rounded-lg border border-gray-700 bg-gray-900 p-5"
                     >
-                      {receita.imagem ? (
+                      {capasReceitas[receita.id] ? (
                         <img
-                          src={receita.imagem}
+                          src={receita.imagem || capasReceitas[receita.id]}
                           alt={receita.nome}
                           className="h-20 w-24 rounded-md object-cover flex-shrink-0"
                         />
