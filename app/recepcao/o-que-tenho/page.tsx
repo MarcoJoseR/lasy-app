@@ -45,9 +45,8 @@ export default function OQueTenhoPage() {
       return;
     }
 
-    const receitasEncontradas = receitas
-      .filter((receita) => receita.tipo === "oficial")
-      .map((receita) => {
+        const receitasEncontradas = receitas
+          .map((receita) => {
         const ingredientesDaReceita = receita.ingredientes.map(normalizarTexto);
 
         const ingredientesEncontrados = ingredientesInformados.filter(

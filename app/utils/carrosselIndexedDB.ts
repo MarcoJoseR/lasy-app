@@ -1,8 +1,9 @@
 const DB_NAME = "health-receitas-db";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const STORE_CARROSSEL = "carrossel-imagens";
 const STORE_PRINTS_RECEITA = "receita-prints";
+const STORE_CAPAS_RECEITA = "receita-capas";
 
 function abrirBanco(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -13,6 +14,10 @@ function abrirBanco(): Promise<IDBDatabase> {
 
   if (!banco.objectStoreNames.contains(STORE_CARROSSEL)) {
     banco.createObjectStore(STORE_CARROSSEL);
+  }
+
+  if (!banco.objectStoreNames.contains(STORE_CAPAS_RECEITA)) {
+    banco.createObjectStore(STORE_CAPAS_RECEITA);
   }
 
   if (!banco.objectStoreNames.contains(STORE_PRINTS_RECEITA)) {
@@ -197,6 +202,99 @@ export async function removerPrintsReceita(
     );
 
     const store = transacao.objectStore(STORE_PRINTS_RECEITA);
+
+    store.delete(receitaId);
+
+    transacao.oncomplete = () => {
+      banco.close();
+      resolve();
+    };
+
+    transacao.onerror = () => {
+      banco.close();
+      reject(transacao.error);
+    };
+  });
+}
+
+// ============================================================
+// CAPAS DAS RECEITAS
+// ============================================================
+
+export async function salvarCapaReceita(
+  receitaId: string,
+  imagem: string
+): Promise<void> {
+  const banco = await abrirBanco();
+
+  return new Promise((resolve, reject) => {
+    const transacao = banco.transaction(
+      STORE_CAPAS_RECEITA,
+      "readwrite"
+    );
+
+    const store = transacao.objectStore(STORE_CAPAS_RECEITA);
+
+    store.put(imagem, receitaId);
+
+    transacao.oncomplete = () => {
+      banco.close();
+      resolve();
+    };
+
+    transacao.onerror = () => {
+      banco.close();
+      reject(transacao.error);
+    };
+  });
+}
+
+export async function obterCapaReceita(
+  receitaId: string
+): Promise<string> {
+  const banco = await abrirBanco();
+
+  return new Promise((resolve, reject) => {
+    const transacao = banco.transaction(
+      STORE_CAPAS_RECEITA,
+      "readonly"
+    );
+
+    const store = transacao.objectStore(STORE_CAPAS_RECEITA);
+
+    const requisicao = store.get(receitaId);
+
+    requisicao.onsuccess = () => {
+      banco.close();
+
+      const resultado = requisicao.result;
+
+      resolve(
+        typeof resultado === "string"
+          ? resultado
+          : ""
+      );
+    };
+
+    requisicao.onerror = () => {
+      banco.close();
+      reject(requisicao.error);
+    };
+  });
+}
+
+export async function removerCapaReceita(
+  receitaId: string
+): Promise<void> {
+  const banco = await abrirBanco();
+
+  return new Promise((resolve, reject) => {
+    const transacao = banco.transaction(
+      STORE_CAPAS_RECEITA,
+      "readwrite"
+    );
+
+    const store = transacao.objectStore(STORE_CAPAS_RECEITA);
 
     store.delete(receitaId);
 

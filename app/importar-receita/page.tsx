@@ -239,7 +239,18 @@ ingredientes = ingredientes
       setProcessandoImagens(false);
     }
   }
+  
+ function removerImagemSelecionada(indice: number) {
+    setImagensCarrossel((imagensAtuais) =>
+      imagensAtuais.filter((_, index) => index !== indice)
+    );
 
+    setNomesImagens((nomesAtuais) =>
+      nomesAtuais.filter((_, index) => index !== indice)
+    );
+  }
+
+  
   // ============================================================
   // TRANSFERÊNCIA DO CARROSSEL PARA O FORMULÁRIO
   // ============================================================
@@ -310,6 +321,8 @@ ingredientes = ingredientes
     }
   }
 
+
+  
   return (
     <main className="mx-auto max-w-3xl p-6 text-white">
       <h1 className="mb-6 text-2xl font-bold">
@@ -503,13 +516,23 @@ ingredientes = ingredientes
                 {imagensCarrossel.map((imagem, indice) => (
                   <div
                     key={`${nomesImagens[indice]}-${indice}`}
-                    className="overflow-hidden rounded-lg bg-zinc-900"
+                    className="relative overflow-hidden rounded-lg bg-zinc-900"
                   >
                     <img
                       src={imagem}
                       alt={`Imagem ${indice + 1} do carrossel`}
                       className="aspect-square w-full object-cover"
                     />
+
+                    <button
+                      type="button"
+                      onClick={() => removerImagemSelecionada(indice)}
+                      className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/80 text-lg font-bold text-white shadow hover:bg-red-700"
+                      title="Retirar imagem"
+                      aria-label={`Retirar imagem ${indice + 1}`}
+                    >
+                      ×
+                    </button>
 
                     <div className="p-2">
                       <p className="text-sm font-semibold">
@@ -523,7 +546,6 @@ ingredientes = ingredientes
                   </div>
                 ))}
               </div>
-
               <p className="mt-3 text-sm text-zinc-400">
                 A primeira imagem será usada como capa.
               </p>

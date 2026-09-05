@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import BotaoLink from "@/app/components/BotaoLink";
+import { obterCapaReceita } from "@/app/utils/carrosselIndexedDB";
 import type { Receita } from "../context/ReceitasContext";
 
 interface CardProps {
@@ -21,8 +23,71 @@ export default function CardReceita({
   onEditar,
   editando,
 }: CardProps) {
-  const imagemReceita = receita.imagem || "/images/categorias/sem-imagem.jpg";
+  
+  const [imagemReceita, setImagemReceita] = useState(
+  receita.imagem || "/images/categorias/sem-imagem.jpg"
+);
 
+useEffect(() => {
+  let ativo = true;
+
+  async function carregarCapa() {
+    console.log(
+      "CARD CAPA:",
+      receita.nome,
+      {
+        imagem: receita.imagem,
+        chaveImagemCapa: receita.chaveImagemCapa,
+      }
+    );
+    
+    if (receita.imagem) {
+      setImagemReceita(receita.imagem);
+      return;
+    }
+
+    if (receita.chaveImagemCapa) {
+      try {
+        const capa = await obterCapaReceita(
+          receita.chaveImagemCapa
+        );
+
+        console.log(
+          "CAPA CARREGADA:",
+          receita.nome,
+          typeof capa,
+          capa?.length
+        );
+
+        if (ativo && capa) {
+          setImagemReceita(capa);
+          return;
+        }
+      } catch (error) {
+        console.error(
+          "Erro ao carregar capa da receita:",
+          error
+        );
+      }
+    }
+
+    if (ativo) {
+      setImagemReceita(
+        "/images/categorias/sem-imagem.jpg"
+      );
+    }
+  }
+
+  carregarCapa();
+
+  return () => {
+    ativo = false;
+  };
+}, [
+  receita.imagem,
+  receita.chaveImagemCapa,
+]);
+  
   return (
     <div className="group relative overflow-hidden rounded-2xl bg-zinc-900 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
       {/* IMAGEM */}

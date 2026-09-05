@@ -14,6 +14,10 @@ import { gerarId } from "@/app/utils/gerarId";
 
 import { RECEITAS_INICIAIS } from "@/app/data/dadosIniciais";
 
+import {
+  salvarCapaReceita,
+} from "@/app/utils/carrosselIndexedDB";
+
 export interface NutritionInfo {
   calories?: number;
   protein?: number;
@@ -34,6 +38,7 @@ export interface Receita {
   tempo?: string;
   porcoes?: string;
   imagem?: string;
+  chaveImagemCapa?: string;
   posicaoImagemY?: number;
   video?: string;
   tipoConteudo?: "receita" | "carrossel";
@@ -85,11 +90,11 @@ interface ReceitasContextType {
   ) => void;
 
   adicionarReceitasOficiaisEmLote: (
-    receitas: Omit<
-      Receita,
-      "id" | "tipo" | "criadoEm" | "atualizadoEm"
-    >[]
-  ) => boolean;
+  receitas: Omit<
+    Receita,
+    "tipo" | "criadoEm" | "atualizadoEm"
+  >[]
+) => boolean;
 
   adicionarNaBiblioteca: (receita: Receita) => Receita;
   
@@ -114,37 +119,102 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
   const [carregado, setCarregado] = useState(false);
 
  useEffect(() => {
-  try {
-    const CHAVE_INICIALIZACAO = "healthReceitasInicializadoV1";
+  async function carregarEMigrarReceitas() {
+    let receitasParaCarregar: Receita[] = [];
 
-    const jaInicializado =
-      localStorage.getItem(CHAVE_INICIALIZACAO) === "1";
+    try {
+      const CHAVE_INICIALIZACAO =
+        "healthReceitasInicializadoV1";
 
-    const dadosSalvos = localStorage.getItem(STORAGE_KEY);
+      const jaInicializado =
+        localStorage.getItem(CHAVE_INICIALIZACAO) === "1";
 
-    if (!jaInicializado) {
-      if (dadosSalvos) {
-        const receitasSalvas = JSON.parse(dadosSalvos) as Receita[];
+      const dadosSalvos =
+        localStorage.getItem(STORAGE_KEY);
 
-        if (receitasSalvas.length > 0) {
-          setReceitas(receitasSalvas);
+      if (!jaInicializado) {
+        if (dadosSalvos) {
+          const receitasSalvas =
+            JSON.parse(dadosSalvos) as Receita[];
+
+          if (receitasSalvas.length > 0) {
+            receitasParaCarregar = receitasSalvas;
+          } else {
+            receitasParaCarregar = RECEITAS_INICIAIS;
+          }
         } else {
-          setReceitas(RECEITAS_INICIAIS);
+          receitasParaCarregar = RECEITAS_INICIAIS;
         }
-      } else {
-        setReceitas(RECEITAS_INICIAIS);
+
+        localStorage.setItem(
+          CHAVE_INICIALIZACAO,
+          "1"
+        );
+      } else if (dadosSalvos) {
+        receitasParaCarregar =
+          JSON.parse(dadosSalvos) as Receita[];
       }
 
-      localStorage.setItem(CHAVE_INICIALIZACAO, "1");
-    } else if (dadosSalvos) {
-      const receitasSalvas = JSON.parse(dadosSalvos) as Receita[];
-      setReceitas(receitasSalvas);
+      let quantidadeMigrada = 0;
+
+      const receitasMigradas: Receita[] = [];
+
+      for (const receita of receitasParaCarregar) {
+        if (
+          receita.imagem &&
+          receita.imagem.startsWith("data:image/")
+        ) {
+          await salvarCapaReceita(
+            receita.id,
+            receita.imagem
+          );
+
+          const {
+            imagem,
+            ...receitaSemImagem
+          } = receita;
+
+          receitasMigradas.push({
+            ...receitaSemImagem,
+            chaveImagemCapa: receita.id,
+          });
+
+          quantidadeMigrada++;
+        } else {
+          receitasMigradas.push(receita);
+        }
+      }
+
+      if (quantidadeMigrada > 0) {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(receitasMigradas)
+        );
+
+        console.log(
+          "Capas migradas para IndexedDB:",
+          quantidadeMigrada
+        );
+      }
+
+      setReceitas(receitasMigradas);
+    } catch (error) {
+      console.error(
+        "Erro ao carregar ou migrar capas das receitas:",
+        error
+      );
+
+      // Segurança: se houver falha durante a migração,
+      // mantém na memória os dados originais já lidos.
+      if (receitasParaCarregar.length > 0) {
+        setReceitas(receitasParaCarregar);
+      }
+    } finally {
+      setCarregado(true);
     }
-  } catch (error) {
-    console.error("Erro ao carregar Minha Biblioteca:", error);
-  } finally {
-    setCarregado(true);
   }
+
+  carregarEMigrarReceitas();
 }, []);
 
   useEffect(() => {
@@ -403,9 +473,10 @@ function adicionarReceitaOficial(
 function adicionarReceitasOficiaisEmLote(
   receitasParaImportar: Omit<
     Receita,
-    "id" | "tipo" | "criadoEm" | "atualizadoEm"
+    "tipo" | "criadoEm" | "atualizadoEm"
   >[]
 ): boolean {
+
   if (receitasParaImportar.length === 0) {
     return false;
   }
@@ -415,7 +486,7 @@ function adicionarReceitasOficiaisEmLote(
   const novasReceitas: Receita[] = receitasParaImportar.map(
     (receita) => ({
       ...receita,
-      id: crypto.randomUUID(),
+      id: receita.id,
       tipo: "oficial",
       colecaoInicial: false,
       favorito: false,
@@ -426,8 +497,16 @@ function adicionarReceitasOficiaisEmLote(
 
   try {
     setReceitas((receitasAtuais) => {
+      const idsImportados = new Set(
+        novasReceitas.map((receita) => receita.id)
+      );
+
+      const receitasSemDuplicadas = receitasAtuais.filter(
+        (receita) => !idsImportados.has(receita.id)
+      );
+
       const receitasAtualizadas = [
-        ...receitasAtuais,
+        ...receitasSemDuplicadas,
         ...novasReceitas,
       ];
 

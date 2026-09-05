@@ -1,6 +1,7 @@
 import {
   salvarImagensCarrossel,
   salvarPrintsReceita,
+  salvarCapaReceita,
 } from "@/app/utils/carrosselIndexedDB";
 
 export type ResultadoValidacaoBackup = {
@@ -132,15 +133,42 @@ export async function restaurarMinhaBiblioteca(
         )
       : [];
 
-    const receitasRestauradas = [
-      ...receitasOficiais,
-      ...backup.dados.receitas,
-    ];
+    const receitasRestauradasBrutas = [
+  ...receitasOficiais,
+  ...backup.dados.receitas,
+];
 
-    localStorage.setItem(
-      "minhaBiblioteca",
-      JSON.stringify(receitasRestauradas)
+const receitasRestauradas = [];
+
+for (const receita of receitasRestauradasBrutas as any[]) {
+  if (
+    receita?.imagem &&
+    typeof receita.imagem === "string" &&
+    receita.imagem.startsWith("data:image/")
+  ) {
+    await salvarCapaReceita(
+      receita.id,
+      receita.imagem
     );
+
+    const {
+      imagem,
+      ...receitaSemImagem
+    } = receita;
+
+    receitasRestauradas.push({
+      ...receitaSemImagem,
+      chaveImagemCapa: receita.id,
+    });
+  } else {
+    receitasRestauradas.push(receita);
+  }
+}
+
+localStorage.setItem(
+  "minhaBiblioteca",
+  JSON.stringify(receitasRestauradas)
+);
 
     localStorage.setItem(
       "listasCompras",

@@ -36,8 +36,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": [
+   "exclude": [
     "node_modules",
+    "Back-up LocalStorage/**",
     "_legado_verificar"
   ]
 }

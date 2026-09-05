@@ -3,7 +3,10 @@
 import { ChangeEvent, useState } from "react";
 import Link from "next/link";
 import { useReceitas, type Receita } from "@/app/context/ReceitasContext";
-import { salvarImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
+import {
+  salvarImagensCarrossel,
+  salvarPrintsReceita,
+} from "@/app/utils/carrosselIndexedDB";
 
 type ReceitaImportada = {
   id?: string;
@@ -29,6 +32,7 @@ type ReceitaImportada = {
     quantidadeImagens?: number;
   };
   printsLegenda?: string[];
+  chavePrintsLegenda?: string;
   tags?: string[];
   resumo?: string;
   nutricao?: Receita["nutricao"];
@@ -67,6 +71,10 @@ export default function ImportarBibliotecaPage() {
     Record<string, string[]>
   >({});
 
+  const [printsIndexedDB, setPrintsIndexedDB] = useState<
+    Record<string, string[]>
+  >({});
+
   const [mensagemImportacao, setMensagemImportacao] = useState("");
   const [importando, setImportando] = useState(false);
 
@@ -83,6 +91,7 @@ export default function ImportarBibliotecaPage() {
     setNomeArquivo("");
     setItensSelecionados(new Set());
     setCarrosseisIndexedDB({});
+    setPrintsIndexedDB({});
     setMensagemImportacao("");
 
     if (!arquivo) {
@@ -129,6 +138,13 @@ export default function ImportarBibliotecaPage() {
           : {}
       );
 
+      setPrintsIndexedDB(
+        backup.dados.printsIndexedDB &&
+          typeof backup.dados.printsIndexedDB === "object"
+          ? backup.dados.printsIndexedDB
+          : {}
+      );
+
       setArquivoValido(true);
 
     } catch (error) {
@@ -167,12 +183,39 @@ function desmarcarTodos() {
 }
 
 async function prepararReceitaParaImportacao(
-  receita: ReceitaImportada
-): Promise<Omit<Receita, "id" | "tipo" | "criadoEm" | "atualizadoEm">> {
-  const ehCarrossel =
-    receita.tipoConteudo === "carrossel" || Boolean(receita.carrossel);
+    receita: ReceitaImportada
+  ): Promise<Omit<Receita, "tipo" | "criadoEm" | "atualizadoEm">> {
+  
+    if (!receita.id) {
+      throw new Error(
+        `A receita "${receita.nome || "sem nome"}" não possui ID e não pode ser importada com segurança.`
+      );
+    }
+  
+      const chavePrintsOriginal =
+        receita.chavePrintsLegenda || "";
+
+      const imagensPrints =
+        (chavePrintsOriginal &&
+          printsIndexedDB[chavePrintsOriginal]) ||
+        receita.printsLegenda ||
+        [];
+
+      if (
+        chavePrintsOriginal &&
+        imagensPrints.length > 0
+      ) {
+        await salvarPrintsReceita(
+          chavePrintsOriginal,
+          imagensPrints
+        );
+      }
+
+      const ehCarrossel =
+        receita.tipoConteudo === "carrossel" || Boolean(receita.carrossel);
 
   const baseReceita = {
+    id: receita.id || "",
     nome: receita.nome || "Receita sem nome",
     categoria: receita.categoria || "sem categoria",
     subCategoria: receita.subCategoria || "",
@@ -189,6 +232,9 @@ async function prepararReceitaParaImportacao(
     printsLegenda: Array.isArray(receita.printsLegenda)
       ? receita.printsLegenda
       : [],
+
+    chavePrintsLegenda: receita.chavePrintsLegenda || "",
+    
     tags: Array.isArray(receita.tags) ? receita.tags : [],
     resumo: receita.resumo || "",
     origem: receita.origem || "",
@@ -211,12 +257,13 @@ async function prepararReceitaParaImportacao(
     (chaveOriginal && carrosseisIndexedDB[chaveOriginal]) ||
     receita.carrossel?.imagens ||
     [];
-
-  const novaChaveImagens = `carrossel-importacao-adm-${crypto.randomUUID()}`;
-
-  if (imagensCarrossel.length > 0) {
-    await salvarImagensCarrossel(novaChaveImagens, imagensCarrossel);
-  }
+  
+  if (chaveOriginal && imagensCarrossel.length > 0) {
+  await salvarImagensCarrossel(
+    chaveOriginal,
+    imagensCarrossel
+  );
+}
 
   return {
     ...baseReceita,
@@ -227,9 +274,9 @@ async function prepararReceitaParaImportacao(
       imagens: [],
       titulo: receita.carrossel?.titulo || receita.nome || "",
       origemUrl: receita.carrossel?.origemUrl || receita.origem || "",
-      chaveImagens: novaChaveImagens,
+      chaveImagens: chaveOriginal,
       quantidadeImagens: imagensCarrossel.length,
-    },
+},
   };
 }
   

@@ -18,6 +18,7 @@ import { useListasCompras } from "../../context/ListasComprasContext";
 import {
   obterImagensCarrossel,
   obterPrintsReceita,
+  obterCapaReceita,
 } from "@/app/utils/carrosselIndexedDB";
 
 export default function ReceitaDetalhe() {
@@ -54,6 +55,65 @@ export default function ReceitaDetalhe() {
   const [modoPreparacao, setModoPreparacao] = useState(false);
   const [mostrarMensagemRealizada, setMostrarMensagemRealizada] =
     useState(false);
+
+  const [imagemReceita, setImagemReceita] = useState(
+    "/images/categorias/sem-imagem.jpg"
+  );
+
+useEffect(() => {
+  let ativo = true;
+
+  async function carregarCapa() {
+    if (!receita) {
+      if (ativo) {
+        setImagemReceita(
+          "/images/categorias/sem-imagem.jpg"
+        );
+      }
+      return;
+    }
+
+    if (receita.imagem) {
+      if (ativo) {
+        setImagemReceita(receita.imagem);
+      }
+      return;
+    }
+
+    if (receita.chaveImagemCapa) {
+      try {
+        const capa = await obterCapaReceita(
+          receita.chaveImagemCapa
+        );
+
+        if (ativo && capa) {
+          setImagemReceita(capa);
+          return;
+        }
+      } catch (error) {
+        console.error(
+          "Erro ao carregar capa da receita:",
+          error
+        );
+      }
+    }
+
+    if (ativo) {
+      setImagemReceita(
+        "/images/categorias/sem-imagem.jpg"
+      );
+    }
+  }
+
+  carregarCapa();
+
+  return () => {
+    ativo = false;
+  };
+}, [
+  receita?.imagem,
+  receita?.chaveImagemCapa,
+]);
 
 useEffect(() => {
   if (!receita) return;
@@ -387,7 +447,7 @@ const temPrintsLegenda = printsLegenda.length > 0;
     <main className="min-h-screen bg-black text-white">
       <div className="relative h-72 w-full">
         <img
-          src={receita.imagem || "/images/categorias/sem-imagem.jpg"}
+          src={imagemReceita}
           alt={receita.nome}
           style={{
             objectPosition: `center ${receita.posicaoImagemY ?? 50}%`,
@@ -445,7 +505,6 @@ const temPrintsLegenda = printsLegenda.length > 0;
         </div>
       )}
 
-      {!ehCarrossel && (
         <>
           <button
             type="button"
@@ -463,8 +522,7 @@ const temPrintsLegenda = printsLegenda.length > 0;
             🛒 Gerar Lista de Compras
           </button>
         </>
-        )}
-
+        
         {receita.tipo === "oficial" && (
           <button
             type="button"
@@ -672,8 +730,7 @@ const temPrintsLegenda = printsLegenda.length > 0;
           </div>
         )}
 
-        {!ehCarrossel && (
-          <>
+         <>
             <div>
               <h2 className="text-lg font-semibold mb-3">
                 🧾 Ingredientes
@@ -728,8 +785,7 @@ const temPrintsLegenda = printsLegenda.length > 0;
                 )}
               </div>
             </div>
-              </>
-            )}
+          </>
         </div>
     </main>
   );

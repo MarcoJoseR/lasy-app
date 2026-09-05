@@ -534,6 +534,7 @@ if (
     categoria,
     subCategoria,
     imagem,
+    posicaoImagemY,
     ingredientes: transformarIngredientes(ingredientesTexto),
     modoPreparo: transformarPassos(modoPreparo),
     tempo,
@@ -837,7 +838,7 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
 
     <ListaReceitas
   receitasFiltradas={receitasOrdenadas}
-  totalReceitas={receitas.length}
+  totalReceitas={receitasOficiais.length}
   categorias={categorias}
   handleFavorito={handleFavorito}
   handleRemover={handleRemover}

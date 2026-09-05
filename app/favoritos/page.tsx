@@ -7,6 +7,7 @@ import { useReceitas } from "../context/ReceitasContext";
 import EstadoVazio from "../components/EstadoVazio";
 import BotaoVoltar from "../components/BotaoVoltar";
 import ModalMinhasListas from "../components/listas-compras/ModalMinhasListas";
+import { obterCapaReceita } from "@/app/utils/carrosselIndexedDB";
 
 export default function FavoritosPage() {
   const { receitas, toggleFavorito, removerReceita } = useReceitas();
@@ -28,6 +29,51 @@ export default function FavoritosPage() {
   const [mensagemRealizadaId, setMensagemRealizadaId] = useState<string | null>(
     null
   );
+
+  const [capasIndexedDB, setCapasIndexedDB] = useState<Record<string, string>>(
+    {}
+  );
+
+useEffect(() => {
+  let ativo = true;
+
+  async function carregarCapas() {
+    const novasCapas: Record<string, string> = {};
+
+    for (const receita of receitas) {
+      if (
+        !receita.imagem &&
+        receita.chaveImagemCapa
+      ) {
+        try {
+          const capa = await obterCapaReceita(
+            receita.chaveImagemCapa
+          );
+
+          if (capa) {
+            novasCapas[receita.id] = capa;
+          }
+        } catch (error) {
+          console.error(
+            "Erro ao carregar capa da receita:",
+            receita.nome,
+            error
+          );
+        }
+      }
+    }
+
+    if (ativo) {
+      setCapasIndexedDB(novasCapas);
+    }
+  }
+
+  carregarCapas();
+
+  return () => {
+    ativo = false;
+  };
+}, [receitas]);
 
 function mostrarMensagemRealizada(id: string) {
   setMensagemRealizadaId(id);
@@ -466,12 +512,17 @@ router.push(`/receita/${receitaId}`);
                   receita.carrossel?.quantidadeImagens ??
                   imagensCarrosselLegadas.length;
 
+                const capaIndexedDB =
+                  capasIndexedDB[receita.id];
+
                 const imagemCapa =
                   ehCarrossel
                     ? receita.imagem ||
+                      capaIndexedDB ||
                       imagensCarrosselLegadas[0] ||
                       "/images/categorias/sem-imagem.jpg"
                     : receita.imagem ||
+                      capaIndexedDB ||
                       "/images/categorias/sem-imagem.jpg";
 
                 return (

@@ -4,8 +4,10 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   obterImagensCarrossel,
-  salvarImagensCarrossel,
   obterPrintsReceita,
+  obterCapaReceita,
+  salvarCapaReceita,
+  salvarImagensCarrossel,
   salvarPrintsReceita,
 } from "@/app/utils/carrosselIndexedDB";
 
@@ -229,8 +231,9 @@ function removerImagemCarrossel(indice: number) {
   // ============================================================
 
   useEffect(() => {
-    if (!carregado || !receitaId) return;
+  if (!carregado || !receitaId) return;
 
+  async function carregarReceitaParaEdicao() {
     const receitaEncontrada = receitas.find(
       (receita) => receita.id === receitaId
     );
@@ -243,10 +246,31 @@ function removerImagemCarrossel(indice: number) {
     );
 
     setNome(receitaEncontrada.nome || "");
-    setImagem(receitaEncontrada.imagem || "");
+
+    let capaCarregada = receitaEncontrada.imagem || "";
+
+    if (
+      !capaCarregada &&
+      receitaEncontrada.chaveImagemCapa
+    ) {
+      try {
+        capaCarregada = await obterCapaReceita(
+          receitaEncontrada.chaveImagemCapa
+        );
+      } catch (error) {
+        console.error(
+          "Erro ao carregar capa para edição:",
+          error
+        );
+      }
+    }
+
+    setImagem(capaCarregada);
+
     setPosicaoImagemY(
       receitaEncontrada.posicaoImagemY ?? 50
     );
+
     setCategoria(receitaEncontrada.categoria || "");
     setSubCategoria(receitaEncontrada.subCategoria || "");
     setTempo(receitaEncontrada.tempo || "");
@@ -340,15 +364,18 @@ setNomesPrintsLegenda([]);
             : []
         );
       }
-    } else {
-      setTipoConteudo("receita");
-      setImagensCarrossel([]);
-      setChaveImagensCarrossel("");
-    }
+        } else {
+          setTipoConteudo("receita");
+          setImagensCarrossel([]);
+          setChaveImagensCarrossel("");
+        }
+      }
 
-    }, [carregado, receitaId, receitas]);
+      carregarReceitaParaEdicao();
+
+    }, [carregado, receitaId]);
     
-// ============================================================
+ // ============================================================
 // RECEBER DADOS DA IMPORTAÇÃO DE RECEITA EM TEXTO
 // ============================================================
 
@@ -430,7 +457,6 @@ useEffect(() => {
           await obterImagensCarrossel(chave);
 
         setImagensCarrossel(imagens);
-        setImagem(imagens[0] || "");
       } else {
         const imagens =
           Array.isArray(
@@ -440,7 +466,6 @@ useEffect(() => {
             : [];
 
         setImagensCarrossel(imagens);
-        setImagem(imagens[0] || "");
       }
 
       setIngredientesTexto("");
@@ -481,6 +506,7 @@ const [mensagemSucesso, setMensagemSucesso] =
     setVideo("");
     setTipoConteudo("receita");
     setImagensCarrossel([]);
+    setChaveImagensCarrossel("");
     setPrintsLegenda([]);
     setNomesPrintsLegenda([]);
     setErroPrints("");
@@ -542,13 +568,43 @@ const [mensagemSucesso, setMensagemSucesso] =
         return;
       }
 
+    let imagemParaReceita = imagem;
+    let chaveImagemCapa =
+      receitaExistente.chaveImagemCapa || "";
+
+    if (
+      imagem &&
+      imagem.startsWith("data:image/")
+    ) {
+      try {
+        await salvarCapaReceita(
+          receitaId,
+          imagem
+        );
+
+        imagemParaReceita = "";
+        chaveImagemCapa = receitaId;
+      } catch (error) {
+        console.error(
+          "Erro ao salvar capa da receita:",
+          error
+        );
+
+        window.alert(
+          "Não foi possível salvar a capa da receita."
+        );
+
+        return;
+      }
+    }
+
       const receitaAtualizada = {
         ...montarReceita({
           id: receitaId,
           nome,
           categoria,
           subCategoria,
-          imagem,
+          imagem: imagemParaReceita,
           posicaoImagemY,
           ingredientesTexto,
           modoPreparoTexto: modoPreparo,
@@ -559,6 +615,9 @@ const [mensagemSucesso, setMensagemSucesso] =
           printsLegenda: [],
           favorito: receitaExistente.favorito,
         }),
+
+          chaveImagemCapa:
+            chaveImagemCapa || undefined,
 
     // ========================================================
     // REFERÊNCIA DOS PRINTS DA RECEITA EM TEXTO
@@ -648,7 +707,11 @@ const [mensagemSucesso, setMensagemSucesso] =
       "Receita atualizada com sucesso"
     );
 
-return;
+    limparFormulario();
+
+    router.replace("/minha-receita");
+
+    return;
 
     } else {
       // ========================================================
@@ -797,7 +860,7 @@ printsLegenda.length > 0
                 {imagensCarrossel.map((imagem, indice) => (
                   <div
                     key={`${indice}-${imagem}`}
-                    className="overflow-hidden rounded-lg bg-zinc-800"
+                    className="relative overflow-hidden rounded-lg bg-zinc-800"
                   >
                     <img
                       src={imagem}
@@ -805,20 +868,20 @@ printsLegenda.length > 0
                       className="aspect-square w-full object-cover"
                     />
 
+                    <button
+                      type="button"
+                      onClick={() => removerImagemCarrossel(indice)}
+                      className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/80 text-lg font-bold text-white shadow hover:bg-red-700"
+                      title="Retirar imagem"
+                      aria-label={`Retirar imagem ${indice + 1}`}
+                    >
+                      ×
+                    </button>
+
                     <div className="p-2">
-                      <p className="mb-2 text-center text-xs text-zinc-300">
+                      <p className="text-center text-xs text-zinc-300">
                         {indice + 1}/{imagensCarrossel.length}
                       </p>
-
-                      {Boolean(receitaId) && (
-                        <button
-                          type="button"
-                          onClick={() => removerImagemCarrossel(indice)}
-                          className="w-full rounded bg-red-700 px-2 py-1 text-xs font-semibold text-white hover:bg-red-600"
-                        >
-                          Remover
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}
