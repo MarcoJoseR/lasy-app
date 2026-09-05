@@ -14,7 +14,10 @@ import PainelBusca from "@/app/components/PainelBusca";
 import PainelCategorias from "@/app/components/PainelCategorias";
 import PainelIngredientes from "@/app/components/PainelIngredientes";
 import PainelOrdenacao from "@/app/components/PainelOrdenacao";
-import { useRouter } from "next/navigation";
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { CATEGORIAS_RECEITAS } from "@/app/config/categoriasReceitas";
 
 export default function Page() {
@@ -27,6 +30,7 @@ export default function Page() {
     const LIMITE_RECEITAS_SIMILARES = 5;
     const [ordenacao, setOrdenacao] = useState("recentes");  
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const {
       receitas,
@@ -39,6 +43,8 @@ export default function Page() {
   const deveRestaurar =
     sessionStorage.getItem("restaurarHomePesquisa") === "1";
 
+  const categoriaUrl = searchParams.get("categoria");
+
   if (deveRestaurar) {
     const estadoSalvo =
       sessionStorage.getItem("estadoHomePesquisa");
@@ -48,9 +54,21 @@ export default function Page() {
         const estado = JSON.parse(estadoSalvo);
 
         setBusca(estado.busca || "");
-        setBuscaIngredientes(estado.buscaIngredientes || "");
-        setFiltroCategoria(estado.filtroCategoria || "");
-        setOrdenacao(estado.ordenacao || "recentes");
+        setBuscaIngredientes(
+          estado.buscaIngredientes || ""
+        );
+
+        if (categoriaUrl) {
+          setFiltroCategoria(categoriaUrl);
+        } else {
+          setFiltroCategoria(
+            estado.filtroCategoria || ""
+          );
+        }
+
+        setOrdenacao(
+          estado.ordenacao || "recentes"
+        );
 
         if (typeof estado.scrollY === "number") {
           sessionStorage.setItem(
@@ -58,17 +76,24 @@ export default function Page() {
             String(estado.scrollY)
           );
         }
-       } catch {
-        // Se o estado salvo estiver inválido,
-        // simplesmente abre a pesquisa normalmente.
+      } catch {
+        if (categoriaUrl) {
+          setFiltroCategoria(categoriaUrl);
+        }
       }
+    } else if (categoriaUrl) {
+      setFiltroCategoria(categoriaUrl);
     }
 
-    sessionStorage.removeItem("restaurarHomePesquisa");
+    sessionStorage.removeItem(
+      "restaurarHomePesquisa"
+    );
+  } else if (categoriaUrl) {
+    setFiltroCategoria(categoriaUrl);
   }
 
   setMounted(true);
-}, []);
+}, [searchParams]);
 
 useEffect(() => {
   if (!mounted || !carregado) return;
@@ -83,7 +108,10 @@ useEffect(() => {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       window.scrollTo(0, posicao);
-      sessionStorage.removeItem("scrollHomePesquisa");
+
+      sessionStorage.removeItem(
+        "scrollHomePesquisa"
+      );
     });
   });
 }, [mounted, carregado]);
@@ -93,9 +121,17 @@ const normalizarBusca = (texto: string) =>
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[,\.;:]/g, " ")
+    .replace(/[,.;:]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+useEffect(() => {
+  const categoriaUrl = searchParams.get("categoria");
+
+  if (categoriaUrl) {
+    setFiltroCategoria(categoriaUrl);
+  }
+}, [searchParams]);
 
 const ingredientesBusca = normalizarBusca(buscaIngredientes)
   .split(" ")
