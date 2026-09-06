@@ -13,13 +13,19 @@ export default function manifest() {
     src: "/icons/health-192-v2.png",
     sizes: "192x192",
     type: "image/png",
-    purpose: "any maskable",
+    purpose: "any",
   },
   {
     src: "/icons/health-512-v2.png",
     sizes: "512x512",
     type: "image/png",
-    purpose: "any maskable",
+    purpose: "any",
+  },
+  {
+    src: "/icons/health-512-maskable.png",
+    sizes: "512x512",
+    type: "image/png",
+    purpose: "maskable",
   },
 ],
 
