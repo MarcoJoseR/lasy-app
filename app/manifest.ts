@@ -9,17 +9,19 @@ export default function manifest() {
     theme_color: "#166534",
 
     icons: [
-      {
-        src: "/icons/health-192-v2.png",
-        sizes: "192x192",
-        type: "image/png",
-      },
-      {
-        src: "/icons/health-512-v2.png",
-        sizes: "512x512",
-        type: "image/png",
-      },
-    ],
+  {
+    src: "/icons/health-192-v2.png",
+    sizes: "192x192",
+    type: "image/png",
+    purpose: "any maskable",
+  },
+  {
+    src: "/icons/health-512-v2.png",
+    sizes: "512x512",
+    type: "image/png",
+    purpose: "any maskable",
+  },
+],
 
     // ===== INÍCIO - COMPARTILHAMENTO ANDROID =====
     share_target: {
