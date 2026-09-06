@@ -3,6 +3,7 @@ export default function manifest() {
     name: "Health",
     short_name: "Health",
     description: "Receitas organizadas",
+    id: "/recepcao",
     start_url: "/recepcao",
     display: "standalone",
     background_color: "#18181b",
