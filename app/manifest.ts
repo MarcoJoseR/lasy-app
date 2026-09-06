@@ -1,8 +1,8 @@
 export default function manifest() {
   return {
-    name: "Receitas Health",
-    short_name: "Receitas Health",
-    description: "Receitas e organização para o dia a dia.",
+    name: "Health",
+    short_name: "Health",
+    description: "Receitas organizadas",
     start_url: "/recepcao",
     display: "standalone",
     background_color: "#18181b",
@@ -10,12 +10,12 @@ export default function manifest() {
 
     icons: [
       {
-        src: "/icons/health-192.png",
+        src: "/icons/health-192-v2.png",
         sizes: "192x192",
         type: "image/png",
       },
       {
-        src: "/icons/health-512.png",
+        src: "/icons/health-512-v2.png",
         sizes: "512x512",
         type: "image/png",
       },

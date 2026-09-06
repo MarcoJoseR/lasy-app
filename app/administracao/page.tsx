@@ -11,7 +11,7 @@ import {
 
 // ===== INÍCIO DA ALTERAÇÃO =====
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 // ===== FIM DA ALTERAÇÃO =====
 
 // Context
@@ -114,6 +114,7 @@ async function handleBackupHomeAdm() {
 
     // ===== INÍCIO DA ALTERAÇÃO =====
     const searchParams = useSearchParams();
+    const router = useRouter();
     const receitaIdEdicao = searchParams.get("id");
 // ===== FIM DA ALTERAÇÃO =====
 
@@ -417,6 +418,7 @@ function limparImportacao() {
   setTipoConteudo("receita");
   setImagensCarrossel([]);
   setChaveImagensCarrossel("");
+  router.replace("/administracao", { scroll: false });
 }
 
 function iniciarEdicao(r: Receita) {
