@@ -20,7 +20,8 @@ export type ResultadoValidacaoBackup = {
       receitas: unknown[];
       listasCompras: unknown[];
       carrosseisIndexedDB?: Record<string, string[]>;
-	printsIndexedDB?: Record<string, string[]>;
+	    printsIndexedDB?: Record<string, string[]>;
+      capasIndexedDB?: Record<string, string>;
     };
   };
 };
@@ -34,7 +35,8 @@ export async function validarBackupMinhaBiblioteca(
 
     const versaoValida =
       dados?.versaoBackup === 1 ||
-      dados?.versaoBackup === 2;
+      dados?.versaoBackup === 2 ||
+      dados?.versaoBackup === 3
 
     if (
       dados?.app !== "Receitas Health" ||
@@ -115,7 +117,8 @@ export async function restaurarMinhaBiblioteca(
       receitas: unknown[];
       listasCompras: unknown[];
       carrosseisIndexedDB?: Record<string, string[]>;
-	printsIndexedDB?: Record<string, string[]>;
+	    printsIndexedDB?: Record<string, string[]>;
+      capasIndexedDB?: Record<string, string>;
     };
   }
 ) {
@@ -196,6 +199,23 @@ localStorage.setItem(
       await salvarPrintsReceita(
         chave,
         imagens
+      );
+    }
+
+    const capas =
+      backup.dados.capasIndexedDB || {};
+
+    for (const [chave, imagem] of Object.entries(capas)) {
+      if (
+        typeof imagem !== "string" ||
+        !imagem.startsWith("data:image/")
+      ) {
+        continue;
+      }
+
+      await salvarCapaReceita(
+        chave,
+        imagem
       );
     }
 

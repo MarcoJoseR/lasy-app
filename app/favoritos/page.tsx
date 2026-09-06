@@ -466,12 +466,21 @@ router.push(`/receita/${receitaId}`);
                   </option>
                 ))}
               </select>
-            </div>
 
-            <div>
-              <label className="block mb-2 font-semibold text-white">
-                Ordenar por
-              </label>
+              {filtroCategoria && (
+                <button
+                  onClick={() => setFiltroCategoria("")}
+                  className="mt-2 bg-yellow-500 text-black px-3 py-2 rounded-lg hover:bg-yellow-600 transition"
+                >
+                  🔄 Todas as categorias
+                </button>
+              )}
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-white">
+                  Ordenar por
+                </label>
 
               <select
                 value={ordenacao}
@@ -485,15 +494,6 @@ router.push(`/receita/${receitaId}`);
               </select>
             </div>
           </div>
-
-          {filtroCategoria && (
-            <button
-              onClick={() => setFiltroCategoria("")}
-              className="mb-6 bg-yellow-500 text-black px-3 py-2 rounded-lg hover:bg-yellow-600 transition"
-            >
-              🔄 Todas as categorias
-            </button>
-          )}
 
           {receitasOrdenadas.length === 0 ? (
             <EstadoVazio

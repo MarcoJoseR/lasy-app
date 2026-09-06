@@ -53,52 +53,54 @@ function iconeCategoria(categoria: string) {
 }
 
   async function handleExportarBiblioteca() {
-    const resultado =
-      await exportarMinhaBiblioteca();
+  const resultado =
+    await exportarMinhaBiblioteca();
 
-    if (resultado.sucesso) {
-      alert(
-        `Biblioteca exportada com sucesso.\n\n` +
-          `${resultado.receitasExportadas} receitas\n` +
-          `${resultado.listasExportadas} listas de compras\n` +
-          `${resultado.carrosseisExportados} carrosséis com imagens`
-      );
-    } else {
-      alert("Não foi possível exportar a Minha Biblioteca.");
-    }
+  if (resultado.sucesso) {
+    alert(
+      `Biblioteca exportada com sucesso.\n\n` +
+        `${resultado.receitasExportadas} receitas\n` +
+        `${resultado.listasExportadas} listas de compras\n` +
+        `${resultado.carrosseisExportados} carrosséis com imagens\n` +
+        `${resultado.printsExportados} conjuntos de prints\n` +
+        `${resultado.capasExportadas} capas`
+    );
+  } else {
+    alert("Não foi possível exportar a Minha Biblioteca.");
+  }
+}
+
+async function handleImportarBiblioteca(
+  event: React.ChangeEvent<HTMLInputElement>
+) {
+  const arquivo = event.target.files?.[0];
+
+  if (!arquivo) {
+    return;
   }
 
-  async function handleImportarBiblioteca(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const arquivo = event.target.files?.[0];
+  const resultado = await validarBackupMinhaBiblioteca(arquivo);
 
-    if (!arquivo) {
-      return;
-    }
+  if (!resultado.valido) {
+    alert(resultado.mensagem);
+    event.target.value = "";
+    return;
+  }
 
-    const resultado = await validarBackupMinhaBiblioteca(arquivo);
+  const confirmar = window.confirm(
+    `Backup válido.\n\n` +
+      `${resultado.receitasEncontradas} receitas encontradas\n` +
+      `${resultado.listasEncontradas} listas de compras encontradas\n` +
+      `${resultado.carrosseisEncontrados} carrosséis com imagens encontrados\n\n` +
+      `ATENÇÃO:\n` +
+      `Os dados atuais da Minha Biblioteca serão substituídos pelos dados deste backup.\n\n` +
+      `Deseja continuar?`
+  );
 
-    if (!resultado.valido) {
-      alert(resultado.mensagem);
-      event.target.value = "";
-      return;
-    }
-
-        const confirmar = window.confirm(
-      `Backup válido.\n\n` +
-        `${resultado.receitasEncontradas} receitas encontradas\n` +
-        `${resultado.listasEncontradas} listas de compras encontradas\n` +
-        `${resultado.carrosseisEncontrados} carrosséis com imagens encontrados\n\n` +
-       `ATENÇÃO:\n` +
-        `Os dados atuais da Minha Biblioteca serão substituídos pelos dados deste backup.\n\n` +
-        `Deseja continuar?`
-    );
-
-    if (!confirmar) {
-      event.target.value = "";
-      return;
-    }
+  if (!confirmar) {
+    event.target.value = "";
+    return;
+  }
 
     if (!resultado.backup) {
       alert("Não foi possível localizar os dados do backup.");
