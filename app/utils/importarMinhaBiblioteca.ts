@@ -9,6 +9,7 @@ export type ResultadoValidacaoBackup = {
   mensagem: string;
   receitasEncontradas: number;
   listasEncontradas: number;
+  carrosseisEncontrados: number;
   printsEncontrados: number;
 
   backup?: {
@@ -49,6 +50,7 @@ export async function validarBackupMinhaBiblioteca(
         mensagem: "O arquivo não é um backup válido do Receitas Health.",
         receitasEncontradas: 0,
         listasEncontradas: 0,
+        carrosseisEncontrados: 0,
         printsEncontrados: 0,
       };
     }
@@ -64,6 +66,7 @@ export async function validarBackupMinhaBiblioteca(
         receitasEncontradas: 0,
         listasEncontradas: 0,
         carrosseisEncontrados: 0,
+        printsEncontrados: 0,
       };
     }
 
@@ -79,6 +82,7 @@ export async function validarBackupMinhaBiblioteca(
         receitasEncontradas: 0,
         listasEncontradas: 0,
         carrosseisEncontrados: 0,
+        printsEncontrados: 0,
       };
     }
 
@@ -114,6 +118,7 @@ export async function validarBackupMinhaBiblioteca(
       receitasEncontradas: 0,
       listasEncontradas: 0,
       carrosseisEncontrados: 0,
+      printsEncontrados: 0,
     };
   }
 }
