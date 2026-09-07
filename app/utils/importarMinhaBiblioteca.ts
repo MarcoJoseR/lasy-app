@@ -9,7 +9,7 @@ export type ResultadoValidacaoBackup = {
   mensagem: string;
   receitasEncontradas: number;
   listasEncontradas: number;
-  carrosseisEncontrados: number;
+  printsEncontrados: number;
 
   backup?: {
     app: string;
@@ -49,7 +49,7 @@ export async function validarBackupMinhaBiblioteca(
         mensagem: "O arquivo não é um backup válido do Receitas Health.",
         receitasEncontradas: 0,
         listasEncontradas: 0,
-        carrosseisEncontrados: 0,
+        printsEncontrados: 0,
       };
     }
 
@@ -94,6 +94,14 @@ export async function validarBackupMinhaBiblioteca(
               dados.dados.carrosseisIndexedDB
             ).length
           : 0,
+
+          printsEncontrados:
+            dados?.dados?.printsIndexedDB &&
+            typeof dados.dados.printsIndexedDB === "object"
+              ? Object.keys(
+                  dados.dados.printsIndexedDB
+                ).length
+              : 0,
       
       backup: dados,
     };
@@ -168,16 +176,6 @@ for (const receita of receitasRestauradasBrutas as any[]) {
   }
 }
 
-localStorage.setItem(
-  "minhaBiblioteca",
-  JSON.stringify(receitasRestauradas)
-);
-
-    localStorage.setItem(
-      "listasCompras",
-      JSON.stringify(backup.dados.listasCompras)
-    );
-
     const carrosseis =
       backup.dados.carrosseisIndexedDB || {};
 
@@ -218,6 +216,16 @@ localStorage.setItem(
         imagem
       );
     }
+
+    localStorage.setItem(
+      "minhaBiblioteca",
+      JSON.stringify(receitasRestauradas)
+    );
+
+    localStorage.setItem(
+      "listasCompras",
+      JSON.stringify(backup.dados.listasCompras)
+    );
 
     return {
       sucesso: true,

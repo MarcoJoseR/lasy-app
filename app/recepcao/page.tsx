@@ -91,7 +91,8 @@ async function handleImportarBiblioteca(
     `Backup válido.\n\n` +
       `${resultado.receitasEncontradas} receitas encontradas\n` +
       `${resultado.listasEncontradas} listas de compras encontradas\n` +
-      `${resultado.carrosseisEncontrados} carrosséis com imagens encontrados\n\n` +
+      `${resultado.carrosseisEncontrados} carrosséis com imagens encontrados\n` +
+      `${resultado.printsEncontrados} conjuntos de prints encontrados\n\n` +
       `ATENÇÃO:\n` +
       `Os dados atuais da Minha Biblioteca serão substituídos pelos dados deste backup.\n\n` +
       `Deseja continuar?`
