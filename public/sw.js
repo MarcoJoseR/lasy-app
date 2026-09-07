@@ -1,4 +1,4 @@
-const VERSION = "v24";
+const VERSION = "v25";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -11,7 +11,6 @@ const APP_SHELL = [
   "/minha-receita",
   "/listas-compras/offline",
   "/receita/offline",
-  "/manifest.webmanifest",
   "/sounds/alarme-timer.wav",
 ];
 
@@ -165,6 +164,14 @@ if (requisicaoNext) {
 }
 
 if (url.pathname.startsWith("/_next/")) {
+  event.respondWith(fetch(request));
+  return;
+}
+
+// Manifest deve sempre vir da rede.
+// Evita que o Chrome/WebAPK use uma versão antiga em cache.
+
+if (url.pathname === "/manifest.webmanifest") {
   event.respondWith(fetch(request));
   return;
 }
