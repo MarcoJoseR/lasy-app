@@ -18,6 +18,8 @@ import {
   salvarCapaReceita,
 } from "@/app/utils/carrosselIndexedDB";
 
+import { inicializarPacoteUsuarios } from "@/app/utils/inicializarPacoteUsuarios";
+
 export interface NutritionInfo {
   calories?: number;
   protein?: number;
@@ -118,7 +120,7 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [carregado, setCarregado] = useState(false);
 
- useEffect(() => {
+useEffect(() => {
   async function carregarEMigrarReceitas() {
     let receitasParaCarregar: Receita[] = [];
 
@@ -132,28 +134,59 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
       const dadosSalvos =
         localStorage.getItem(STORAGE_KEY);
 
-      if (!jaInicializado) {
-        if (dadosSalvos) {
-          const receitasSalvas =
-            JSON.parse(dadosSalvos) as Receita[];
+      // ============================================================
+      // PRIMEIRA INSTALAÇÃO
+      // ============================================================
 
-          if (receitasSalvas.length > 0) {
-            receitasParaCarregar = receitasSalvas;
-          } else {
-            receitasParaCarregar = RECEITAS_INICIAIS;
-          }
-        } else {
-          receitasParaCarregar = RECEITAS_INICIAIS;
-        }
+      if (!jaInicializado) {
+        const resultadoPacote =
+          await inicializarPacoteUsuarios();
+
+        receitasParaCarregar =
+          resultadoPacote.receitas;
+
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(receitasParaCarregar)
+        );
 
         localStorage.setItem(
           CHAVE_INICIALIZACAO,
           "1"
         );
-      } else if (dadosSalvos) {
+
+        console.log(
+          "Pacote inicial de usuários carregado:",
+          {
+            oficiais:
+              resultadoPacote.quantidadeOficiais,
+            pessoais:
+              resultadoPacote.quantidadePessoais,
+            carrosseis:
+              resultadoPacote.quantidadeCarrosseis,
+            prints:
+              resultadoPacote.quantidadePrints,
+            capas:
+              resultadoPacote.quantidadeCapas,
+          }
+        );
+
+        setReceitas(receitasParaCarregar);
+        return;
+      }
+
+      // ============================================================
+      // USUÁRIO JÁ INICIALIZADO
+      // ============================================================
+
+      if (dadosSalvos) {
         receitasParaCarregar =
           JSON.parse(dadosSalvos) as Receita[];
       }
+
+      // ============================================================
+      // MIGRAÇÃO DE CAPAS ANTIGAS BASE64
+      // ============================================================
 
       let quantidadeMigrada = 0;
 
@@ -200,12 +233,10 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
       setReceitas(receitasMigradas);
     } catch (error) {
       console.error(
-        "Erro ao carregar ou migrar capas das receitas:",
+        "Erro ao carregar ou inicializar receitas:",
         error
       );
 
-      // Segurança: se houver falha durante a migração,
-      // mantém na memória os dados originais já lidos.
       if (receitasParaCarregar.length > 0) {
         setReceitas(receitasParaCarregar);
       }
@@ -232,97 +263,6 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
     );
   }
 }, [receitas, carregado]);
-
-// NOVO useEffect temporário do carrossel
-useEffect(() => {
-  if (!carregado) return;
-
-  const CHAVE_CARROSSEL_TESTE =
-    "healthCarrosselTesteInseridoV1";
-
-  try {
-    if (
-      localStorage.getItem(CHAVE_CARROSSEL_TESTE) === "1"
-    ) {
-      return;
-    }
-
-    const dadosSalvos =
-      localStorage.getItem(STORAGE_KEY);
-
-    if (!dadosSalvos) {
-      console.warn(
-        "Carrossel não inserido: biblioteca não encontrada."
-      );
-      return;
-    }
-
-    const receitasSalvas =
-      JSON.parse(dadosSalvos) as Receita[];
-
-    if (
-      !Array.isArray(receitasSalvas) ||
-      receitasSalvas.length === 0
-    ) {
-      console.warn(
-        "Carrossel não inserido: biblioteca vazia."
-      );
-      return;
-    }
-
-    const carrosselTeste = RECEITAS_INICIAIS.find(
-      (receita) =>
-        receita.id === "carrossel-teste-semana-001"
-    );
-
-    if (!carrosselTeste) {
-      console.warn(
-        "Carrossel de teste não encontrado em RECEITAS_INICIAIS."
-      );
-      return;
-    }
-
-    const jaExiste = receitasSalvas.some(
-      (receita) =>
-        String(receita.id) ===
-        String(carrosselTeste.id)
-    );
-
-    if (jaExiste) {
-      localStorage.setItem(
-        CHAVE_CARROSSEL_TESTE,
-        "1"
-      );
-      return;
-    }
-
-    const receitasAtualizadas = [
-      ...receitasSalvas,
-      carrosselTeste,
-    ];
-
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(receitasAtualizadas)
-    );
-
-    setReceitas(receitasAtualizadas);
-
-    localStorage.setItem(
-      CHAVE_CARROSSEL_TESTE,
-      "1"
-    );
-
-    console.log(
-      "Carrossel de teste acrescentado com segurança."
-    );
-  } catch (error) {
-    console.error(
-      "Erro ao acrescentar carrossel de teste:",
-      error
-    );
-  }
-}, [carregado]);
 
 useEffect(() => {
   if (!carregado) return;
