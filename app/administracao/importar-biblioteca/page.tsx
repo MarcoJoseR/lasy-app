@@ -6,6 +6,7 @@ import { useReceitas, type Receita } from "@/app/context/ReceitasContext";
 import {
   salvarImagensCarrossel,
   salvarPrintsReceita,
+  salvarCapaReceita,
 } from "@/app/utils/carrosselIndexedDB";
 
 type ReceitaImportada = {
@@ -192,6 +193,24 @@ async function prepararReceitaParaImportacao(
       );
     }
   
+let chaveImagemCapa =
+  typeof receita.chaveImagemCapa === "string"
+    ? receita.chaveImagemCapa
+    : "";
+
+if (
+  receita.imagem &&
+  typeof receita.imagem === "string" &&
+  receita.imagem.startsWith("data:image/")
+) {
+  await salvarCapaReceita(
+    receita.id,
+    receita.imagem
+  );
+
+  chaveImagemCapa = receita.id;
+}
+
       const chavePrintsOriginal =
         receita.chavePrintsLegenda || "";
 
@@ -227,7 +246,8 @@ async function prepararReceitaParaImportacao(
       : [],
     tempo: receita.tempo || "",
     porcoes: receita.porcoes || "",
-    imagem: receita.imagem || "",
+    imagem: "",
+    chaveImagemCapa,
     video: receita.video || "",
     printsLegenda: Array.isArray(receita.printsLegenda)
       ? receita.printsLegenda
@@ -268,7 +288,7 @@ async function prepararReceitaParaImportacao(
   return {
     ...baseReceita,
     tipoConteudo: "carrossel",
-    imagem: receita.imagem || imagensCarrossel[0] || "",
+    imagem: "",
     origem: receita.origem || receita.carrossel?.origemUrl || "",
     carrossel: {
       imagens: [],
