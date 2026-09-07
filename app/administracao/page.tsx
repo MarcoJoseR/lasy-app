@@ -26,6 +26,7 @@ import {
   transformarPassos,
 } from "@/app/utils/receitaHelpers";
 import { exportarBackupHomeAdm } from "@/app/utils/exportarHomeAdm";
+import { exportarPacoteUsuarios } from "@/app/utils/exportarPacoteUsuarios";
 
 // Componentes
 import Header from "@/app/components/Header";
@@ -108,6 +109,28 @@ async function handleBackupHomeAdm() {
     alert(
       resultado.mensagem ||
         "Não foi possível criar o backup da Home ADM."
+    );
+  }
+}
+
+async function handleGerarPacoteUsuarios() {
+  const resultado = await exportarPacoteUsuarios();
+
+  if (resultado.sucesso) {
+    alert(
+      `Pacote Usuários criado com sucesso.\n\n` +
+        `Receitas da Pesquisa: ${resultado.quantidadeReceitasPesquisa}\n` +
+        `Receitas orientativas: ${resultado.quantidadeOrientativas}\n` +
+        `Total do pacote: ${resultado.quantidadeTotal}\n` +
+        `Capas: ${resultado.quantidadeCapas}\n` +
+        `Carrosséis: ${resultado.quantidadeCarrosseis}\n` +
+        `Conjuntos de prints: ${resultado.quantidadePrints}\n\n` +
+        `Arquivo: ${resultado.nomeArquivo}`
+    );
+  } else {
+    alert(
+      resultado.mensagem ||
+        "Não foi possível criar o Pacote Usuários."
     );
   }
 }
@@ -622,6 +645,14 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
   >
     💾 Backup Home ADM
   </button>
+
+<button
+  type="button"
+  onClick={handleGerarPacoteUsuarios}
+  className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white transition hover:border-violet-500 hover:bg-gray-800"
+>
+  📦 Pacote Usuários
+</button>
 
 </div>
 
