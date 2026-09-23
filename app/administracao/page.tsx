@@ -28,6 +28,11 @@ import {
 import { exportarBackupHomeAdm } from "@/app/utils/exportarHomeAdm";
 import { exportarPacoteUsuarios } from "@/app/utils/exportarPacoteUsuarios";
 
+import {
+  diagnosticarArmazenamento,
+  solicitarPersistenciaArmazenamento,
+} from "@/app/utils/armazenamento";
+
 // Componentes
 import Header from "@/app/components/Header";
 import FormReceita from "@/app/components/FormReceita";
@@ -81,6 +86,9 @@ export default function Page() {
       useState("");
 
     const [posicaoImagemY, setPosicaoImagemY] = useState(50);
+
+    const [statusArmazenamento, setStatusArmazenamento] =
+      useState<string>("Verificando armazenamento...");
 
 async function handleBackupCompletoLocalStorage() {
   const resultado = await backupCompletoLocalStorage();
@@ -317,6 +325,47 @@ async function adicionarImagensCarrossel(
   }
 }
   
+useEffect(() => {
+  async function verificarProtecaoArmazenamento() {
+    const antes = await diagnosticarArmazenamento();
+
+    const resultado =
+      await solicitarPersistenciaArmazenamento();
+
+    const depois =
+      await diagnosticarArmazenamento();
+
+    console.log(
+      "ARMAZENAMENTO HEALTH:",
+      {
+        antes,
+        solicitacaoPersistencia: resultado,
+        depois,
+      }
+    );
+
+    if (!depois.suportado) {
+      setStatusArmazenamento(
+        "Armazenamento persistente não suportado neste navegador."
+      );
+      return;
+    }
+
+    if (depois.persistente) {
+      setStatusArmazenamento(
+        "✅ Armazenamento protegido pelo navegador."
+      );
+      return;
+    }
+
+    setStatusArmazenamento(
+      "⚠️ Armazenamento ainda não foi marcado como persistente."
+    );
+  }
+
+  verificarProtecaoArmazenamento();
+}, []);
+
 // ===== FIM DA ALTERAÇÃO =====
 
 const normalizarBusca = (texto: string) =>
@@ -651,6 +700,10 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
 )}
       
 <Header />
+
+<div className="mb-4 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm text-white">
+  {statusArmazenamento}
+</div>
 
 <div className="mb-4 flex flex-wrap justify-end gap-3">
   <Link
