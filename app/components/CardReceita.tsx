@@ -24,12 +24,18 @@ export default function CardReceita({
   editando,
 }: CardProps) {
   
+const imagemPadrao = "/images/categorias/sem-imagem.jpg";
+
+const temImagemReal =
+  Boolean(receita.imagem) &&
+  receita.imagem !== imagemPadrao;
+
 const [imagemReceita, setImagemReceita] = useState<string | null>(
-  receita.imagem || null
+  temImagemReal ? receita.imagem! : null
 );
 
 const [carregandoCapa, setCarregandoCapa] = useState(
-  !receita.imagem
+  !temImagemReal
 );
 
 useEffect(() => {
@@ -47,7 +53,10 @@ useEffect(() => {
       }
     );
 
-    if (receita.imagem) {
+    if (
+      receita.imagem &&
+      receita.imagem !== imagemPadrao
+    ) {
       if (ativo) {
         setImagemReceita(receita.imagem);
         setCarregandoCapa(false);
@@ -83,9 +92,7 @@ useEffect(() => {
     }
 
     if (ativo) {
-      setImagemReceita(
-        "/images/categorias/sem-imagem.jpg"
-      );
+      setImagemReceita(imagemPadrao);
       setCarregandoCapa(false);
     }
   }
@@ -108,14 +115,13 @@ useEffect(() => {
           <div className="h-full w-full bg-zinc-800" />
         ) : (
           <img
-            src={imagemReceita || "/images/categorias/sem-imagem.jpg"}
+            src={imagemReceita || imagemPadrao}
             alt={receita.nome}
             style={{
               objectPosition: `center ${receita.posicaoImagemY ?? 50}%`,
             }}
             onError={(e) => {
-              e.currentTarget.src =
-                "/images/categorias/sem-imagem.jpg";
+              e.currentTarget.src = imagemPadrao;
             }}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
