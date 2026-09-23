@@ -1,8 +1,13 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { salvarImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
+
+import {
+  diagnosticarArmazenamento,
+  avaliarEstadoArmazenamento,
+} from "@/app/utils/armazenamento";
 
 type TipoImportacao = "receita" | "carrossel";
 
@@ -35,6 +40,25 @@ export default function ImportarReceitaPage() {
   const [erroCarrossel, setErroCarrossel] = useState("");
   const [chaveImagensCarrossel, setChaveImagensCarrossel] =
     useState("");
+
+  const [alertaArmazenamento, setAlertaArmazenamento] =
+    useState(false);
+
+  useEffect(() => {
+    async function verificarArmazenamento() {
+      const diagnostico =
+        await diagnosticarArmazenamento();
+
+      const estado =
+        avaliarEstadoArmazenamento(diagnostico);
+
+    setAlertaArmazenamento(
+        estado === "alerta"
+      );
+     }
+
+    verificarArmazenamento();
+  }, []);
 
   // ============================================================
   // RECEITA EM TEXTO
@@ -321,7 +345,6 @@ ingredientes = ingredientes
     }
   }
 
-
   
   return (
     <main className="mx-auto max-w-3xl p-6 text-white">
@@ -364,6 +387,12 @@ ingredientes = ingredientes
           </button>
         </div>
       </div>
+
+      {alertaArmazenamento && (
+        <div className="mb-4 rounded-lg border border-yellow-600 bg-yellow-950/40 p-3 text-sm text-yellow-100">
+          ⚠️ Espaço de armazenamento reduzido. Faça um backup antes de adicionar novos conteúdos.
+        </div>
+      )}
 
       {/* ======================================================
           RECEITA EM TEXTO

@@ -28,6 +28,10 @@ import { montarReceita } from "@/app/utils/montarReceita";
 import { gerarId } from "@/app/utils/gerarId";
 import BotaoVoltar from "@/app/components/BotaoVoltar";
 
+import {
+  diagnosticarArmazenamento,
+  avaliarEstadoArmazenamento,
+} from "@/app/utils/armazenamento";
 
 export default function MinhaReceitaPage() {
   const router = useRouter();
@@ -80,6 +84,9 @@ export default function MinhaReceitaPage() {
   const [nomesPrintsLegenda, setNomesPrintsLegenda] = useState<string[]>([]);
   const [processandoPrints, setProcessandoPrints] = useState(false);
   const [erroPrints, setErroPrints] = useState("");
+
+  const [alertaArmazenamento, setAlertaArmazenamento] =
+  useState(false);
 
   const {
     receitas,
@@ -576,6 +583,22 @@ useEffect(() => {
 const [mensagemSucesso, setMensagemSucesso] =
   useState("");
   
+useEffect(() => {
+  async function verificarArmazenamento() {
+    const diagnostico =
+      await diagnosticarArmazenamento();
+
+    const estado =
+      avaliarEstadoArmazenamento(diagnostico);
+
+    setAlertaArmazenamento(
+      estado === "alerta"
+    );
+   }
+
+  verificarArmazenamento();
+}, []);
+
   // ============================================================
   // LIMPAR FORMULÁRIO
   // ============================================================
@@ -981,6 +1004,12 @@ printsLegenda.length > 0
             </button>
           </div>
         </BlocoCriarReceita>
+
+        {alertaArmazenamento && (
+          <div className="mb-4 rounded-lg border border-yellow-600 bg-yellow-950/40 p-3 text-sm text-yellow-100">
+            ⚠️ Espaço de armazenamento reduzido. Faça um backup antes de adicionar novos conteúdos.
+          </div>
+        )}
 
         {/* ====================================================
             AVISO DE CARROSSEL IMPORTADO

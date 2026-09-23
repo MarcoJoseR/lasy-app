@@ -31,6 +31,8 @@ import { exportarPacoteUsuarios } from "@/app/utils/exportarPacoteUsuarios";
 import {
   diagnosticarArmazenamento,
   solicitarPersistenciaArmazenamento,
+  avaliarEstadoArmazenamento,
+  mensagemEstadoArmazenamento,
 } from "@/app/utils/armazenamento";
 
 // Componentes
@@ -326,44 +328,33 @@ async function adicionarImagensCarrossel(
 }
   
 useEffect(() => {
-  async function verificarProtecaoArmazenamento() {
-    const antes = await diagnosticarArmazenamento();
+  async function verificarArmazenamento() {
+    // Tenta garantir a proteção persistente.
+    await solicitarPersistenciaArmazenamento();
 
-    const resultado =
-      await solicitarPersistenciaArmazenamento();
-
-    const depois =
+    // Mede a situação atual do armazenamento.
+    const diagnostico =
       await diagnosticarArmazenamento();
 
+    const estado =
+      avaliarEstadoArmazenamento(diagnostico);
+
+    const mensagem =
+      mensagemEstadoArmazenamento(estado);
+
+    setStatusArmazenamento(mensagem);
+
     console.log(
-      "ARMAZENAMENTO HEALTH:",
+      "ESTADO ARMAZENAMENTO HEALTH:",
       {
-        antes,
-        solicitacaoPersistencia: resultado,
-        depois,
+        diagnostico,
+        estado,
+        mensagem,
       }
-    );
-
-    if (!depois.suportado) {
-      setStatusArmazenamento(
-        "Armazenamento persistente não suportado neste navegador."
-      );
-      return;
-    }
-
-    if (depois.persistente) {
-      setStatusArmazenamento(
-        "✅ Armazenamento protegido pelo navegador."
-      );
-      return;
-    }
-
-    setStatusArmazenamento(
-      "⚠️ Armazenamento ainda não foi marcado como persistente."
     );
   }
 
-  verificarProtecaoArmazenamento();
+  verificarArmazenamento();
 }, []);
 
 // ===== FIM DA ALTERAÇÃO =====

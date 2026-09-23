@@ -6,6 +6,8 @@ export interface DiagnosticoArmazenamento {
   usoMB: number | null;
   cotaMB: number | null;
   percentualUso: number | null;
+  espacoLivreBytes: number | null;
+  espacoLivreMB: number | null;
 }
 
 export async function diagnosticarArmazenamento(): Promise<DiagnosticoArmazenamento> {
@@ -21,6 +23,8 @@ export async function diagnosticarArmazenamento(): Promise<DiagnosticoArmazename
       usoMB: null,
       cotaMB: null,
       percentualUso: null,
+      espacoLivreBytes: null,
+      espacoLivreMB: null,
     };
   }
 
@@ -53,6 +57,17 @@ export async function diagnosticarArmazenamento(): Promise<DiagnosticoArmazename
         ? cotaBytes / 1024 / 1024
         : null;
 
+    const espacoLivreBytes =
+      usoBytes !== null &&
+      cotaBytes !== null
+        ? Math.max(cotaBytes - usoBytes, 0)
+        : null;
+
+    const espacoLivreMB =
+      espacoLivreBytes !== null
+        ? espacoLivreBytes / 1024 / 1024
+        : null;
+
     const percentualUso =
       usoBytes !== null &&
       cotaBytes !== null &&
@@ -68,6 +83,8 @@ export async function diagnosticarArmazenamento(): Promise<DiagnosticoArmazename
       usoMB,
       cotaMB,
       percentualUso,
+      espacoLivreBytes,
+      espacoLivreMB,
     };
   } catch (erro) {
     console.error(
@@ -83,6 +100,8 @@ export async function diagnosticarArmazenamento(): Promise<DiagnosticoArmazename
       usoMB: null,
       cotaMB: null,
       percentualUso: null,
+      espacoLivreBytes: null,
+      espacoLivreMB: null,
     };
   }
 }
@@ -118,4 +137,44 @@ export async function solicitarPersistenciaArmazenamento(): Promise<boolean | nu
 
     return false;
   }
+}
+
+export type EstadoArmazenamento =
+  | "normal"
+  | "alerta"
+  | "indisponivel";
+
+export function avaliarEstadoArmazenamento(
+  diagnostico: DiagnosticoArmazenamento
+): EstadoArmazenamento {
+  if (
+    !diagnostico.suportado ||
+    diagnostico.espacoLivreMB === null ||
+    diagnostico.percentualUso === null
+  ) {
+    return "indisponivel";
+  }
+
+  if (
+    diagnostico.espacoLivreMB < 200 ||
+    diagnostico.percentualUso >= 85
+  ) {
+    return "alerta";
+  }
+
+  return "normal";
+}
+
+export function mensagemEstadoArmazenamento(
+  estado: EstadoArmazenamento
+): string {
+  if (estado === "alerta") {
+    return "⚠️ Espaço de armazenamento reduzido. Faça um backup antes de adicionar novos conteúdos.";
+  }
+
+  if (estado === "normal") {
+    return "✅ Armazenamento em condições normais.";
+  }
+
+  return "Armazenamento não pôde ser verificado neste navegador.";
 }
