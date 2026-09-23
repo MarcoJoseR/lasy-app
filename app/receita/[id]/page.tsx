@@ -231,7 +231,7 @@ if (!carregado) {
   const ingredientesFormatados = formatarIngredientes(receita.ingredientes);
   const preparoFormatado = formatarModoPreparo(receita.modoPreparo);
 
-  function handleAdicionarNaBiblioteca() {
+  async function handleAdicionarNaBiblioteca() {
   if (!receita) return;
 
   const nomeJaExisteNaBiblioteca = receitas.some(
@@ -248,7 +248,8 @@ if (!carregado) {
     return;
   }
 
-  const novaReceita = adicionarNaBiblioteca(receita);
+  const novaReceita =
+  await adicionarNaBiblioteca(receita);
 
 if (receita.tipoConteudo === "carrossel") {
   setMensagemSucesso(

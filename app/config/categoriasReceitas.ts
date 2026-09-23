@@ -21,4 +21,5 @@ export const CATEGORIAS_RECEITAS = [
   "sem-gluten",
   "sobremesa",
   "sopa",
+  "outras",
 ].sort((a, b) => a.localeCompare(b, "pt-BR"));

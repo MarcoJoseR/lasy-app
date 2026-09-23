@@ -16,6 +16,8 @@ import { RECEITAS_INICIAIS } from "@/app/data/dadosIniciais";
 
 import {
   salvarCapaReceita,
+  obterImagensCarrossel,
+  salvarImagensCarrossel,
 } from "@/app/utils/carrosselIndexedDB";
 
 import { inicializarPacoteUsuarios } from "@/app/utils/inicializarPacoteUsuarios";
@@ -98,7 +100,7 @@ interface ReceitasContextType {
   >[]
 ) => boolean;
 
-  adicionarNaBiblioteca: (receita: Receita) => Receita;
+  adicionarNaBiblioteca: (receita: Receita) => Promise<Receita>;
   
   removerReceita: (id: string) => void;
   toggleFavorito: (id: string) => void;
@@ -473,38 +475,94 @@ function adicionarReceitasOficiaisEmLote(
   }
 }
 
-function adicionarNaBiblioteca(receita: Receita): Receita {
+async function adicionarNaBiblioteca(
+  receita: Receita
+): Promise<Receita> {
   const agora = new Date().toISOString();
+
+  const novaReceitaId = crypto.randomUUID();
+
+  let carrosselCopia = receita.carrossel;
+
+  // ========================================================
+  // CRIAR CÓPIA INDEPENDENTE DAS IMAGENS DO CARROSSEL
+  // ========================================================
+
+  if (receita.tipoConteudo === "carrossel") {
+    const chaveOriginal =
+      receita.carrossel?.chaveImagens || "";
+
+    let imagensParaCopiar: string[] = [];
+
+    try {
+      if (chaveOriginal) {
+        imagensParaCopiar =
+          await obterImagensCarrossel(chaveOriginal);
+      } else if (
+        Array.isArray(receita.carrossel?.imagens)
+      ) {
+        imagensParaCopiar =
+          receita.carrossel.imagens;
+      }
+
+      if (imagensParaCopiar.length > 0) {
+        await salvarImagensCarrossel(
+          novaReceitaId,
+          imagensParaCopiar
+        );
+      }
+    } catch (erro) {
+      console.error(
+        "Erro ao copiar imagens do carrossel para Minha Biblioteca:",
+        erro
+      );
+
+      throw erro;
+    }
+
+    carrosselCopia = {
+      ...receita.carrossel,
+      imagens: [],
+      chaveImagens: novaReceitaId,
+      quantidadeImagens: imagensParaCopiar.length,
+    };
+  }
 
   const novaReceita: Receita = {
     ...receita,
-    id: crypto.randomUUID(),
+    id: novaReceitaId,
     tipo: "pessoal",
     colecaoInicial: false,
     favorito: false,
+
+    ...(receita.tipoConteudo === "carrossel"
+      ? {
+          carrossel: carrosselCopia,
+        }
+      : {}),
+
     criadoEm: agora,
     atualizadoEm: agora,
   };
 
   setReceitas((receitasAtuais) => {
-  const receitasAtualizadas = [
-    ...receitasAtuais,
-    novaReceita,
-  ];
+    const receitasAtualizadas = [
+      ...receitasAtuais,
+      novaReceita,
+    ];
 
-  // Grava imediatamente antes de qualquer navegação.
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(receitasAtualizadas)
-  );
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(receitasAtualizadas)
+    );
 
-  return receitasAtualizadas;
-});
+    return receitasAtualizadas;
+  });
 
-return novaReceita;
+  return novaReceita;
 }
 
-   function removerReceita(id: string) {
+  function removerReceita(id: string) {
     setReceitas((receitasAtuais) =>
       receitasAtuais.filter((receita) => receita.id !== id)
     );
@@ -518,7 +576,10 @@ return novaReceita;
         receita.id === id
           ? {
               ...receita,
-              preparacoes: [...(receita.preparacoes || []), agora],
+              preparacoes: [
+                ...(receita.preparacoes || []),
+                agora,
+              ],
             }
           : receita
       )

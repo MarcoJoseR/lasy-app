@@ -51,6 +51,8 @@ import { CATEGORIAS_RECEITAS } from "@/app/config/categoriasReceitas";
 export default function Page() {
     const [nome, setNome] = useState("");
     const [categoria, setCategoria] = useState("");
+    const [subCategoria, setSubCategoria] = useState("");
+    const [origem, setOrigem] = useState("");
     const [imagem, setImagem] = useState("");
     const [ingredientesTexto, setIngredientesTexto] = useState("");
     const [buscaIngredientes, setBuscaIngredientes] = useState("");
@@ -67,7 +69,6 @@ export default function Page() {
     const [porcoes, setPorcoes] = useState("");
     const LIMITE_RECEITAS_SIMILARES = 5;
     const [ordenacao, setOrdenacao] = useState("recentes");  
-    const [subCategoria, setSubCategoria] = useState("");
     const [colecaoInicial, setColecaoInicial] = useState(false);
     
     const [tipoConteudo, setTipoConteudo] = useState<
@@ -176,6 +177,38 @@ useEffect(() => {
     );
   }
 
+function moverImagemCarrosselParaEsquerda(indice: number) {
+  if (indice === 0) return;
+
+  setImagensCarrossel((imagensAtuais) => {
+    const novasImagens = [...imagensAtuais];
+
+    [novasImagens[indice - 1], novasImagens[indice]] = [
+      novasImagens[indice],
+      novasImagens[indice - 1],
+    ];
+
+    return novasImagens;
+  });
+}
+
+function moverImagemCarrosselParaDireita(indice: number) {
+  setImagensCarrossel((imagensAtuais) => {
+    if (indice >= imagensAtuais.length - 1) {
+      return imagensAtuais;
+    }
+
+    const novasImagens = [...imagensAtuais];
+
+    [novasImagens[indice], novasImagens[indice + 1]] = [
+      novasImagens[indice + 1],
+      novasImagens[indice],
+    ];
+
+    return novasImagens;
+  });
+}
+
 function reduzirImagemCarrossel(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -247,9 +280,9 @@ async function adicionarImagensCarrossel(
 
   if (arquivos.length === 0) return;
 
-  if (imagensCarrossel.length + arquivos.length > 15) {
+  if (imagensCarrossel.length + arquivos.length > 20) {
     window.alert(
-      "O carrossel pode manter no máximo 15 imagens."
+      "O carrossel pode manter no máximo 20 imagens."
     );
 
     event.target.value = "";
@@ -429,6 +462,7 @@ function limparImportacao() {
   setNome("");
   setCategoria("");
   setSubCategoria("");
+  setOrigem("");
   setImagem("");
   setColecaoInicial(false);
   setIngredientesTexto("");
@@ -449,6 +483,7 @@ function iniciarEdicao(r: Receita) {
   setNome(r.nome || "");
   setCategoria(r.categoria || "");
   setSubCategoria(r.subCategoria || "");
+  setOrigem(r.origem || "");
   setColecaoInicial(r.colecaoInicial ?? false);
   setImagem(r.imagem || "");
 
@@ -558,6 +593,7 @@ if (
     nome,
     categoria,
     subCategoria,
+    origem,
     imagem,
     posicaoImagemY,
     ingredientes: transformarIngredientes(ingredientesTexto),
@@ -572,6 +608,7 @@ if (
       carrossel: {
         imagens: [],
         titulo: nome,
+        origemUrl: origem,
         chaveImagens: chaveImagensCarrossel,
         quantidadeImagens: imagensCarrossel.length,
       },
@@ -669,6 +706,8 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
     <SecaoDadosGerais
       nome={nome}
       setNome={setNome}
+      origem={origem}
+      setOrigem={setOrigem}
       imagem={imagem}
       setImagem={setImagem}
       posicaoImagemY={posicaoImagemY}
@@ -712,15 +751,40 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
   </p>
 </div>
 
-{tipoConteudo === "carrossel" && imagensCarrossel.length > 0 && (
+<div className="mb-6 grid grid-cols-2 gap-3">
+  <button
+    type="button"
+    onClick={() => setTipoConteudo("receita")}
+    className={`rounded-xl border px-4 py-3 font-semibold transition ${
+      tipoConteudo === "receita"
+        ? "border-emerald-500 bg-emerald-600 text-white"
+        : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+    }`}
+  >
+    📄 Receita
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setTipoConteudo("carrossel")}
+    className={`rounded-xl border px-4 py-3 font-semibold transition ${
+      tipoConteudo === "carrossel"
+        ? "border-emerald-500 bg-emerald-600 text-white"
+        : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+    }`}
+  >
+    📚 Carrossel
+  </button>
+</div>
+
+{tipoConteudo === "carrossel" && (
   <div className="rounded-lg border border-emerald-700 bg-zinc-900 p-4">
     <h3 className="mb-2 text-lg font-semibold text-emerald-300">
-      📚 Carrossel com {imagensCarrossel.length}{" "}
-      {imagensCarrossel.length === 1 ? "imagem" : "imagens"}
+      📚 Carrossel
     </h3>
 
     <p className="mb-4 text-sm text-zinc-400">
-      Imagens armazenadas no carrossel.
+      Selecione até 20 imagens para criar ou completar um carrossel.
     </p>
 
   <div className="mb-4">
@@ -737,7 +801,7 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
     />
 
     <p className="mt-2 text-xs text-zinc-400">
-      Máximo de 15 imagens no carrossel.
+      {imagensCarrossel.length}/20 imagens
     </p>
   </div>
 
@@ -754,9 +818,35 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
           />
 
           <div className="p-2">
-            <p className="mb-2 text-center text-xs text-zinc-300">
-              {indice + 1}/{imagensCarrossel.length}
-            </p>
+            <div className="mb-2 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  moverImagemCarrosselParaEsquerda(indice)
+                }
+                disabled={indice === 0}
+                className="rounded bg-zinc-700 px-2 py-1 text-sm text-white disabled:opacity-30"
+                title="Mover para a esquerda"
+              >
+                ←
+              </button>
+
+              <span className="text-xs text-zinc-300">
+                {indice + 1}/{imagensCarrossel.length}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  moverImagemCarrosselParaDireita(indice)
+                }
+                disabled={indice === imagensCarrossel.length - 1}
+                className="rounded bg-zinc-700 px-2 py-1 text-sm text-white disabled:opacity-30"
+                title="Mover para a direita"
+              >
+                →
+              </button>
+            </div>
 
             <button
               type="button"
@@ -796,7 +886,7 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
 
     <AcoesFormularioReceita
       editando={Boolean(editandoId)}
-      onConfirmar={() => {
+      onConfirmar={async () => {
         if (editandoId) {
           salvarEdicao();
         } else {
@@ -813,9 +903,47 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
             return;
           }
 
+          const novaReceitaId = crypto.randomUUID();
+
+const chaveCarrosselNova =
+  chaveImagensCarrossel || novaReceitaId;
+
+if (
+  tipoConteudo === "carrossel" &&
+  imagensCarrossel.length === 0
+) {
+  window.alert(
+    "O carrossel precisa manter pelo menos uma imagem."
+  );
+  return;
+}
+
+if (
+  tipoConteudo === "carrossel" &&
+  imagensCarrossel.length > 0
+) {
+  try {
+    await salvarImagensCarrossel(
+      chaveCarrosselNova,
+      imagensCarrossel
+    );
+  } catch (erro) {
+    console.error(
+      "Erro ao salvar imagens do novo carrossel na ADM:",
+      erro
+    );
+
+    window.alert(
+      "Não foi possível salvar as imagens do carrossel."
+    );
+
+    return;
+  }
+}
+
           adicionarReceitaOficial({
             ...montarReceita({
-              id: crypto.randomUUID(),
+              id: novaReceitaId,
               nome,
               categoria,
               subCategoria,
@@ -824,11 +952,26 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
               modoPreparoTexto: modoPreparo,
               tempo,
               porcoes,
+              origem,
               favorito: false,
             }),
 
             colecaoInicial,
-            });
+
+            ...(tipoConteudo === "carrossel"
+              ? {
+                  tipoConteudo: "carrossel" as const,
+
+                  carrossel: {
+                    imagens: [],
+                    titulo: nome,
+                    origemUrl: origem,
+                    chaveImagens: chaveCarrosselNova,
+                    quantidadeImagens: imagensCarrossel.length,
+                  },
+                }
+              : {}),
+          });
 
           limparImportacao();
 

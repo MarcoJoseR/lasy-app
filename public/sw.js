@@ -1,4 +1,4 @@
-const VERSION = "v25";
+const VERSION = "v26";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -88,68 +88,128 @@ self.addEventListener("fetch", (event) => {
   // 1. NAVEGAÇÃO NORMAL ENTRE PÁGINAS
   // ==========================================
   if (request.mode === "navigate") {
+  // ==========================================
+  // ENTRADA DO APP:
+  // abre imediatamente pelo cache.
+  // Se houver internet, atualiza em segundo plano.
+  // ==========================================
+  if (
+    url.pathname === "/recepcao" ||
+    url.pathname === "/"
+  ) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const copia = response.clone();
+      (async () => {
+        const paginaCache = await caches.match(url.pathname);
 
-            caches.open(CACHE_PAGINAS).then((cache) => {
-              cache.put(request, copia);
-            });
+        if (paginaCache) {
+          event.waitUntil(
+            fetch(request)
+              .then(async (response) => {
+                if (response && response.status === 200) {
+                  const cache = await caches.open(CACHE_PAGINAS);
+                  await cache.put(
+                    url.pathname,
+                    response.clone()
+                  );
+                }
+              })
+              .catch(() => {
+                // Rede fraca ou indisponível:
+                // o aplicativo já abriu pelo cache.
+              })
+          );
+
+          return paginaCache;
+        }
+
+        try {
+          const response = await fetch(request);
+
+          if (response && response.status === 200) {
+            const cache = await caches.open(CACHE_PAGINAS);
+
+            await cache.put(
+              url.pathname,
+              response.clone()
+            );
           }
 
           return response;
-        })
-        .catch(async () => {
-          if (url.pathname === "/listas-compras/offline") {
-            const listaOffline = await caches.match(
-              "/listas-compras/offline"
-            );
-
-            if (listaOffline) {
-              return listaOffline;
-            }
-          }
-
-          if (url.pathname === "/receita/offline") {
-            const receitaOffline = await caches.match(
-              "/receita/offline"
-            );
-
-            if (receitaOffline) {
-              return receitaOffline;
-            }
-          }
-
-          if (url.pathname === "/minha-receita") {
-              const minhaReceitaOffline = await caches.match(
-                "/minha-receita"
-              );
-
-              if (minhaReceitaOffline) {
-                return minhaReceitaOffline;
-              }
-            }
-
-          const paginaCache = await caches.match(request);
-
-          if (paginaCache) {
-            return paginaCache;
-          }
-
-          const recepcao = await caches.match("/recepcao");
-
-          if (recepcao) {
-            return recepcao;
-          }
-
-          return caches.match("/");
-        })
+        } catch {
+          return caches.match("/recepcao");
+        }
+      })()
     );
 
     return;
   }
+
+  // ==========================================
+  // DEMAIS NAVEGAÇÕES:
+  // mantém o comportamento atual.
+  // ==========================================
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const copia = response.clone();
+
+          caches.open(CACHE_PAGINAS).then((cache) => {
+            cache.put(request, copia);
+          });
+        }
+
+        return response;
+      })
+      .catch(async () => {
+        if (url.pathname === "/listas-compras/offline") {
+          const listaOffline = await caches.match(
+            "/listas-compras/offline"
+          );
+
+          if (listaOffline) {
+            return listaOffline;
+          }
+        }
+
+        if (url.pathname === "/receita/offline") {
+          const receitaOffline = await caches.match(
+            "/receita/offline"
+          );
+
+          if (receitaOffline) {
+            return receitaOffline;
+          }
+        }
+
+        if (url.pathname === "/minha-receita") {
+          const minhaReceitaOffline = await caches.match(
+            "/minha-receita"
+          );
+
+          if (minhaReceitaOffline) {
+            return minhaReceitaOffline;
+          }
+        }
+
+        const paginaCache = await caches.match(request);
+
+        if (paginaCache) {
+          return paginaCache;
+        }
+
+        const recepcao = await caches.match("/recepcao");
+
+        if (recepcao) {
+          return recepcao;
+        }
+
+        return caches.match("/");
+      })
+  );
+
+  return;
+}
 
   // ==========================================
 // 2. NAVEGAÇÃO INTERNA DO NEXT.JS / APP ROUTER

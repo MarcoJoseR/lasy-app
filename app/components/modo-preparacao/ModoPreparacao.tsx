@@ -113,7 +113,7 @@ function formatarTempo(tempoRestante: number) {
   ).padStart(2, "0")}`;
 }
 
-function marcarReceitaRealizada() {
+async function marcarReceitaRealizada() {
   if (receitaRealizada) return;
 
   let receitaIdParaRegistrar = String(receita.id);
@@ -138,7 +138,7 @@ function marcarReceitaRealizada() {
       receitaIdParaRegistrar = String(receitaExistente.id);
     } else {
       const novaReceita =
-        adicionarNaBiblioteca(receitaCompleta);
+        await adicionarNaBiblioteca(receitaCompleta);
 
       receitaIdParaRegistrar = String(novaReceita.id);
     }

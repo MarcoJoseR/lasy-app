@@ -95,6 +95,10 @@ export default function MinhaReceitaPage() {
 // REDUZIR PRINT ANTES DE ARMAZENAR
 // ============================================================
 
+function reduzirImagemCarrossel(file: File): Promise<string> {
+  return reduzirPrint(file);
+}
+
 function reduzirPrint(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -170,6 +174,58 @@ function reduzirPrint(file: File): Promise<string> {
   });
 }
 
+async function selecionarImagensCarrossel(
+  event: React.ChangeEvent<HTMLInputElement>
+) {
+  const arquivos = Array.from(event.target.files || []);
+
+  if (arquivos.length === 0) {
+    return;
+  }
+
+  const totalFinal =
+    imagensCarrossel.length + arquivos.length;
+
+  if (totalFinal > 20) {
+    window.alert(
+      "O carrossel pode ter no máximo 20 imagens."
+    );
+
+    event.target.value = "";
+    return;
+  }
+
+  try {
+    const novasImagens = await Promise.all(
+      arquivos.map((arquivo) =>
+        reduzirImagemCarrossel(arquivo)
+      )
+    );
+
+    setImagensCarrossel((atuais) => [
+      ...atuais,
+      ...novasImagens,
+    ]);
+
+    setTipoConteudo("carrossel");
+
+    if (!chaveImagensCarrossel) {
+      setChaveImagensCarrossel("");
+    }
+
+    event.target.value = "";
+  } catch (erro) {
+    console.error(
+      "Erro ao preparar imagens do carrossel:",
+      erro
+    );
+
+    window.alert(
+      "Não foi possível preparar as imagens do carrossel."
+    );
+  }
+}
+
 async function selecionarPrintsLegenda(
   event: ChangeEvent<HTMLInputElement>
 ) {
@@ -224,6 +280,38 @@ function removerImagemCarrossel(indice: number) {
   setImagensCarrossel((imagensAtuais) =>
     imagensAtuais.filter((_, index) => index !== indice)
   );
+}
+
+function moverImagemCarrosselParaEsquerda(indice: number) {
+  if (indice === 0) return;
+
+  setImagensCarrossel((imagensAtuais) => {
+    const novasImagens = [...imagensAtuais];
+
+    [novasImagens[indice - 1], novasImagens[indice]] = [
+      novasImagens[indice],
+      novasImagens[indice - 1],
+    ];
+
+    return novasImagens;
+  });
+}
+
+function moverImagemCarrosselParaDireita(indice: number) {
+  setImagensCarrossel((imagensAtuais) => {
+    if (indice >= imagensAtuais.length - 1) {
+      return imagensAtuais;
+    }
+
+    const novasImagens = [...imagensAtuais];
+
+    [novasImagens[indice], novasImagens[indice + 1]] = [
+      novasImagens[indice + 1],
+      novasImagens[indice],
+    ];
+
+    return novasImagens;
+  });
 }
 
   // ============================================================
@@ -721,6 +809,36 @@ const [mensagemSucesso, setMensagemSucesso] =
       const novaReceitaId = gerarId();
 
 // ========================================================
+// SALVAR IMAGENS DO NOVO CARROSSEL NO INDEXEDDB
+// ========================================================
+
+const chaveCarrosselNova =
+  chaveImagensCarrossel || novaReceitaId;
+
+if (
+  tipoConteudo === "carrossel" &&
+  imagensCarrossel.length > 0
+) {
+  try {
+    await salvarImagensCarrossel(
+      chaveCarrosselNova,
+      imagensCarrossel
+    );
+  } catch (erro) {
+    console.error(
+      "Erro ao salvar imagens do carrossel:",
+      erro
+    );
+
+    window.alert(
+      "Não foi possível salvar as imagens do carrossel."
+    );
+
+    return;
+  }
+}
+
+// ========================================================
 // SALVAR PRINTS DA RECEITA EM TEXTO NO INDEXEDDB
 // ========================================================
 
@@ -790,7 +908,7 @@ printsLegenda.length > 0
               imagens: [],
               titulo: nome,
               origemUrl: origem,
-              chaveImagens: chaveImagensCarrossel,
+              chaveImagens: chaveCarrosselNova,
               quantidadeImagens: imagensCarrossel.length,
             },  
             }
@@ -836,11 +954,61 @@ printsLegenda.length > 0
       <div className="mx-auto max-w-4xl px-4 py-8">
         <BotaoVoltar />
 
-        <BlocoCriarReceita editando={receitaId !== null} />
+        <BlocoCriarReceita editando={receitaId !== null}>
+          <div className="mb-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setTipoConteudo("receita")}
+              className={`rounded-xl border px-4 py-3 font-semibold transition ${
+                tipoConteudo === "receita"
+                  ? "border-emerald-500 bg-emerald-600 text-white"
+                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+              }`}
+            >
+              📄 Receita
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTipoConteudo("carrossel")}
+              className={`rounded-xl border px-4 py-3 font-semibold transition ${
+                tipoConteudo === "carrossel"
+                  ? "border-emerald-500 bg-emerald-600 text-white"
+                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+              }`}
+            >
+              📚 Carrossel
+            </button>
+          </div>
+        </BlocoCriarReceita>
 
         {/* ====================================================
             AVISO DE CARROSSEL IMPORTADO
         ==================================================== */}
+      {tipoConteudo === "carrossel" && (
+        <div className="mb-6 rounded-xl border border-zinc-700 bg-zinc-900 p-4">
+          <p className="mb-2 font-semibold text-white">
+            📚 Carrossel
+          </p>
+
+          <p className="mb-3 text-sm text-zinc-400">
+            Selecione até 20 imagens para criar ou completar
+            um carrossel.
+          </p>
+
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={selecionarImagensCarrossel}
+            className="block w-full rounded-lg bg-zinc-800 p-3"
+          />
+
+          <p className="mt-2 text-xs text-zinc-500">
+            {imagensCarrossel.length}/20 imagens
+          </p>
+        </div>
+      )}
 
         {tipoConteudo === "carrossel" &&
           imagensCarrossel.length > 0 && (
@@ -853,7 +1021,8 @@ printsLegenda.length > 0
               </p>
 
               <p className="mt-1 text-sm text-zinc-400">
-                A primeira imagem será usada como capa.
+                As imagens serão salvas na ordem selecionada.
+                A capa pode ser escolhida separadamente.
               </p>
 
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -879,9 +1048,35 @@ printsLegenda.length > 0
                     </button>
 
                     <div className="p-2">
-                      <p className="text-center text-xs text-zinc-300">
-                        {indice + 1}/{imagensCarrossel.length}
-                      </p>
+                      <div className="mb-1 flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            moverImagemCarrosselParaEsquerda(indice)
+                          }
+                          disabled={indice === 0}
+                          className="rounded bg-zinc-700 px-2 py-1 text-sm text-white disabled:opacity-30"
+                          title="Mover para a esquerda"
+                        >
+                          ←
+                        </button>
+
+                        <span className="text-xs text-zinc-300">
+                          {indice + 1}/{imagensCarrossel.length}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            moverImagemCarrosselParaDireita(indice)
+                          }
+                          disabled={indice === imagensCarrossel.length - 1}
+                          className="rounded bg-zinc-700 px-2 py-1 text-sm text-white disabled:opacity-30"
+                          title="Mover para a direita"
+                        >
+                          →
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -917,6 +1112,7 @@ printsLegenda.length > 0
         </div>
       )}
 
+        {tipoConteudo === "receita" && (
         <div className="mb-6 rounded-xl border border-zinc-700 bg-zinc-900 p-4">
           <p className="mb-2 font-semibold text-white">
             📄 Prints da legenda
@@ -978,7 +1174,7 @@ printsLegenda.length > 0
             </div>
           )}
         </div>
-
+      )}
         <FormReceita>
           <FormularioReceita>
             <SecaoDadosGerais
@@ -986,6 +1182,8 @@ printsLegenda.length > 0
               setNome={setNome}
               imagem={imagem}
               setImagem={setImagem}
+              origem={origem}
+              setOrigem={setOrigem}
               posicaoImagemY={posicaoImagemY}
               setPosicaoImagemY={setPosicaoImagemY}
               permitirUploadImagem={true}

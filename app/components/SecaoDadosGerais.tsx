@@ -1,6 +1,8 @@
 interface SecaoDadosGeraisProps {
   nome: string;
   setNome: React.Dispatch<React.SetStateAction<string>>;
+  origem: string;
+  setOrigem: React.Dispatch<React.SetStateAction<string>>;
   imagem: string;
   setImagem: React.Dispatch<React.SetStateAction<string>>;
   posicaoImagemY?: number;
@@ -24,6 +26,8 @@ export default function SecaoDadosGerais({
   setImagem,
   posicaoImagemY = 50,
   setPosicaoImagemY = () => {},
+  origem,
+  setOrigem,
   erroNome,
   setErroNome,
   limparTexto,
@@ -151,6 +155,20 @@ function handleSelecionarImagem(
             ⚠️ {erroNome}
           </p>
         )}
+      </div>
+
+      <div className="mb-3">
+        <label className="mb-2 block font-semibold text-white">
+          Link de origem
+        </label>
+
+        <input
+          type="url"
+          placeholder="Cole aqui o link da publicação"
+          value={origem}
+          onChange={(e) => setOrigem(e.target.value)}
+          className={inputClassBase}
+        />
       </div>
 
       {/* ===== INÍCIO DA ALTERAÇÃO ===== */}
