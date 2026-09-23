@@ -34,15 +34,30 @@ export default function ImportarReceitaPage() {
   const [tipoImportacao, setTipoImportacao] =
     useState<TipoImportacao>("receita");
 
-  const [imagensCarrossel, setImagensCarrossel] = useState<string[]>([]);
-  const [nomesImagens, setNomesImagens] = useState<string[]>([]);
-  const [processandoImagens, setProcessandoImagens] = useState(false);
-  const [erroCarrossel, setErroCarrossel] = useState("");
+  const [linkOrigemEditavel, setLinkOrigemEditavel] =
+    useState("");
+
+  const [imagensCarrossel, setImagensCarrossel] =
+    useState<string[]>([]);
+
+  const [nomesImagens, setNomesImagens] =
+    useState<string[]>([]);
+
+  const [processandoImagens, setProcessandoImagens] =
+    useState(false);
+
+  const [erroCarrossel, setErroCarrossel] =
+    useState("");
+
   const [chaveImagensCarrossel, setChaveImagensCarrossel] =
     useState("");
 
   const [alertaArmazenamento, setAlertaArmazenamento] =
     useState(false);
+
+  useEffect(() => {
+    setLinkOrigemEditavel(linkRecebido);
+  }, [linkRecebido]);
 
   useEffect(() => {
     async function verificarArmazenamento() {
@@ -52,14 +67,14 @@ export default function ImportarReceitaPage() {
       const estado =
         avaliarEstadoArmazenamento(diagnostico);
 
-    setAlertaArmazenamento(
+      setAlertaArmazenamento(
         estado === "alerta"
       );
-     }
+    }
 
     verificarArmazenamento();
   }, []);
-
+  
   // ============================================================
   // RECEITA EM TEXTO
   // SEPARAÇÃO DO TEXTO RECEBIDO
@@ -132,8 +147,8 @@ ingredientes = ingredientes
       nome: title,
       ingredientesTexto: ingredientes,
       modoPreparoTexto: modoPreparo,
-      origem: linkRecebido,
-      video: linkRecebido,
+      origem: linkOrigemEditavel.trim(),
+      video: linkOrigemEditavel.trim(),
     };
 
     sessionStorage.setItem(
@@ -315,15 +330,14 @@ ingredientes = ingredientes
 
     const dadosCarrossel = {
       nome: title,
-      origem: linkRecebido,
-      video: linkRecebido,
-
+      origem: linkOrigemEditavel.trim(),
+      video: linkOrigemEditavel.trim(),
       tipoConteudo: "carrossel" as const,
 
       carrossel: {
         imagens: [],
         titulo: title,
-        origemUrl: linkRecebido,
+        origemUrl: linkOrigemEditavel.trim(),
         chaveImagens,
         quantidadeImagens: imagensCarrossel.length,
       },
@@ -441,16 +455,20 @@ ingredientes = ingredientes
           </div>
 
           <div>
-            <p className="mb-1 text-sm font-semibold text-zinc-400">
-              Link recebido
-            </p>
+            <label className="mb-1 block text-sm font-semibold text-zinc-400">
+              Link de origem
+            </label>
 
-            <div className="break-all rounded-lg bg-zinc-900 p-3">
-              {linkRecebido || "Nenhum link recebido"}
-            </div>
+            <input
+              type="url"
+              value={linkOrigemEditavel}
+              onChange={(e) => setLinkOrigemEditavel(e.target.value)}
+              placeholder="Cole aqui o link da publicação"
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-white outline-none focus:border-amber-500"
+            />
           </div>
 
-      {linkRecebido && !ingredientes && !modoPreparo && (
+      {linkOrigemEditavel && !ingredientes && !modoPreparo && (
         <div className="rounded-lg border border-amber-700 bg-amber-950/30 p-4">
           <p className="font-semibold text-amber-300">
             📄 A receita está escrita na legenda da publicação?
@@ -493,9 +511,9 @@ ingredientes = ingredientes
             </p>
 
             <p className="break-all">
-              {linkRecebido || "Nenhum link recebido"}
+              {linkOrigemEditavel || "Nenhum link recebido"}
             </p>
-          </div>
+         </div>
 
           <div>
             <label

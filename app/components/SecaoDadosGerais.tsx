@@ -157,8 +157,8 @@ function handleSelecionarImagem(
         )}
       </div>
 
-      <div className="mb-3">
-        <label className="mb-2 block font-semibold text-white">
+      <div className="mb-2">
+        <label className="mb-1 block text-sm font-medium text-zinc-700">
           Link de origem
         </label>
 

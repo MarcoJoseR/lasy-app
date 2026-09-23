@@ -24,14 +24,20 @@ export default function CardReceita({
   editando,
 }: CardProps) {
   
-  const [imagemReceita, setImagemReceita] = useState(
-  receita.imagem || "/images/categorias/sem-imagem.jpg"
+const [imagemReceita, setImagemReceita] = useState<string | null>(
+  receita.imagem || null
+);
+
+const [carregandoCapa, setCarregandoCapa] = useState(
+  !receita.imagem
 );
 
 useEffect(() => {
   let ativo = true;
 
   async function carregarCapa() {
+    setCarregandoCapa(true);
+
     console.log(
       "CARD CAPA:",
       receita.nome,
@@ -40,9 +46,13 @@ useEffect(() => {
         chaveImagemCapa: receita.chaveImagemCapa,
       }
     );
-    
+
     if (receita.imagem) {
-      setImagemReceita(receita.imagem);
+      if (ativo) {
+        setImagemReceita(receita.imagem);
+        setCarregandoCapa(false);
+      }
+
       return;
     }
 
@@ -61,6 +71,7 @@ useEffect(() => {
 
         if (ativo && capa) {
           setImagemReceita(capa);
+          setCarregandoCapa(false);
           return;
         }
       } catch (error) {
@@ -75,6 +86,7 @@ useEffect(() => {
       setImagemReceita(
         "/images/categorias/sem-imagem.jpg"
       );
+      setCarregandoCapa(false);
     }
   }
 
@@ -92,18 +104,23 @@ useEffect(() => {
     <div className="group relative overflow-hidden rounded-2xl bg-zinc-900 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
       {/* IMAGEM */}
       <div className="relative h-56 w-full overflow-hidden">
-        <img
-          src={imagemReceita}
-          alt={receita.nome}
-          style={{
-            objectPosition: `center ${receita.posicaoImagemY ?? 50}%`,
-          }}
-          onError={(e) => {
-            e.currentTarget.src = "/images/categorias/sem-imagem.jpg";
-          }}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-
+        {carregandoCapa ? (
+          <div className="h-full w-full bg-zinc-800" />
+        ) : (
+          <img
+            src={imagemReceita || "/images/categorias/sem-imagem.jpg"}
+            alt={receita.nome}
+            style={{
+              objectPosition: `center ${receita.posicaoImagemY ?? 50}%`,
+            }}
+            onError={(e) => {
+              e.currentTarget.src =
+                "/images/categorias/sem-imagem.jpg";
+            }}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        )}
+        
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
       {/* TIPO DE CONTEÚDO / CATEGORIA */}
