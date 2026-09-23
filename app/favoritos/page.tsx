@@ -34,10 +34,14 @@ export default function FavoritosPage() {
     {}
   );
 
+  const [capasCarregadas, setCapasCarregadas] = useState(false);
+
 useEffect(() => {
   let ativo = true;
 
   async function carregarCapas() {
+    setCapasCarregadas(false);
+    
     const novasCapas: Record<string, string> = {};
 
     for (const receita of receitas) {
@@ -65,6 +69,7 @@ useEffect(() => {
 
     if (ativo) {
       setCapasIndexedDB(novasCapas);
+      setCapasCarregadas(true);
     }
   }
 
@@ -500,6 +505,10 @@ router.push(`/receita/${receitaId}`);
               titulo="Nenhuma receita encontrada"
               mensagem="Tente buscar por outro nome, ingrediente ou categoria."
             />
+          ) : !capasCarregadas ? (
+            <div className="py-10 text-center text-sm text-zinc-400">
+              Carregando biblioteca...
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {receitasOrdenadas.map((receita) => {
