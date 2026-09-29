@@ -4,7 +4,7 @@ export default function manifest() {
     short_name: "Health",
     description: "Receitas organizadas",
     id: "/recepcao",
-    start_url: "/recepcao",
+    start_url: "/inicio",
     display: "standalone",
     background_color: "#18181b",
     theme_color: "#166534",

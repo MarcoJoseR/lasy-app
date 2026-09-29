@@ -1290,7 +1290,7 @@ const itensOrdenados =
                   : "border-zinc-700 text-zinc-300 hover:bg-zinc-900"
               }`}
             >
-              ▶ Com vídeo
+              ▶ Vídeos
             </button>
 
             <button
@@ -1304,7 +1304,7 @@ const itensOrdenados =
                   : "border-zinc-700 text-zinc-300 hover:bg-zinc-900"
               }`}
             >
-              📄 Com documentos
+              📄 Documentos
             </button>
 
             <button
@@ -1318,7 +1318,7 @@ const itensOrdenados =
                   : "border-zinc-700 text-zinc-300 hover:bg-zinc-900"
               }`}
             >
-              🖼 Com imagens
+              🖼 Imagens
             </button>
 
             <div className="mt-3">
