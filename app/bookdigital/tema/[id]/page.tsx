@@ -1276,7 +1276,7 @@ const itensOrdenados =
                   : "border-zinc-700 text-zinc-300 hover:bg-zinc-900"
               }`}
             >
-              ★ Favoritos
+              ★Favoritos
             </button>
 
             <button
@@ -1290,7 +1290,7 @@ const itensOrdenados =
                   : "border-zinc-700 text-zinc-300 hover:bg-zinc-900"
               }`}
             >
-              ▶ Vídeos
+              ▶Vídeos
             </button>
 
             <button
@@ -1304,7 +1304,7 @@ const itensOrdenados =
                   : "border-zinc-700 text-zinc-300 hover:bg-zinc-900"
               }`}
             >
-              📄 Documentos
+              📄Documentos
             </button>
 
             <button
@@ -1318,7 +1318,7 @@ const itensOrdenados =
                   : "border-zinc-700 text-zinc-300 hover:bg-zinc-900"
               }`}
             >
-              🖼 Imagens
+              🖼Imagens
             </button>
 
             <div className="mt-3">
