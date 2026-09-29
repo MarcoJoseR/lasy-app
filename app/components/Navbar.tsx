@@ -6,6 +6,14 @@ import { usePathname } from "next/navigation";
 export default function Navbar() {
   const pathname = usePathname();
   
+  const ocultarNavbar =
+  pathname === "/inicio" ||
+  pathname.startsWith("/bookdigital");
+
+  if (ocultarNavbar) {
+    return null;
+  }
+
   return (
     <nav className="bg-zinc-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
 

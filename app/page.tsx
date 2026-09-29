@@ -8,7 +8,6 @@ import { useReceitas, type Receita } from "@/app/context/ReceitasContext";
 
 
 // Componentes
-import Header from "@/app/components/Header";
 import ListaReceitas from "@/app/components/ListaReceitas";
 import PainelBusca from "@/app/components/PainelBusca";
 import PainelCategorias from "@/app/components/PainelCategorias";
@@ -364,8 +363,6 @@ function iniciarEdicao(r: Receita) {
     </div>
   </div>
 )}
-      
-    <Header />
 
 <PainelBusca
 	  busca={busca}

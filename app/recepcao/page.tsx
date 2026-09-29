@@ -415,18 +415,18 @@ return (
             </span>
           </Link>
 
-          <div
-            className="flex cursor-default flex-col items-center justify-center gap-1 py-3 text-gray-600"
-            title="Perfil — em breve"
+          <Link
+            href="/inicio"
+            className="flex flex-col items-center justify-center gap-1 py-3 text-gray-400 transition hover:text-white"
           >
             <span className="text-2xl leading-none md:text-3xl">
-              ♙
+              ⬚
             </span>
 
             <span className="text-xs font-semibold md:text-sm">
-              Perfil
+              Módulos
             </span>
-          </div>
+          </Link>
 
         </div>
       </nav>

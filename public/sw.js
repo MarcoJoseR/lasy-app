@@ -1,4 +1,4 @@
-const VERSION = "v26";
+const VERSION = "v27";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -6,9 +6,11 @@ const CACHE_NEXT = `health-receitas-next-${VERSION}`;
 
 const APP_SHELL = [
   "/",
+  "/inicio",
   "/recepcao",
   "/favoritos",
   "/minha-receita",
+  "/bookdigital",
   "/listas-compras/offline",
   "/receita/offline",
   "/sounds/alarme-timer.wav",
@@ -95,8 +97,10 @@ self.addEventListener("fetch", (event) => {
   // ==========================================
   if (
     url.pathname === "/recepcao" ||
-    url.pathname === "/"
-  ) {
+    url.pathname === "/" ||
+    url.pathname === "/inicio" ||
+    url.pathname === "/bookdigital"
+    ) {
     event.respondWith(
       (async () => {
         const paginaCache = await caches.match(url.pathname);
