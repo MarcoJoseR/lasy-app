@@ -158,7 +158,7 @@ async function handleImportarBackupGeral(
             {/* HEALTH */}
             <div className="flex min-h-[240px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-lg">
               <div className="flex-1">
-                <p className="inline-flex rounded-lg bg-white px-3 py-1 text-base font-bold uppercase tracking-wide text-green-700">
+                <p className="inline-flex rounded-lg bg-green-700 px-3 py-1 text-base font-bold uppercase tracking-wide text-white">
                   Health
                 </p>
 
@@ -183,7 +183,7 @@ async function handleImportarBackupGeral(
             {/* BOOKDIGITAL */}
             <div className="flex min-h-[240px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-lg">
               <div className="flex-1">
-                <p className="inline-flex rounded-lg bg-purple-700 px-3 py-1 text-base font-bold uppercase tracking-wide text-white">
+                <p className="inline-flex rounded-lg bg-purple-700 px-3 py-1 text-base font-bold tracking-wide text-white">
                   BaúDigital
                 </p>
 
