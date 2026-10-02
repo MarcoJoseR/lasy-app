@@ -793,7 +793,14 @@ const itensOrdenados =
       <div className="mx-auto max-w-4xl px-4 py-8">
         <button
           type="button"
-          onClick={() => router.push("/bookdigital")}
+          onClick={() => {
+            if (itemEditandoId) {
+              router.push(`/bookdigital/item/${itemEditandoId}`);
+              return;
+            }
+
+            router.push("/bookdigital");
+          }}
           className="mb-6 text-sm text-zinc-400 hover:text-white"
         >
           ← Voltar

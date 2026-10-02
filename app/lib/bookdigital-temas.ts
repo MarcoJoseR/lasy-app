@@ -1,5 +1,9 @@
 import type { Tema } from "@/types/bookdigital";
 
+import {
+  listarItensPorTema,
+} from "@/app/lib/bookdigital-itens";
+
 const CHAVE_TEMAS = "bookdigitalTemas";
 const LIMITE_TEMAS = 9;
 
@@ -135,6 +139,35 @@ export function renomearTema(
 
 export function removerTema(temaId: string) {
   const temas = listarTemas();
+
+  const temaEncontrado = temas.find(
+    (tema) => tema.id === temaId
+  );
+
+  if (!temaEncontrado) {
+    throw new Error(
+      "Tema não encontrado."
+    );
+  }
+
+  const itensDoTema =
+    listarItensPorTema(temaId);
+
+  if (itensDoTema.length > 0) {
+    throw new Error(
+      `O tema "${temaEncontrado.nome}" possui ${
+        itensDoTema.length
+      } ${
+        itensDoTema.length === 1
+          ? "item"
+          : "itens"
+      }. Exclua ou mova ${
+        itensDoTema.length === 1
+          ? "o item"
+          : "os itens"
+      } para outro tema antes de apagar este tema.`
+    );
+  }
 
   const restantes = temas
     .filter((tema) => tema.id !== temaId)
