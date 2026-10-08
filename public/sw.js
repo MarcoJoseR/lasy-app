@@ -1,4 +1,4 @@
-const VERSION = "v27";
+const VERSION = "v28";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -202,6 +202,13 @@ self.addEventListener("fetch", (event) => {
           return paginaCache;
         }
 
+        // Procura a página pela rota, sem parâmetros adicionais.
+        const paginaPelaRota = await caches.match(url.pathname);
+
+        if (paginaPelaRota) {
+          return paginaPelaRota;
+        }
+
         const recepcao = await caches.match("/recepcao");
 
         if (recepcao) {
@@ -224,6 +231,27 @@ const requisicaoNext =
 
 if (requisicaoNext) {
   event.respondWith(fetch(request));
+  return;
+}
+
+if (url.pathname.startsWith("/_next/static/")) {
+  event.respondWith(
+    caches.open(CACHE_NEXT).then(async (cache) => {
+      const cached = await cache.match(request);
+
+      if (cached) {
+        return cached;
+      }
+
+      const response = await fetch(request);
+
+      if (response && response.ok) {
+        await cache.put(request, response.clone());
+      }
+
+      return response;
+    })
+  );
   return;
 }
 

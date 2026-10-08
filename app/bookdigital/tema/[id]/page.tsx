@@ -72,7 +72,9 @@ export default function TemaPage() {
   const params = useParams();
   const router = useRouter();
 
-  const temaId = String(params.id);
+  const temaId = Array.isArray(params.id)
+    ? params.id[0]
+    : String(params.id ?? "");
 
   const [tema, setTema] = useState<Tema | null>(null);
   const [itens, setItens] = useState<ItemBiblioteca[]>([]);
