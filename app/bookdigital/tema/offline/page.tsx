@@ -1,28 +1,24 @@
-
 "use client";
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import TemaBiblioteca from "../TemaBiblioteca";
 
 function ConteudoTemaOffline() {
   const params = useSearchParams();
-  const temaId = params.get("id");
+  const temaId = params.get("id") ?? "";
 
-  return (
-    <main className="min-h-screen bg-black p-8 text-white">
-      <h1 className="text-2xl font-bold">
-        Teste de identificação do Tema
-      </h1>
+  if (!temaId) {
+    return (
+      <main className="min-h-screen bg-black p-8 text-white">
+        <p className="text-zinc-400">
+          Nenhum Tema foi identificado.
+        </p>
+      </main>
+    );
+  }
 
-      <p className="mt-4 text-zinc-400">
-        Identificador recebido:
-      </p>
-
-      <p className="mt-2 break-all text-green-400">
-        {temaId || "Nenhum identificador informado"}
-      </p>
-    </main>
-  );
+  return <TemaBiblioteca temaId={temaId} />;
 }
 
 export default function TemaOfflinePage() {

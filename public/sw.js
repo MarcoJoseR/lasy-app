@@ -1,4 +1,4 @@
-const VERSION = "v28";
+const VERSION = "v29";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -11,6 +11,7 @@ const APP_SHELL = [
   "/favoritos",
   "/minha-receita",
   "/bookdigital",
+  "/bookdigital/tema/offline",
   "/listas-compras/offline",
   "/receita/offline",
   "/sounds/alarme-timer.wav",
@@ -86,6 +87,13 @@ self.addEventListener("fetch", (event) => {
   // Não interfere em recursos de outros domínios.
   if (url.origin !== self.location.origin) return;
 
+// ==========================================
+// IDENTIFICAÇÃO DAS ROTAS DO BAÚDIGITAL
+// ==========================================
+  const rotaTemaBookDigital =
+    /^\/bookdigital\/tema\/[^/]+\/?$/.test(url.pathname) &&
+    url.pathname !== "/bookdigital/tema/offline";
+
   // ==========================================
   // 1. NAVEGAÇÃO NORMAL ENTRE PÁGINAS
   // ==========================================
@@ -96,18 +104,23 @@ self.addEventListener("fetch", (event) => {
   // Se houver internet, atualiza em segundo plano.
   // ==========================================
   if (
-    url.pathname === "/recepcao" ||
-    url.pathname === "/" ||
-    url.pathname === "/inicio" ||
-    url.pathname === "/bookdigital"
-    ) {
+  url.pathname === "/recepcao" ||
+  url.pathname === "/" ||
+  url.pathname === "/inicio" ||
+  url.pathname === "/bookdigital" ||
+  url.pathname === "/bookdigital/tema/offline"
+) {
     event.respondWith(
       (async () => {
         const paginaCache = await caches.match(url.pathname);
 
         if (paginaCache) {
           event.waitUntil(
-            fetch(request)
+            fetch(
+              url.pathname === "/bookdigital/tema/offline"
+                ? "/bookdigital/tema/offline"
+                : request
+            )
               .then(async (response) => {
                 if (response && response.status === 200) {
                   const cache = await caches.open(CACHE_PAGINAS);
@@ -127,7 +140,12 @@ self.addEventListener("fetch", (event) => {
         }
 
         try {
-          const response = await fetch(request);
+          const requisicaoPagina =
+            url.pathname === "/bookdigital/tema/offline"
+              ? "/bookdigital/tema/offline"
+              : request;
+
+          const response = await fetch(requisicaoPagina);
 
           if (response && response.status === 200) {
             const cache = await caches.open(CACHE_PAGINAS);
@@ -166,6 +184,27 @@ self.addEventListener("fetch", (event) => {
         return response;
       })
       .catch(async () => {
+
+        // ==========================================
+        // FALLBACK OFFLINE DOS TEMAS DO BAÚDIGITAL
+        // ==========================================
+
+        if (rotaTemaBookDigital) {
+          const paginaTemaCache = await caches.match(request);
+
+          if (paginaTemaCache) {
+            return paginaTemaCache;
+          }
+
+          const paginaTemaPelaRota = await caches.match(
+            url.pathname
+          );
+
+          if (paginaTemaPelaRota) {
+            return paginaTemaPelaRota;
+          }
+        }
+
         if (url.pathname === "/listas-compras/offline") {
           const listaOffline = await caches.match(
             "/listas-compras/offline"
@@ -223,25 +262,25 @@ self.addEventListener("fetch", (event) => {
 }
 
   // ==========================================
-// 2. NAVEGAÇÃO INTERNA DO NEXT.JS / APP ROUTER
-// ==========================================
-const requisicaoNext =
-  url.searchParams.has("_rsc") ||
-  request.headers.get("RSC") === "1";
+  // 2. NAVEGAÇÃO INTERNA DO NEXT.JS / APP ROUTER
+  // ==========================================
+      const requisicaoNext =
+        url.searchParams.has("_rsc") ||
+        request.headers.get("RSC") === "1";
 
-if (requisicaoNext) {
-  event.respondWith(fetch(request));
-  return;
-}
-
-if (url.pathname.startsWith("/_next/static/")) {
-  event.respondWith(
-    caches.open(CACHE_NEXT).then(async (cache) => {
-      const cached = await cache.match(request);
-
-      if (cached) {
-        return cached;
+      if (requisicaoNext) {
+        event.respondWith(fetch(request));
+        return;
       }
+
+      if (url.pathname.startsWith("/_next/static/")) {
+        event.respondWith(
+          caches.open(CACHE_NEXT).then(async (cache) => {
+            const cached = await cache.match(request);
+
+            if (cached) {
+              return cached;
+            }
 
       const response = await fetch(request);
 

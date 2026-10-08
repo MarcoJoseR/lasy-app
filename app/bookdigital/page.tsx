@@ -183,9 +183,11 @@ function excluirTema(
                 <>
                   <button
                     type="button"
-                    onClick={() =>
-                      router.push(`/bookdigital/tema/${tema.id}`)
-                    }
+                    onClick={() => {
+                      window.location.assign(
+                        `/bookdigital/tema/offline?id=${encodeURIComponent(tema.id)}`
+                      );
+                    }}
                     className="min-h-12 w-full px-1 py-2 text-base font-bold text-white"
                   >
                     {tema.nome}
