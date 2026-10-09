@@ -1,4 +1,4 @@
-const VERSION = "v29";
+const VERSION = "v31";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -12,19 +12,80 @@ const APP_SHELL = [
   "/minha-receita",
   "/bookdigital",
   "/bookdigital/tema/offline",
+  "/bookdigital/item/offline",
   "/listas-compras/offline",
   "/receita/offline",
   "/sounds/alarme-timer.wav",
 ];
 
+// ==========================================
+// INSTALAÇÃO E PREPARAÇÃO DO CACHE OFFLINE
+// ==========================================
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_PAGINAS).then((cache) => {
-      return cache.addAll(APP_SHELL);
-    })
-  );
+    (async () => {
+      // 1. Armazena as páginas principais.
+      const cachePaginas = await caches.open(
+        CACHE_PAGINAS
+      );
 
-  self.skipWaiting();
+      await cachePaginas.addAll(APP_SHELL);
+
+      
+      // 2. Recupera o HTML das páginas offline
+      // dos Temas e Itens do BaúDigital.
+      const paginasOffline = [
+        "/bookdigital/tema/offline",
+        "/bookdigital/item/offline",
+      ];
+
+      const arquivosEncontrados = new Set();
+
+      for (const rota of paginasOffline) {
+        const paginaOffline = await cachePaginas.match(rota);
+
+        if (!paginaOffline || !paginaOffline.ok) {
+          throw new Error(
+            `Página offline indisponível: ${rota}`
+          );
+        }
+
+        const html = await paginaOffline.text();
+
+        // 3. Identifica os arquivos JavaScript
+        // e CSS utilizados pela página.
+        const arquivosPagina = Array.from(
+          html.matchAll(
+            /\/_next\/static\/[^"'<>\s]+?\.(?:js|css)/g
+          ),
+          (resultado) => resultado[0]
+        );
+
+        if (arquivosPagina.length === 0) {
+          throw new Error(
+            `Recursos estáticos não encontrados: ${rota}`
+          );
+        }
+
+        arquivosPagina.forEach((arquivo) => {
+          arquivosEncontrados.add(arquivo);
+        });
+      }
+
+      // 4. Armazena os recursos das duas páginas
+      // no cache da versão atual.
+      const arquivos = Array.from(arquivosEncontrados);
+
+      const cacheNext = await caches.open(CACHE_NEXT);
+
+      await cacheNext.addAll(arquivos);
+
+      // 5. Somente permite a ativação
+      // após preparar os recursos essenciais.
+      await self.skipWaiting();
+    })()
+  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -94,21 +155,31 @@ self.addEventListener("fetch", (event) => {
     /^\/bookdigital\/tema\/[^/]+\/?$/.test(url.pathname) &&
     url.pathname !== "/bookdigital/tema/offline";
 
+
+  const rotaItemBookDigital =
+    /^\/bookdigital\/item\/[^/]+\/?$/.test(url.pathname) &&
+    url.pathname !== "/bookdigital/item/offline";
+
+
   // ==========================================
   // 1. NAVEGAÇÃO NORMAL ENTRE PÁGINAS
   // ==========================================
+ 
   if (request.mode === "navigate") {
+
   // ==========================================
   // ENTRADA DO APP:
   // abre imediatamente pelo cache.
   // Se houver internet, atualiza em segundo plano.
   // ==========================================
+ 
   if (
   url.pathname === "/recepcao" ||
   url.pathname === "/" ||
   url.pathname === "/inicio" ||
   url.pathname === "/bookdigital" ||
-  url.pathname === "/bookdigital/tema/offline"
+  url.pathname === "/bookdigital/tema/offline" ||
+  url.pathname === "/bookdigital/item/offline"
 ) {
     event.respondWith(
       (async () => {
@@ -202,6 +273,33 @@ self.addEventListener("fetch", (event) => {
 
           if (paginaTemaPelaRota) {
             return paginaTemaPelaRota;
+          }
+        }
+
+        // ==========================================
+        // FALLBACK OFFLINE DOS ITENS DO BAÚDIGITAL
+        // ==========================================
+        if (rotaItemBookDigital) {
+          const paginaItemCache = await caches.match(request);
+
+          if (paginaItemCache) {
+            return paginaItemCache;
+          }
+
+          const paginaItemPelaRota = await caches.match(
+            url.pathname
+          );
+
+          if (paginaItemPelaRota) {
+            return paginaItemPelaRota;
+          }
+
+          const paginaItemOffline = await caches.match(
+            "/bookdigital/item/offline"
+          );
+
+          if (paginaItemOffline) {
+            return paginaItemOffline;
           }
         }
 

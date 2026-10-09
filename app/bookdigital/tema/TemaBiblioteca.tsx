@@ -1426,9 +1426,14 @@ const itensOrdenados =
                 <div className="mt-auto flex flex-wrap gap-2 pt-4">
                   <button
                     type="button"
-                    onClick={() =>
-                      router.push(`/bookdigital/item/${item.id}`)
-                    }
+                    onClick={() => {
+                      const destino = navigator.onLine
+                        ? `/bookdigital/item/${item.id}`
+                        : `/bookdigital/item/offline?id=${encodeURIComponent(item.id)}`;
+
+                      window.location.assign(destino);
+                    }}
+
                     className="rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500"
                   >
                     VER
