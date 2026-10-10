@@ -3,6 +3,7 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { salvarImagensCarrossel } from "@/app/utils/carrosselIndexedDB";
+import { salvarLinkPendente } from "@/app/lib/links-pendentes";
 
 import {
   diagnosticarArmazenamento,
@@ -141,6 +142,30 @@ ingredientes = ingredientes
   // ============================================================
   // TRANSFERÊNCIA DA RECEITA EM TEXTO PARA O FORMULÁRIO
   // ============================================================
+
+
+function guardarLinkParaDepois() {
+  const link = linkOrigemEditavel.trim();
+
+  if (!link) {
+    window.alert("Informe ou cole um link para guardar.");
+    return;
+  }
+
+  try {
+    salvarLinkPendente(link, title);
+
+    window.alert(
+      "✅ Link guardado com sucesso! Você poderá organizá-lo depois."
+    );
+  } catch (erro) {
+    console.error("Erro ao guardar link:", erro);
+
+    window.alert(
+      "Não foi possível guardar o link. Verifique o endereço e tente novamente."
+    );
+  }
+}
 
   function continuarParaFormulario() {
     const dadosImportados = {
@@ -480,6 +505,14 @@ ingredientes = ingredientes
           </p>
         </div>
       )}
+
+          <button
+            type="button"
+            onClick={guardarLinkParaDepois}
+            className="w-full rounded-lg bg-green-700 px-4 py-3 font-semibold text-white hover:bg-green-600"
+          >
+            📌 Guardar link para depois
+          </button>
 
           <button
             type="button"

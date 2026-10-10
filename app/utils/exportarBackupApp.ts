@@ -13,6 +13,11 @@ import {
   obterDocumento,
 } from "@/app/lib/bookdigital-arquivos";
 
+import {
+  listarLinksPendentes,
+  type LinkPendente,
+} from "@/app/lib/links-pendentes";
+
 type BackupAppV1 = {
   app: "Health";
   tipo: "backup-geral-app";
@@ -63,6 +68,8 @@ type BackupAppV1 = {
         }
       >;
     };
+
+    linksPendentes: LinkPendente[];
   };
 };
 
@@ -418,6 +425,8 @@ export async function exportarBackupApp() {
           documentosIndexedDB:
             documentosBookDigitalIndexedDB,
         },
+
+        linksPendentes: listarLinksPendentes(),
       },
     };
 
@@ -516,6 +525,9 @@ export async function exportarBackupApp() {
             documentosBookDigitalIndexedDB
           ).length,
       },
+
+        linksPendentes:
+          backup.dados.linksPendentes.length,
     };
   } catch (erro) {
     console.error(

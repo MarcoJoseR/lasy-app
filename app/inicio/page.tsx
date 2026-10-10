@@ -47,13 +47,14 @@ async function handleExportarBackupGeral() {
         `${resultado.bookdigital?.itens ?? 0} itens\n` +
         `${resultado.bookdigital?.capas ?? 0} capas\n` +
         `${resultado.bookdigital?.imagens ?? 0} conjuntos de imagens\n` +
-        `${resultado.bookdigital?.documentos ?? 0} documentos`
+        `${resultado.bookdigital?.documentos ?? 0} documentos\n\n` +
+        `LINKS PENDENTES\n` +
+        `${resultado.linksPendentes ?? 0} links guardados`
     );
   } finally {
     setExportandoBackup(false);
   }
 }
-
 async function handleImportarBackupGeral(
   event: React.ChangeEvent<HTMLInputElement>
 ) {
@@ -89,9 +90,12 @@ async function handleImportarBackupGeral(
         `${resultado.bookdigital.capas} capas\n` +
         `${resultado.bookdigital.imagens} conjuntos de imagens\n` +
         `${resultado.bookdigital.documentos} documentos\n\n` +
+        `LINKS PENDENTES\n` +
+        `${resultado.linksPendentes ?? 0} links guardados\n\n` +
         `ATENÇÃO:\n` +
-        `Os dados pessoais atuais serão substituídos pelos dados deste backup.\n\n` +
-        `Deseja continuar?`
+                `Os dados pessoais atuais serão substituídos pelos dados deste backup.\n` +
+                `Exceção: se o backup antigo não contiver Links Pendentes, os links atuais serão preservados.\n\n` +
+                `Deseja continuar?`
     );
 
     if (!confirmar) {
@@ -206,6 +210,34 @@ async function handleImportarBackupGeral(
             </div>
           </div>
         
+
+            {/* CAPTURA RÁPIDA DE LINKS */}
+            <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+              <h2 className="text-lg font-bold text-white">
+                📌 Captura Rápida
+              </h2>
+
+              <p className="mt-2 text-sm text-zinc-400">
+                Encontrou algo interessante? Guarde o link agora
+                e organize depois.
+              </p>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Link
+                  href="/captura-rapida"
+                  className="rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-orange-600"
+                >
+                  Guardar link
+                </Link>
+
+                <Link
+                  href="/links-pendentes"
+                  className="rounded-xl bg-zinc-700 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-zinc-600"
+                >
+                  Ver links pendentes
+                </Link>
+              </div>
+            </div>
 
         {/* DADOS / BACKUP */}
         <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">

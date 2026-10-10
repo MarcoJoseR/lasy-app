@@ -63,6 +63,14 @@ type BackupGeralAppV1 = {
         DocumentoBackup
       >;
     };
+    
+    linksPendentes?: {
+      id: string;
+      titulo: string;
+      url: string;
+      criadoEm: string;
+      status: "pendente";
+    }[];
   };
 };
 
@@ -85,6 +93,8 @@ export type ResultadoValidacaoBackupApp = {
     imagens: number;
     documentos: number;
   };
+  
+  linksPendentes?: number;
 
   backup?: BackupGeralAppV1;
 };
@@ -192,6 +202,51 @@ export async function validarBackupApp(
 
     const bookdigital =
       dados?.dados?.bookdigital;
+
+      const linksPendentes =
+        dados?.dados?.linksPendentes;
+
+      if (
+        linksPendentes !== undefined &&
+        (
+          !Array.isArray(linksPendentes) ||
+          !linksPendentes.every(
+            (link) =>
+              link !== null &&
+              typeof link === "object" &&
+              typeof link.id === "string" &&
+              link.id.trim() !== "" &&
+              typeof link.titulo === "string" &&
+              typeof link.url === "string" &&
+              /^https?:\/\/\S+$/i.test(link.url) &&
+              typeof link.criadoEm === "string" &&
+              !Number.isNaN(Date.parse(link.criadoEm)) &&
+              link.status === "pendente"
+          )
+        )
+      ) {
+        return {
+          valido: false,
+          mensagem:
+            "O backup possui Links Pendentes inválidos.",
+
+          health: {
+            receitas: 0,
+            listas: 0,
+            carrosseis: 0,
+            prints: 0,
+            capas: 0,
+          },
+
+          bookdigital: {
+            temas: 0,
+            itens: 0,
+            capas: 0,
+            imagens: 0,
+            documentos: 0,
+          },
+        };
+      }
 
     if (
       !health ||
@@ -322,6 +377,11 @@ export async function validarBackupApp(
               ).length
             : 0,
       },
+
+      linksPendentes:
+        Array.isArray(linksPendentes)
+          ? linksPendentes.length
+          : 0,
 
       backup:
         dados as BackupGeralAppV1,
@@ -508,6 +568,20 @@ export async function restaurarBackupApp(
       await salvarDocumento(
         chave,
         blob
+      );
+    }
+
+    // ============================================================
+    // 6. RESTAURA LINKS PENDENTES
+    // ============================================================
+
+    const linksPendentes =
+      backup.dados.linksPendentes;
+
+    if (Array.isArray(linksPendentes)) {
+      localStorage.setItem(
+        "healthLinksPendentes",
+        JSON.stringify(linksPendentes)
       );
     }
 

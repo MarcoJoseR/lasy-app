@@ -1,4 +1,4 @@
-const VERSION = "v31";
+const VERSION = "v32";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -10,6 +10,9 @@ const APP_SHELL = [
   "/recepcao",
   "/favoritos",
   "/minha-receita",
+  "/importar-receita",
+  "/captura-rapida",
+  "/links-pendentes",
   "/bookdigital",
   "/bookdigital/tema/offline",
   "/bookdigital/item/offline",
@@ -32,12 +35,14 @@ self.addEventListener("install", (event) => {
 
       await cachePaginas.addAll(APP_SHELL);
 
-      
-      // 2. Recupera o HTML das páginas offline
-      // dos Temas e Itens do BaúDigital.
+      // 2. Identifica os recursos necessários
+      // para funcionamento offline destas páginas.
       const paginasOffline = [
         "/bookdigital/tema/offline",
         "/bookdigital/item/offline",
+        "/captura-rapida",
+        "/links-pendentes",
+        "/importar-receita",
       ];
 
       const arquivosEncontrados = new Set();
