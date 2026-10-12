@@ -1,12 +1,13 @@
 const DB_NAME = "bookdigital-arquivos-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_DOCUMENTOS = "documentos-itens";
+const STORE_AUDIOS = "audios-itens";
 
 // ============================================================
 // ABRIR BANCO
 // ============================================================
 
-function abrirBanco(): Promise<IDBDatabase> {
+export function abrirBanco(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const requisicao = indexedDB.open(
       DB_NAME,
@@ -23,6 +24,16 @@ function abrirBanco(): Promise<IDBDatabase> {
       ) {
         db.createObjectStore(
           STORE_DOCUMENTOS
+        );
+      }
+
+      if (
+        !db.objectStoreNames.contains(
+          STORE_AUDIOS
+        )
+      ) {
+        db.createObjectStore(
+          STORE_AUDIOS
         );
       }
     };

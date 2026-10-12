@@ -31,7 +31,11 @@ export interface ItemBiblioteca {
   origem?: string;
   video?: string;
   links?: string[];
-
+  
+  chaveAudio?: string;
+  chavesAudios?: string[];
+  referenciasAudios?: Record<string, string>;
+  
   favorito?: boolean;
 
   criadoEm: string;

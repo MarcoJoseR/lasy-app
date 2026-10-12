@@ -25,6 +25,10 @@ import {
   obterDocumento,
 } from "@/app/lib/bookdigital-arquivos";
 
+import {
+  obterAudio,
+} from "@/app/lib/bookdigital-audios";
+
 function formatarData(data?: string) {
   if (!data) return "—";
 
@@ -70,6 +74,10 @@ export default function ItemBiblioteca({
 
   const [imagemCapa, setImagemCapa] = useState("");
 
+  const [audiosExistentes, setAudiosExistentes] = useState<
+    { chave: string; url: string }[]
+  >([]);
+
   const [indiceImagem, setIndiceImagem] =
       useState(0);
 
@@ -86,6 +94,7 @@ export default function ItemBiblioteca({
 
   useEffect(() => {
     const urlsCriadas: string[] = [];
+    let cancelado = false;
     
     const itens = listarItens();
 
@@ -100,7 +109,52 @@ export default function ItemBiblioteca({
 
     setItem(itemEncontrado);
 
-setDocumentosAbertos([]);
+    setAudiosExistentes([]);
+
+    const chavesAudios = [...new Set([
+      ...(itemEncontrado.chaveAudio
+        ? [itemEncontrado.chaveAudio]
+        : []),
+      ...(itemEncontrado.chavesAudios ?? []),
+    ])];
+
+    Promise.all(
+      chavesAudios.map(async (chave) => {
+        const arquivo = await obterAudio(chave);
+
+        if (!arquivo) return null;
+
+        const url = URL.createObjectURL(arquivo);
+
+        urlsCriadas.push(url);
+
+        return {
+          chave,
+          url,
+        };
+      })
+    )
+      .then((audiosCarregados) => {
+        if (cancelado) {
+          return;
+        }
+        setAudiosExistentes(
+          audiosCarregados.filter(
+            (audio): audio is {
+              chave: string;
+              url: string;
+            } => audio !== null
+          )
+        );
+      })
+      .catch((erro) => {
+        console.error(
+          "Erro ao carregar áudios do item:",
+          erro
+        );
+      });
+
+    setDocumentosAbertos([]);
 
 if (itemEncontrado.documentos?.length) {
   Promise.all(
@@ -205,6 +259,8 @@ if (itemEncontrado.chaveImagemCapa) {
     setCarregando(false);
   
     return () => {
+      cancelado = true;
+      
       urlsCriadas.forEach((url) => {
         URL.revokeObjectURL(url);
       });
@@ -276,6 +332,21 @@ if (itemEncontrado.chaveImagemCapa) {
       )}
 
     <div className="mx-auto max-w-4xl px-4 py-8">
+      {!imagemCapa && (
+        <>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="mb-6 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-900"
+          >
+            ← Voltar
+          </button>
+
+          <h1 className="mb-4 text-2xl font-bold text-white">
+            {item.titulo}
+          </h1>
+        </>
+      )}
         {tema && (
           <p className="text-sm font-medium text-purple-400">
             {tema.nome}
@@ -294,7 +365,41 @@ if (itemEncontrado.chaveImagemCapa) {
           </div>
         )}
 
-        {item.palavrasChave.length > 0 && (
+      {/* ÁUDIOS DO ITEM */}
+      {audiosExistentes.length > 0 && (
+        <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+          <h2 className="text-sm font-semibold text-zinc-300">
+            Áudios do item
+          </h2>
+
+          <div className="mt-4 space-y-4">
+            {audiosExistentes.map((audio, indice) => (
+              <div key={audio.chave}>
+                <p className="mb-2 text-xs text-zinc-400">
+                  Gravação {indice + 1}
+                </p>
+
+                {item.referenciasAudios?.[audio.chave] && (
+                  <p className="mb-3 text-sm text-white">
+                    {item.referenciasAudios[audio.chave]}
+                  </p>
+                )}
+
+                <audio
+                  controls
+                  src={audio.url}
+                  className="w-full"
+                >
+                  Seu navegador não oferece suporte à reprodução de áudio.
+                </audio>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+  {item.palavrasChave.length > 0 && (
+  
   <div className="mt-6">
     <p className="text-sm font-semibold text-zinc-300">
       Palavras-chave

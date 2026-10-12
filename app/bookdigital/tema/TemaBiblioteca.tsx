@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type {
@@ -34,6 +34,11 @@ import {
   salvarDocumento,
   obterDocumento,
 } from "@/app/lib/bookdigital-arquivos";
+
+import {
+  salvarAudio,
+  obterAudio,
+} from "@/app/lib/bookdigital-audios";
 
 import {
   adicionarLinkNaLista,
@@ -127,6 +132,74 @@ export default function TemaBiblioteca({
   const [documentos, setDocumentos] =
   useState<File[]>([]);
 
+  // ============================================================
+  // ÁUDIO DO ITEM
+  // ============================================================
+
+  const [audioGravado, setAudioGravado] =
+    useState<Blob | null>(null);
+
+    const [urlAudioGravado, setUrlAudioGravado] = useState<string | null>(null);
+
+useEffect(() => {
+  if (!audioGravado) {
+    setUrlAudioGravado(null);
+    return;
+  }
+
+  const url = URL.createObjectURL(audioGravado);
+  setUrlAudioGravado(url);
+
+  return () => {
+    URL.revokeObjectURL(url);
+  };
+}, [audioGravado]);
+
+  const [gravandoAudio, setGravandoAudio] =
+    useState(false);
+
+  const [audioPausado, setAudioPausado] =
+    useState(false);
+
+  const [finalizandoAudio, setFinalizandoAudio] =
+    useState(false);
+
+  const finalizandoAudioRef = useRef(false);
+
+  const [chaveAudio, setChaveAudio] =
+    useState<string | null>(null);
+
+  const [audiosExistentes, setAudiosExistentes] = useState<
+    { chave: string; url: string; referencia?: string }[]
+  >([]);
+
+  const carregamentoAudiosRef = useRef(0);
+
+  const urlsAudiosExistentesRef = useRef<string[]>([]);
+
+    // ============================================================
+  // CONTROLE DO GRAVADOR DE ÁUDIO
+  // ============================================================
+
+  const gravadorRef =
+    useRef<MediaRecorder | null>(null);
+
+  const microfoneRef =
+    useRef<MediaStream | null>(null);
+
+  const partesAudioRef =
+    useRef<Blob[]>([]);  
+
+  // ============================================================
+  // CONTROLE DE CANCELAMENTO DO ÁUDIO
+  // ============================================================
+
+  const cancelarAudioRef = useRef(false);
+
+  const solicitacaoMicrofoneRef = useRef(0);
+
+  const solicitandoMicrofoneRef = useRef(false);
+
   const [itemEditandoId, setItemEditandoId] =
     useState<string | null>(null);
 
@@ -140,8 +213,9 @@ export default function TemaBiblioteca({
   >("recentes");
 
 function iniciarNovoItem() {
+  cancelarGravacaoAudio();
+  limparAudiosExistentes();
   setItemEditandoId(null);
-
   setTitulo("");
   setDescricao("");
   setPalavrasChave("");
@@ -158,10 +232,325 @@ function iniciarNovoItem() {
 
   setDocumentos([]);
 
+  setAudioGravado(null);
+  setGravandoAudio(false);
+  setChaveAudio(null);
+
   setTemaDestinoId(temaId);
 
   setErro("");
   setMostrarFormulario(true);
+}
+
+async function iniciarGravacaoAudio() {
+  if (
+    gravadorRef.current ||
+    gravandoAudio ||
+    solicitandoMicrofoneRef.current
+  ) {
+    return;
+  }
+
+  solicitandoMicrofoneRef.current = true;
+
+  const numeroSolicitacao =
+    ++solicitacaoMicrofoneRef.current;
+
+  cancelarAudioRef.current = false;
+
+  try {
+    setErro("");
+
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
+      setErro(
+        "A gravação de áudio não está disponível neste navegador."
+      );
+      return;
+    }
+
+    const microfone =
+      await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+
+      solicitandoMicrofoneRef.current = false;
+
+    // Verifica se a solicitação foi cancelada
+    // enquanto aguardava a permissão.
+
+    if (
+      cancelarAudioRef.current ||
+      numeroSolicitacao !==
+        solicitacaoMicrofoneRef.current
+    ) {
+      microfone.getTracks().forEach(
+        (trilha) => trilha.stop()
+      );
+      return;
+    }
+
+    microfoneRef.current = microfone;
+    partesAudioRef.current = [];
+
+    const gravador =
+      new MediaRecorder(microfone);
+
+    gravadorRef.current = gravador;
+
+    gravador.ondataavailable = (evento) => {
+      if (evento.data.size > 0) {
+        partesAudioRef.current.push(
+          evento.data
+        );
+      }
+    };
+        
+    gravador.onstop = () => {
+      const partes = partesAudioRef.current;
+
+      const gravacaoValida =
+        !cancelarAudioRef.current &&
+        gravadorRef.current === gravador &&
+        partes.length > 0;
+
+      if (gravacaoValida) {
+        const audio = new Blob(partes, {
+          type:
+            gravador.mimeType ||
+            partes[0].type ||
+            "audio/webm",
+        });
+
+        setAudioGravado(audio);
+      }
+
+      // Libera o microfone desta gravação.
+      microfone.getTracks().forEach(
+        (trilha) => trilha.stop()
+      );
+
+      // Evita que um gravador antigo
+      // altere uma gravação mais recente.
+      if (gravadorRef.current === gravador) {
+        microfoneRef.current = null;
+        gravadorRef.current = null;
+        partesAudioRef.current = [];
+
+        finalizandoAudioRef.current = false;
+        setFinalizandoAudio(false);
+        setGravandoAudio(false);
+        setAudioPausado(false);
+
+        if (
+          !cancelarAudioRef.current &&
+          !gravacaoValida
+        ) {
+          setErro(
+            "A gravação terminou sem produzir áudio."
+          );
+        }
+      }
+    };
+
+    gravador.onerror = () => {
+      // Libera o microfone
+      microfone.getTracks().forEach(
+        (trilha) => trilha.stop()
+      );
+
+      // Limpa apenas o gravador correspondente
+      if (gravadorRef.current === gravador) {
+        microfoneRef.current = null;
+        gravadorRef.current = null;
+        partesAudioRef.current = [];
+
+        // Libera o controle de finalização
+        finalizandoAudioRef.current = false;
+        setFinalizandoAudio(false);
+
+        setGravandoAudio(false);
+        setAudioGravado(null);
+
+        setErro(
+          "Ocorreu um erro durante a gravação. Tente novamente."
+        );
+      }
+    };
+    
+    gravador.start();
+
+    setAudioPausado(false);
+    setFinalizandoAudio(false);
+    finalizandoAudioRef.current = false;
+
+    setGravandoAudio(true);
+
+  } catch (error) {
+    if (
+      numeroSolicitacao !==
+      solicitacaoMicrofoneRef.current
+    ) {
+      return;
+    }
+
+    microfoneRef.current
+      ?.getTracks()
+      .forEach((trilha) => trilha.stop());
+
+    microfoneRef.current = null;
+    gravadorRef.current = null;
+    partesAudioRef.current = [];
+
+    setGravandoAudio(false);
+
+    if (!cancelarAudioRef.current) {
+      setErro(
+        "Não foi possível iniciar a gravação. Verifique a permissão do microfone."
+      );
+    }
+    } finally {
+    if (
+      numeroSolicitacao ===
+      solicitacaoMicrofoneRef.current
+    ) {
+      solicitandoMicrofoneRef.current = false;
+    }
+  }
+}
+
+// ============================================================
+// PARAR GRAVAÇÃO DE ÁUDIO
+// ============================================================
+
+function pararGravacaoAudio() {
+  const gravador = gravadorRef.current;
+
+  if (!gravador) {
+    return;
+  }
+
+  if (
+    gravador.state === "recording" ||
+    gravador.state === "paused"
+  ) {
+    try {
+      // Bloqueia o salvamento enquanto
+      // o arquivo está sendo finalizado.
+      finalizandoAudioRef.current = true;
+      setFinalizandoAudio(true);
+
+      gravador.stop();
+    } catch (error) {
+      console.error(
+        "Erro ao parar a gravação:",
+        error
+      );
+
+      microfoneRef.current
+        ?.getTracks()
+        .forEach((trilha) => trilha.stop());
+
+      microfoneRef.current = null;
+      gravadorRef.current = null;
+      partesAudioRef.current = [];
+
+      finalizandoAudioRef.current = false;
+      setFinalizandoAudio(false);
+      setGravandoAudio(false);
+
+      setErro(
+        "Não foi possível finalizar a gravação."
+      );
+    }
+  }
+}
+
+// ============================================================
+// PAUSAR GRAVAÇÃO
+// ============================================================
+
+function pausarGravacaoAudio() {
+  const gravador = gravadorRef.current;
+
+  if (!gravador || gravador.state !== "recording") {
+    return;
+  }
+
+  try {
+    gravador.pause();
+    setAudioPausado(true);
+    setGravandoAudio(false);
+  } catch (error) {
+    console.error("Erro ao pausar gravação:", error);
+    setErro("Não foi possível pausar a gravação.");
+  }
+}
+
+// ============================================================
+// CONTINUAR GRAVAÇÃO
+// ============================================================
+
+function continuarGravacaoAudio() {
+  const gravador = gravadorRef.current;
+
+  if (!gravador || gravador.state !== "paused") {
+    return;
+  }
+
+  try {
+    gravador.resume();
+    setAudioPausado(false);
+    setGravandoAudio(true);
+  } catch (error) {
+    console.error("Erro ao continuar gravação:", error);
+    setErro("Não foi possível continuar a gravação.");
+  }
+}
+
+ // ============================================================
+ // CANCELAR GRAVAÇÃO DE ÁUDIO
+ // ============================================================
+
+function cancelarGravacaoAudio() {
+  // Invalida solicitações de microfone pendentes.
+  solicitacaoMicrofoneRef.current += 1;
+
+  // Impede que o áudio seja guardado ao parar.
+  cancelarAudioRef.current = true;
+  solicitandoMicrofoneRef.current = false;
+
+  const gravador = gravadorRef.current;
+
+  if (gravador && gravador.state !== "inactive") {
+    try {
+      gravador.stop();
+    } catch (error) {
+      console.error(
+        "Erro ao cancelar gravação:",
+        error
+      );
+    }
+  }
+
+  // Libera o microfone.
+  microfoneRef.current
+    ?.getTracks()
+    .forEach((trilha) => trilha.stop());
+
+  microfoneRef.current = null;
+  gravadorRef.current = null;
+  partesAudioRef.current = [];
+
+  finalizandoAudioRef.current = false;
+  setFinalizandoAudio(false);
+
+  setGravandoAudio(false);
+  setAudioPausado(false);
+  setAudioGravado(null);
 }
 
   function limparFormularioItem() {
@@ -181,11 +570,15 @@ function iniciarNovoItem() {
 
   setDocumentos([]);
 
+  setAudioGravado(null);
+  setGravandoAudio(false);
+  setChaveAudio(null);
+
   setTemaDestinoId("");
   setItemEditandoId(null);
 
   setErro("");
-}
+ }
 
   function adicionarLink() {
   setLinks((anteriores) =>
@@ -312,6 +705,45 @@ function moverImagemItem(
     setCarregando(false);
   }, [temaId]);
 
+  // ============================================================
+  // LIBERAR MICROFONE AO SAIR DO TEMA
+  // ============================================================
+
+  useEffect(() => {
+    return () => {
+      // Invalida permissões de microfone pendentes.
+      solicitacaoMicrofoneRef.current += 1;
+      cancelarAudioRef.current = true;
+
+      const gravador = gravadorRef.current;
+
+      if (gravador) {
+        gravador.ondataavailable = null;
+        gravador.onstop = null;
+        gravador.onerror = null;
+
+        if (gravador.state !== "inactive") {
+          try {
+            gravador.stop();
+          } catch (error) {
+            console.error(
+              "Erro ao encerrar gravador:",
+              error
+            );
+          }
+        }
+      }
+
+      microfoneRef.current
+        ?.getTracks()
+        .forEach((trilha) => trilha.stop());
+
+      microfoneRef.current = null;
+      gravadorRef.current = null;
+      partesAudioRef.current = [];
+    };
+  }, [temaId]);
+
 async function carregarCapas(
   listaItens: ItemBiblioteca[]
 ) {
@@ -407,6 +839,34 @@ for (const arquivo of documentos) {
   });
 }
 
+// ============================================================
+// SALVAR ÁUDIO DO NOVO ITEM
+// ============================================================
+
+let chaveAudioSalvo: string | undefined;
+
+if (
+  gravandoAudio ||
+  audioPausado ||
+  gravadorRef.current !== null ||
+  solicitandoMicrofoneRef.current ||
+  finalizandoAudioRef.current
+) {
+  setErro(
+    "Finalize a gravação de áudio antes de salvar o item."
+  );
+  return;
+}
+
+if (audioGravado) {
+  chaveAudioSalvo = crypto.randomUUID();
+
+  await salvarAudio(
+    chaveAudioSalvo,
+    audioGravado
+  );
+}
+
       const novoItem = criarItem({
         temaId,
         titulo: dadosFormulario.titulo,
@@ -415,6 +875,14 @@ for (const arquivo of documentos) {
         origem: dadosFormulario.origem,
         video: dadosFormulario.video,
         links: dadosFormulario.links,
+
+        // ÁUDIO DO NOVO ITEM
+        chaveAudio: chaveAudioSalvo,
+
+        chavesAudios: chaveAudioSalvo
+          ? [chaveAudioSalvo]
+          : undefined,
+
         chaveImagemCapa,
         posicaoImagemY,
         favorito: false,
@@ -450,6 +918,11 @@ for (const arquivo of documentos) {
       setOrigem("");
       setVideo("");
       setDocumentos([]);
+
+      // Limpar áudio provisório após salvar
+      setAudioGravado(null);
+      setChaveAudio(null);
+
       setMostrarFormulario(false);
     } catch (error) {
       if (error instanceof Error) {
@@ -478,9 +951,87 @@ function alternarFavorito(itemId: string) {
   }
 }
 
-function iniciarEdicao(item: ItemBiblioteca) {
-  setItemEditandoId(item.id);
+function limparAudiosExistentes() {
+  // Invalida carregamentos ainda em andamento.
+  carregamentoAudiosRef.current += 1;
 
+  // Libera os endereços temporários.
+  urlsAudiosExistentesRef.current.forEach((url) => {
+    URL.revokeObjectURL(url);
+  });
+
+  urlsAudiosExistentesRef.current = [];
+  setAudiosExistentes([]);
+}
+
+async function carregarAudiosExistentes(item: ItemBiblioteca) {
+  const numeroCarregamento = ++carregamentoAudiosRef.current;
+
+  // Libera os endereços do item anterior.
+  urlsAudiosExistentesRef.current.forEach((url) => {
+    URL.revokeObjectURL(url);
+  });
+
+  urlsAudiosExistentesRef.current = [];
+  setAudiosExistentes([]);
+
+  const chaves = [...new Set([
+    ...(item.chaveAudio ? [item.chaveAudio] : []),
+    ...(item.chavesAudios ?? []),
+  ])];
+
+  const audiosCarregados: {
+  chave: string;
+  url: string;
+  referencia?: string;
+}[] = [];
+
+  try {
+    for (const chave of chaves) {
+      const arquivo = await obterAudio(chave);
+
+     if (numeroCarregamento !== carregamentoAudiosRef.current) {
+        break;
+      }
+
+      if (!arquivo) continue;
+
+      const url = URL.createObjectURL(arquivo);
+
+      audiosCarregados.push({
+        chave,
+        url,
+        referencia: item.referenciasAudios?.[chave] ?? "",
+      });
+    }
+
+    if (numeroCarregamento === carregamentoAudiosRef.current) {
+      urlsAudiosExistentesRef.current =
+        audiosCarregados.map((audio) => audio.url);
+      
+    setAudiosExistentes(audiosCarregados);
+    } else {
+      audiosCarregados.forEach((audio) => {
+        URL.revokeObjectURL(audio.url);
+      });
+    }
+  } catch (error) {
+    audiosCarregados.forEach((audio) => {
+      URL.revokeObjectURL(audio.url);
+    });
+
+    console.error("Erro ao carregar áudios:", error);
+
+    if (numeroCarregamento === carregamentoAudiosRef.current) {
+      setErro("Não foi possível carregar os áudios deste item.");
+    }
+  }
+}
+
+function iniciarEdicao(item: ItemBiblioteca) {
+  cancelarGravacaoAudio();
+
+  setItemEditandoId(item.id);
   setTitulo(item.titulo);
   setDescricao(item.descricao ?? "");
   setPalavrasChave(
@@ -531,9 +1082,15 @@ setPosicaoImagemY(
     setDocumentos(arquivos);
   });
 
+  // ÁUDIO DO ITEM
+  setAudioGravado(null);
+  setGravandoAudio(false);
+  setChaveAudio(item.chaveAudio ?? null);
 
-    setMostrarFormulario(true);
-    setErro("");
+  setMostrarFormulario(true);
+  setErro("");
+
+  void carregarAudiosExistentes(item);
 }
 
 async function salvarDadosEdicaoAtual() {
@@ -614,6 +1171,55 @@ async function salvarDadosEdicaoAtual() {
     });
   }
 
+  // ============================================================
+  // PREPARAR ÁUDIOS DO ITEM
+  // ============================================================
+
+      if (
+      gravandoAudio ||
+      solicitandoMicrofoneRef.current ||
+      gravadorRef.current ||
+      finalizandoAudioRef.current
+    ) {
+    setErro(
+      "Finalize a gravação antes de salvar o item."
+    );
+    return false;
+  }
+
+  const chavesAudiosExistentes = [
+    ...new Set([
+      ...(itemAtual?.chaveAudio
+        ? [itemAtual.chaveAudio]
+        : []),
+      ...(itemAtual?.chavesAudios ?? []),
+    ]),
+  ];
+
+  let chaveNovoAudio: string | undefined;
+
+  if (audioGravado) {
+    chaveNovoAudio = crypto.randomUUID();
+
+    await salvarAudio(
+      chaveNovoAudio,
+      audioGravado
+    );
+  }
+
+  const chavesAudiosFinais = chaveNovoAudio
+    ? [...chavesAudiosExistentes, chaveNovoAudio]
+    : chavesAudiosExistentes;
+
+  const referenciasAudiosAtualizadas: Record<string, string> = {
+    ...(itemAtual?.referenciasAudios ?? {}),
+  };
+
+  audiosExistentes.forEach((audio) => {
+    referenciasAudiosAtualizadas[audio.chave] =
+      audio.referencia ?? "";
+  });
+
   const itemAtualizado = atualizarItem(
     itemEditandoId,
     {
@@ -625,6 +1231,17 @@ async function salvarDadosEdicaoAtual() {
       origem: dadosFormulario.origem,
       video: dadosFormulario.video,
       links: dadosFormulario.links,
+
+      // ÁUDIOS DO ITEM
+      chaveAudio:
+        chavesAudiosFinais[0] ?? undefined,
+
+      chavesAudios:
+        chavesAudiosFinais.length > 0
+          ? chavesAudiosFinais
+          : undefined,
+
+      referenciasAudios: referenciasAudiosAtualizadas,
 
       chaveImagemCapa,
       posicaoImagemY,
@@ -816,16 +1433,18 @@ const itensOrdenados =
         <p className="mt-2 text-sm text-zinc-400">
           Biblioteca do tema
         </p>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (mostrarFormulario) {
-              setMostrarFormulario(false);
-            } else {
-              iniciarNovoItem();
-            }
-          }}
+          <button
+            type="button"
+            onClick={() => {
+              if (mostrarFormulario) {
+                cancelarGravacaoAudio();
+                limparAudiosExistentes();
+                limparFormularioItem();
+                setMostrarFormulario(false);
+              } else {
+                iniciarNovoItem();
+              }
+            }}
           className="mt-6 rounded-lg bg-purple-700 px-4 py-3 text-sm font-semibold text-white"
         >
           {mostrarFormulario
@@ -1205,6 +1824,149 @@ const itensOrdenados =
                 </p>
               )}
             </div>
+
+        {/* ============================================= */}
+        {/* ÁUDIO DO ITEM                                  */}
+        {/* ============================================= */}
+
+        <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <p className="font-semibold text-white">
+            Áudio do item
+          </p>
+
+          <p className="mt-1 text-sm text-zinc-400">
+            Grave informações e acrescente complementos
+            ao seu item.
+          </p>
+
+          <p className="mt-3 text-xs text-zinc-500">
+            Gravações armazenadas no dispositivo.
+          </p>
+
+         {gravandoAudio && (
+          <p className="mt-3 text-sm font-semibold text-red-400">
+            🔴 Gravando áudio...
+          </p>
+        )}
+
+        {audioPausado && (
+          <p className="mt-3 text-sm font-semibold text-amber-400">
+            ⏸️ Gravação pausada
+          </p>
+        )}
+
+          <button
+            type="button"
+            onClick={iniciarGravacaoAudio}
+            disabled={
+              gravandoAudio ||
+              audioPausado ||
+              finalizandoAudio
+            }
+            className="mt-4 rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            🎙️ Gravar áudio
+          </button>
+
+        {gravandoAudio && (
+          <button
+            type="button"
+            onClick={pausarGravacaoAudio}
+            className="ml-2 mt-4 rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white"
+          >
+            ⏸️ Pausar
+          </button>
+        )}
+
+        {audioPausado && (
+          <button
+            type="button"
+            onClick={continuarGravacaoAudio}
+            className="ml-2 mt-4 rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white"
+          >
+            ▶️ Continuar
+          </button>
+        )}
+
+        {(gravandoAudio || audioPausado) && (
+          <button
+            type="button"
+            onClick={pararGravacaoAudio}
+            disabled={finalizandoAudio}
+            className="ml-2 mt-4 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            ⏹️ Parar
+          </button>
+        )}
+
+        {finalizandoAudio && (
+          <p className="mt-3 text-sm text-amber-400">
+            Finalizando gravação...
+          </p>
+        )}
+
+        {audioGravado && !finalizandoAudio && (
+          <p className="mt-3 text-sm text-green-400">
+            ✅ Áudio gravado. Pronto para ouvir e salvar.
+          </p>
+        )}
+        </div>
+            
+          {audioGravado && urlAudioGravado && !finalizandoAudio && (
+            <div className="mt-3">
+              <audio
+                controls
+                src={urlAudioGravado}
+                className="w-full"
+              >
+                Seu navegador não oferece suporte à reprodução de áudio.
+              </audio>
+          </div>
+          )}
+
+          {audiosExistentes.length > 0 && (
+
+            <div className="mt-4 space-y-3">
+              <p className="text-sm font-semibold text-zinc-300">
+                Áudios salvos
+              </p>
+
+              {audiosExistentes.map((audio, indice) => (
+                <div key={audio.chave}>
+                  <p className="mb-2 text-xs text-zinc-400">
+                    Gravação {indice + 1}
+                  </p>
+
+                  <input
+                    type="text"
+                    maxLength={80}
+                    placeholder="Referência sobre este áudio"
+                    value={audio.referencia ?? ""}
+                    onChange={(e) => {
+                      const novaReferencia = e.target.value;
+
+                      setAudiosExistentes((anteriores) =>
+                        anteriores.map((atual) =>
+                          atual.chave === audio.chave
+                            ? { ...atual, referencia: novaReferencia }
+                            : atual
+                        )
+                      );
+                    }}
+                    className="mb-3 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
+                  />
+
+                  <audio
+                    controls
+                    src={audio.url}
+                    className="w-full"
+                  >
+                    Seu navegador não oferece suporte à reprodução de áudio.
+                  </audio>
+                </div>
+              ))}
+            </div>
+          )}
 
             {itemEditandoId && (
               <>
