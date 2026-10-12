@@ -38,6 +38,7 @@ import {
 import {
   salvarAudio,
   obterAudio,
+  removerAudio,
 } from "@/app/lib/bookdigital-audios";
 
 import {
@@ -139,7 +140,10 @@ export default function TemaBiblioteca({
   const [audioGravado, setAudioGravado] =
     useState<Blob | null>(null);
 
-    const [urlAudioGravado, setUrlAudioGravado] = useState<string | null>(null);
+  const [referenciaNovoAudio, setReferenciaNovoAudio] =
+    useState("");
+
+  const [urlAudioGravado, setUrlAudioGravado] = useState<string | null>(null);
 
 useEffect(() => {
   if (!audioGravado) {
@@ -172,6 +176,9 @@ useEffect(() => {
   const [audiosExistentes, setAudiosExistentes] = useState<
     { chave: string; url: string; referencia?: string }[]
   >([]);
+
+  const [chavesAudiosExcluir, setChavesAudiosExcluir] =
+  useState<string[]>([]);
 
   const carregamentoAudiosRef = useRef(0);
 
@@ -292,6 +299,8 @@ async function iniciarGravacaoAudio() {
       );
       return;
     }
+
+    setReferenciaNovoAudio("");
 
     microfoneRef.current = microfone;
     partesAudioRef.current = [];
@@ -554,6 +563,8 @@ function cancelarGravacaoAudio() {
 }
 
   function limparFormularioItem() {
+  setChavesAudiosExcluir([]);
+  
   setTitulo("");
   setDescricao("");
   setPalavrasChave("");
@@ -571,6 +582,7 @@ function cancelarGravacaoAudio() {
   setDocumentos([]);
 
   setAudioGravado(null);
+  setReferenciaNovoAudio("");
   setGravandoAudio(false);
   setChaveAudio(null);
 
@@ -1030,6 +1042,8 @@ async function carregarAudiosExistentes(item: ItemBiblioteca) {
 
 function iniciarEdicao(item: ItemBiblioteca) {
   cancelarGravacaoAudio();
+  
+  setChavesAudiosExcluir([]);
 
   setItemEditandoId(item.id);
   setTitulo(item.titulo);
@@ -1207,9 +1221,14 @@ async function salvarDadosEdicaoAtual() {
     );
   }
 
+  const chavesAudiosMantidas =
+  chavesAudiosExistentes.filter(
+    (chave) => !chavesAudiosExcluir.includes(chave)
+  );
+
   const chavesAudiosFinais = chaveNovoAudio
-    ? [...chavesAudiosExistentes, chaveNovoAudio]
-    : chavesAudiosExistentes;
+    ? [...chavesAudiosMantidas, chaveNovoAudio]
+    : chavesAudiosMantidas;
 
   const referenciasAudiosAtualizadas: Record<string, string> = {
     ...(itemAtual?.referenciasAudios ?? {}),
@@ -1218,6 +1237,15 @@ async function salvarDadosEdicaoAtual() {
   audiosExistentes.forEach((audio) => {
     referenciasAudiosAtualizadas[audio.chave] =
       audio.referencia ?? "";
+  });
+
+  if (chaveNovoAudio) {
+    referenciasAudiosAtualizadas[chaveNovoAudio] =
+      referenciaNovoAudio.trim();
+  }
+
+  chavesAudiosExcluir.forEach((chave) => {
+    delete referenciasAudiosAtualizadas[chave];
   });
 
   const itemAtualizado = atualizarItem(
@@ -1277,6 +1305,27 @@ async function salvarDadosEdicaoAtual() {
       [itemEditandoId]: imagemCapa,
     }));
   }
+
+  // EXCLUSÃO DEFINITIVA DOS ÁUDIOS
+  // Remover arquivos dos áudios excluídos,
+  // após atualizar os dados do item.
+  for (const chave of chavesAudiosExcluir) {
+    try {
+      await removerAudio(chave);
+    } catch (error) {
+      console.error(
+        "Erro ao remover áudio do IndexedDB:",
+        error
+      );
+
+      setErro(
+        "O item foi atualizado, mas não foi possível remover " +
+        "um dos arquivos de áudio do dispositivo."
+      );
+
+    return false;
+  }
+}
 
   return true;
 }
@@ -1415,7 +1464,10 @@ const itensOrdenados =
           type="button"
           onClick={() => {
             if (itemEditandoId) {
-              router.push(`/bookdigital/item/${itemEditandoId}`);
+              cancelarGravacaoAudio();
+              limparAudiosExistentes();
+              limparFormularioItem();
+              setMostrarFormulario(false);
               return;
             }
 
@@ -1425,7 +1477,7 @@ const itensOrdenados =
         >
           ← Voltar
         </button>
-
+        
         <h1 className="text-3xl font-bold">
           {tema.nome}
         </h1>
@@ -1911,19 +1963,7 @@ const itensOrdenados =
           </p>
         )}
         </div>
-            
-          {audioGravado && urlAudioGravado && !finalizandoAudio && (
-            <div className="mt-3">
-              <audio
-                controls
-                src={urlAudioGravado}
-                className="w-full"
-              >
-                Seu navegador não oferece suporte à reprodução de áudio.
-              </audio>
-          </div>
-          )}
-
+          
           {audiosExistentes.length > 0 && (
 
             <div className="mt-4 space-y-3">
@@ -1931,11 +1971,32 @@ const itensOrdenados =
                 Áudios salvos
               </p>
 
-              {audiosExistentes.map((audio, indice) => (
+              {audiosExistentes
+                .filter((audio) => !chavesAudiosExcluir.includes(audio.chave))
+                .map((audio, indice) => (
+                
                 <div key={audio.chave}>
                   <p className="mb-2 text-xs text-zinc-400">
                     Gravação {indice + 1}
                   </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const confirmar = window.confirm(
+                          "Deseja excluir esta gravação de áudio?"
+                        );
+
+                        if (!confirmar) return;
+
+                        setChavesAudiosExcluir((anteriores) =>
+                          [...new Set([...anteriores, audio.chave])]
+                        );
+                      }}
+                      className="mb-3 rounded-lg bg-red-800 px-3 py-2 text-xs font-semibold text-white"
+                    >
+                      Excluir áudio
+                    </button>
 
                   <input
                     type="text"
@@ -1955,11 +2016,19 @@ const itensOrdenados =
                     }}
                     className="mb-3 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                   />
-
                   <audio
                     controls
                     src={audio.url}
                     className="w-full"
+                    onPlay={(evento) => {
+                      const audioAtual = evento.currentTarget;
+
+                      document.querySelectorAll("audio").forEach((outroAudio) => {
+                        if (outroAudio !== audioAtual) {
+                          outroAudio.pause();
+                        }
+                      });
+                    }}
                   >
                     Seu navegador não oferece suporte à reprodução de áudio.
                   </audio>
@@ -1967,6 +2036,31 @@ const itensOrdenados =
               ))}
             </div>
           )}
+
+            {audioGravado && urlAudioGravado && !finalizandoAudio && (
+              <div className="mt-3 space-y-3">
+                <p className="text-xs text-zinc-400">
+                  Nova gravação
+                </p>
+
+                <input
+                  type="text"
+                  maxLength={80}
+                  placeholder="Referência sobre este áudio"
+                  value={referenciaNovoAudio}
+                  onChange={(e) => setReferenciaNovoAudio(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
+                />
+
+                <audio
+                  controls
+                  src={urlAudioGravado}
+                  className="w-full"
+                >
+                  Seu navegador não oferece suporte à reprodução de áudio.
+                </audio>
+              </div>
+            )}
 
             {itemEditandoId && (
               <>

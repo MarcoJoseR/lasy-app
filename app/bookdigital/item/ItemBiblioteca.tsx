@@ -60,6 +60,16 @@ export default function ItemBiblioteca({
 }: ItemBibliotecaProps) {
   const router = useRouter();
 
+function controlarReproducao(
+  audioAtual: HTMLAudioElement
+) {
+  document.querySelectorAll("audio").forEach((audio) => {
+    if (audio !== audioAtual) {
+      audio.pause();
+    }
+  });
+}
+
   const [item, setItem] =
     useState<ItemBiblioteca | null>(null);
 
@@ -319,7 +329,13 @@ if (itemEncontrado.chaveImagemCapa) {
 
           <button
             type="button"
-            onClick={() => router.back()}
+           onClick={() => {
+              if (!item) return;
+
+              router.push(
+                `/bookdigital/tema/${item.temaId}`
+              );
+            }}
             className="absolute left-4 top-4 rounded bg-black/60 px-3 py-1 text-white backdrop-blur transition hover:scale-105"
           >
             ← Voltar
@@ -336,7 +352,13 @@ if (itemEncontrado.chaveImagemCapa) {
         <>
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => {
+              if (!item) return;
+
+              router.push(
+                `/bookdigital/tema/${item.temaId}`
+              );
+            }}
             className="mb-6 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-900"
           >
             ← Voltar
@@ -389,6 +411,9 @@ if (itemEncontrado.chaveImagemCapa) {
                   controls
                   src={audio.url}
                   className="w-full"
+                  onPlay={(evento) => {
+                    controlarReproducao(evento.currentTarget);
+                  }}
                 >
                   Seu navegador não oferece suporte à reprodução de áudio.
                 </audio>
