@@ -18,6 +18,10 @@ import {
   type LinkPendente,
 } from "@/app/lib/links-pendentes";
 
+import {
+  obterAudio,
+} from "@/app/lib/bookdigital-audios";
+
 type BackupAppV1 = {
   app: "Health";
   tipo: "backup-geral-app";
@@ -66,7 +70,9 @@ type BackupAppV1 = {
           tipoDocumento?: string;
           conteudo: string;
         }
-      >;
+       >;
+
+      audiosIndexedDB: Record<string, string>;
     };
 
     linksPendentes: LinkPendente[];
@@ -384,6 +390,42 @@ export async function exportarBackupApp() {
     }
 
     // ============================================================
+    // BOOKDIGITAL - ÁUDIOS DOS ITENS
+    // ============================================================
+
+    const audiosBookDigitalIndexedDB:
+      Record<string, string> = {};
+
+    const chavesAudios = new Set<string>();
+
+    for (const item of listaItens) {
+      if (item?.chaveAudio) {
+        chavesAudios.add(item.chaveAudio);
+      }
+
+      if (Array.isArray(item?.chavesAudios)) {
+        item.chavesAudios.forEach((chave: string) => {
+          if (chave) {
+            chavesAudios.add(chave);
+          }
+        });
+      }
+    }
+
+    for (const chave of chavesAudios) {
+      const arquivo = await obterAudio(chave);
+
+      if (!arquivo) {
+        throw new Error(
+          `Áudio não encontrado no backup: ${chave}`
+        );
+      }
+
+      audiosBookDigitalIndexedDB[chave] =
+        await blobParaDataURL(arquivo);
+    }
+
+    // ============================================================
     // MONTA BACKUP GERAL
     // ============================================================
 
@@ -424,6 +466,9 @@ export async function exportarBackupApp() {
 
           documentosIndexedDB:
             documentosBookDigitalIndexedDB,
+
+          audiosIndexedDB:
+            audiosBookDigitalIndexedDB,
         },
 
         linksPendentes: listarLinksPendentes(),

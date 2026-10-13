@@ -11,6 +11,10 @@ import {
   salvarDocumento,
 } from "@/app/lib/bookdigital-arquivos";
 
+import {
+  salvarAudio,
+} from "@/app/lib/bookdigital-audios";
+
 type DocumentoBackup = {
   nomeDocumento: string;
   tipoDocumento?: string;
@@ -62,6 +66,7 @@ type BackupGeralAppV1 = {
         string,
         DocumentoBackup
       >;
+      audiosIndexedDB?: Record<string, string>;
     };
     
     linksPendentes?: {
@@ -277,6 +282,97 @@ export async function validarBackupApp(
           capas: 0,
         },
 
+        bookdigital: {
+          temas: 0,
+          itens: 0,
+          capas: 0,
+          imagens: 0,
+          documentos: 0,
+        },
+      };
+    }
+
+    // Validação dos áudios do BaúDigital
+    const audiosBackup =
+      bookdigital.audiosIndexedDB;
+
+    if (audiosBackup !== undefined) {
+      if (
+        !audiosBackup ||
+        typeof audiosBackup !== "object" ||
+        Array.isArray(audiosBackup) ||
+        Object.entries(audiosBackup).some(
+          ([chave, conteudo]) =>
+            !chave ||
+            typeof conteudo !== "string" ||
+            !/^data:audio\/[^,]+;base64,/.test(conteudo)
+        )
+      ) {
+        return {
+          valido: false,
+          mensagem:
+            "O backup contém arquivos de áudio inválidos.",
+
+          health: {
+            receitas: 0,
+            listas: 0,
+            carrosseis: 0,
+            prints: 0,
+            capas: 0,
+          },
+
+          bookdigital: {
+            temas: 0,
+            itens: 0,
+            capas: 0,
+            imagens: 0,
+            documentos: 0,
+          },
+        };
+      }
+    }
+
+    // Verifica se todos os áudios dos itens estão no backup
+    const chavesReferenciadas = new Set<string>();
+
+    for (const item of bookdigital.itens) {
+      if (!item || typeof item !== "object") continue;
+
+      const registro = item as {
+        chaveAudio?: string;
+        chavesAudios?: string[];
+      };
+
+      if (registro.chaveAudio) {
+        chavesReferenciadas.add(registro.chaveAudio);
+      }
+
+      if (Array.isArray(registro.chavesAudios)) {
+        for (const chave of registro.chavesAudios) {
+          if (chave) chavesReferenciadas.add(chave);
+        }
+      }
+    }
+
+    const audiosAusentes = [...chavesReferenciadas].filter(
+      (chave) => !Object.prototype.hasOwnProperty.call(
+        audiosBackup ?? {},
+        chave
+      )
+    );
+
+    if (audiosAusentes.length > 0) {
+      return {
+        valido: false,
+        mensagem:
+          `O backup possui ${audiosAusentes.length} áudio(s) ausente(s).`,
+        health: {
+          receitas: 0,
+          listas: 0,
+          carrosseis: 0,
+          prints: 0,
+          capas: 0,
+        },
         bookdigital: {
           temas: 0,
           itens: 0,
@@ -570,6 +666,28 @@ export async function restaurarBackupApp(
         blob
       );
     }
+
+      // ============================================================
+      // RESTAURA ÁUDIOS DO BOOKDIGITAL
+      // ============================================================
+
+      const audios =
+        backup.dados.bookdigital.audiosIndexedDB || {};
+
+      for (const [chave, conteudo] of Object.entries(audios)) {
+        if (
+          typeof conteudo !== "string" ||
+          !conteudo.startsWith("data:audio/")
+        ) {
+          throw new Error(
+            `Arquivo de áudio inválido no backup: ${chave}`
+          );
+        }
+
+        const blob = dataURLParaBlob(conteudo);
+
+        await salvarAudio(chave, blob);
+      }
 
     // ============================================================
     // 6. RESTAURA LINKS PENDENTES
