@@ -118,6 +118,9 @@ export default function TemaBiblioteca({
   const [capas, setCapas] =
     useState<Record<string, string>>({});
 
+  const [capasCarregadas, setCapasCarregadas] =
+    useState(false);
+
   const [posicaoImagemY, setPosicaoImagemY] =
     useState(50);
 
@@ -710,15 +713,18 @@ function moverImagemItem(
       const itensDoTema =
         listarItensPorTema(temaId);
 
+      setCapasCarregadas(false);
       setItens(itensDoTema);
-      carregarCapas(itensDoTema);
+      void carregarCapas(itensDoTema);
+    } else {
+      setCapasCarregadas(true);
     }
 
     setCarregando(false);
   }, [temaId]);
 
 useEffect(() => {
-  if (carregando) return;
+  if (carregando || !capasCarregadas) return;
 
   const retornoSalvo = sessionStorage.getItem(
     "bookdigitalCardRetorno"
@@ -757,7 +763,7 @@ useEffect(() => {
       }
     });
   });
-}, [carregando, temaId, itens]);
+}, [carregando, capasCarregadas, temaId, itens]);
 
   // ============================================================
   // LIBERAR MICROFONE AO SAIR DO TEMA
@@ -827,6 +833,7 @@ async function carregarCapas(
   );
 
   setCapas(novasCapas);
+ setCapasCarregadas(true);
 }
 
   async function adicionarItem() {

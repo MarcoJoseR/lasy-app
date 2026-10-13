@@ -148,7 +148,7 @@ function excluirTema(
           {temas.map((tema) => (
             <div
               key={tema.id}
-              className="rounded-xl border-4 border-purple-700 bg-zinc-900 p-2 shadow"
+              className="flex h-full min-w-0 flex-col rounded-xl border-4 border-purple-700 bg-zinc-900 p-2 shadow"
             >
               {temaEditandoId === tema.id ? (
                 <div>
@@ -188,7 +188,8 @@ function excluirTema(
                         `/bookdigital/tema/offline?id=${encodeURIComponent(tema.id)}`
                       );
                     }}
-                    className="min-h-12 w-full min-w-0 break-words [overflow-wrap:anywhere] px-1 py-2 text-base font-bold text-white"
+                    
+                    className="flex min-h-12 w-full min-w-0 flex-1 items-center justify-center break-words [overflow-wrap:anywhere] px-1 py-2 text-center text-base font-bold text-white"
                   >
                     {tema.nome}
                   </button>
