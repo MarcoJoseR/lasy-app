@@ -717,6 +717,48 @@ function moverImagemItem(
     setCarregando(false);
   }, [temaId]);
 
+useEffect(() => {
+  if (carregando) return;
+
+  const retornoSalvo = sessionStorage.getItem(
+    "bookdigitalCardRetorno"
+  );
+
+  if (!retornoSalvo) return;
+
+  let retorno;
+
+  try {
+    retorno = JSON.parse(retornoSalvo);
+  } catch {
+    sessionStorage.removeItem(
+      "bookdigitalCardRetorno"
+    );
+    return;
+  }
+
+  if (retorno.temaId !== temaId) return;
+
+  const cardId = `card-item-${retorno.itemId}`;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const card = document.getElementById(cardId);
+
+      if (card) {
+        card.scrollIntoView({
+          behavior: "auto",
+          block: "center",
+        });
+
+        sessionStorage.removeItem(
+          "bookdigitalCardRetorno"
+        );
+      }
+    });
+  });
+}, [carregando, temaId, itens]);
+
   // ============================================================
   // LIBERAR MICROFONE AO SAIR DO TEMA
   // ============================================================
@@ -1330,7 +1372,24 @@ async function salvarDadosEdicaoAtual() {
   return true;
 }
 
+function voltarAoCard(itemId: string) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const card = document.getElementById(
+        `card-item-${itemId}`
+      );
+
+      card?.scrollIntoView({
+        behavior: "auto",
+        block: "center",
+      });
+    });
+  });
+}
+
 async function salvarEdicao() {
+  const itemId = itemEditandoId;
+
   const salvou =
     await salvarDadosEdicaoAtual();
 
@@ -1340,6 +1399,10 @@ async function salvarEdicao() {
 
   limparFormularioItem();
   setMostrarFormulario(false);
+
+  if (itemId) {
+    voltarAoCard(itemId);
+  }
 
   return true;
 }
@@ -1489,10 +1552,16 @@ const itensOrdenados =
             type="button"
             onClick={() => {
               if (mostrarFormulario) {
+                const itemId = itemEditandoId;
+
                 cancelarGravacaoAudio();
                 limparAudiosExistentes();
                 limparFormularioItem();
                 setMostrarFormulario(false);
+
+                if (itemId) {
+                  voltarAoCard(itemId);
+                }
               } else {
                 iniciarNovoItem();
               }
@@ -2211,6 +2280,8 @@ const itensOrdenados =
             {itensOrdenados.map((item) => (
               <div
                 key={item.id}
+                id={`card-item-${item.id}`}
+
                 className="relative flex h-full flex-col overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-sm"
               >
                 <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
@@ -2268,7 +2339,7 @@ const itensOrdenados =
                   </h2>
 
                 {item.descricao && (
-                  <p className="mt-2 text-sm text-zinc-400">
+                  <p className="mt-2 line-clamp-2 whitespace-pre-line break-words text-sm text-zinc-400">
                     {item.descricao}
                   </p>
                 )}

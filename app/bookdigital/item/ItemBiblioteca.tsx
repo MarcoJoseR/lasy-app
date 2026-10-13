@@ -332,11 +332,20 @@ if (itemEncontrado.chaveImagemCapa) {
            onClick={() => {
               if (!item) return;
 
-              router.push(
-                `/bookdigital/tema/${item.temaId}`
+              sessionStorage.setItem(
+                "bookdigitalCardRetorno",
+                JSON.stringify({
+                  temaId: item.temaId,
+                  itemId: item.id,
+                })
+              );
+
+              window.location.assign(
+                `/bookdigital/tema/offline?id=${encodeURIComponent(item.temaId)}`
               );
             }}
-            className="absolute left-4 top-4 rounded bg-black/60 px-3 py-1 text-white backdrop-blur transition hover:scale-105"
+          
+          className="absolute left-4 top-4 rounded bg-black/60 px-3 py-1 text-white backdrop-blur transition hover:scale-105"
           >
             ← Voltar
           </button>
@@ -355,11 +364,20 @@ if (itemEncontrado.chaveImagemCapa) {
             onClick={() => {
               if (!item) return;
 
-              router.push(
-                `/bookdigital/tema/${item.temaId}`
+              sessionStorage.setItem(
+                "bookdigitalCardRetorno",
+                JSON.stringify({
+                  temaId: item.temaId,
+                  itemId: item.id,
+                })
+              );
+
+              window.location.assign(
+                `/bookdigital/tema/offline?id=${encodeURIComponent(item.temaId)}`
               );
             }}
-            className="mb-6 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-900"
+
+          className="mb-6 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-900"
           >
             ← Voltar
           </button>
@@ -381,7 +399,7 @@ if (itemEncontrado.chaveImagemCapa) {
               Descrição
             </h2>
 
-            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-zinc-300">
+            <p className="mt-2 max-h-[14rem] overflow-y-auto whitespace-pre-line break-words text-sm leading-relaxed text-zinc-300">
               {item.descricao}
             </p>
           </div>

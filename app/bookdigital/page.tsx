@@ -188,7 +188,7 @@ function excluirTema(
                         `/bookdigital/tema/offline?id=${encodeURIComponent(tema.id)}`
                       );
                     }}
-                    className="min-h-12 w-full px-1 py-2 text-base font-bold text-white"
+                    className="min-h-12 w-full min-w-0 break-words [overflow-wrap:anywhere] px-1 py-2 text-base font-bold text-white"
                   >
                     {tema.nome}
                   </button>
