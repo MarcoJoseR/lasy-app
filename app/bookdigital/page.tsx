@@ -303,6 +303,17 @@ useEffect(() => {
           ))}
         </div>
 
+        {/* ACESSO À LISTA DE ACOMPANHAMENTO */}
+        <button
+          type="button"
+          onClick={() =>
+            router.push("/bookdigital/acompanhamento")
+          }
+          className="mt-6 w-full rounded-xl border border-purple-700 bg-zinc-900 px-4 py-3 text-base font-semibold text-white hover:bg-zinc-800"
+        >
+          ✓ Lista de Acompanhamento
+        </button>
+
         {temas.length < 9 && (
           <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
             <label className="block text-sm font-medium">

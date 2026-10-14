@@ -63,6 +63,37 @@ export default function ItemBiblioteca({
 function voltarDaPaginaVer() {
   if (!item) return;
 
+  // Retornar à Lista de Acompanhamento
+  const origemAcompanhamento = sessionStorage.getItem(
+    "bookdigitalOrigemAcompanhamento"
+  );
+
+  if (origemAcompanhamento === item.id) {
+    sessionStorage.removeItem(
+      "bookdigitalOrigemAcompanhamento"
+    );
+
+    sessionStorage.removeItem(
+      "bookdigitalOrigemBuscaGeral"
+    );
+
+    sessionStorage.removeItem(
+      "bookdigitalCardRetorno"
+    );
+
+    window.location.assign(
+      "/bookdigital/acompanhamento"
+    );
+    return;
+  }
+
+  // Limpar origem de acompanhamento de outro item
+  if (origemAcompanhamento) {
+    sessionStorage.removeItem(
+      "bookdigitalOrigemAcompanhamento"
+    );
+  }
+
   const origemSalva = sessionStorage.getItem(
     "bookdigitalOrigemBuscaGeral"
   );

@@ -19,6 +19,7 @@ import {
   moverItemParaTema,
   removerItem,
   toggleFavoritoItem,
+  toggleAcompanhamentoItem,
 } from "@/app/lib/bookdigital-itens";
 
 import {
@@ -1007,6 +1008,30 @@ function alternarFavorito(itemId: string) {
   } catch (error) {
     console.error(
       "Erro ao alterar favorito:",
+      error
+    );
+  }
+}
+
+// ============================================================
+// ALTERNAR ACOMPANHAMENTO DO ITEM
+// ============================================================
+
+function alternarAcompanhamento(itemId: string) {
+  try {
+    const itemAtualizado =
+      toggleAcompanhamentoItem(itemId);
+
+    setItens((anteriores) =>
+      anteriores.map((item) =>
+        item.id === itemId
+          ? itemAtualizado
+          : item
+      )
+    );
+  } catch (error) {
+    console.error(
+      "Erro ao alterar acompanhamento:",
       error
     );
   }
@@ -2397,6 +2422,16 @@ const itensOrdenados =
                     {item.favorito
                       ? "★ Favoritado"
                       : "☆ Favoritar"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => alternarAcompanhamento(item.id)}
+                    className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+                  >
+                    {item.emAcompanhamento
+                      ? "✓ Acompanhando"
+                      : "○ Acompanhar"}
                   </button>
                 </div>
               </div>

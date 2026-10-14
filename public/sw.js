@@ -1,4 +1,4 @@
-const VERSION = "v32";
+const VERSION = "v33";
 
 const CACHE_PAGINAS = `health-receitas-paginas-${VERSION}`;
 const CACHE_RECURSOS = `health-receitas-recursos-${VERSION}`;
@@ -14,6 +14,7 @@ const APP_SHELL = [
   "/captura-rapida",
   "/links-pendentes",
   "/bookdigital",
+  "/bookdigital/acompanhamento",
   "/bookdigital/tema/offline",
   "/bookdigital/item/offline",
   "/listas-compras/offline",
@@ -183,6 +184,7 @@ self.addEventListener("fetch", (event) => {
   url.pathname === "/" ||
   url.pathname === "/inicio" ||
   url.pathname === "/bookdigital" ||
+  url.pathname === "/bookdigital/acompanhamento" ||
   url.pathname === "/bookdigital/tema/offline" ||
   url.pathname === "/bookdigital/item/offline"
 ) {

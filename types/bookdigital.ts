@@ -37,6 +37,7 @@ export interface ItemBiblioteca {
   referenciasAudios?: Record<string, string>;
   
   favorito?: boolean;
+  emAcompanhamento?: boolean;
 
   criadoEm: string;
   atualizadoEm: string;

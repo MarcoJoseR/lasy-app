@@ -179,3 +179,30 @@ export function toggleFavoritoItem(
     }
   );
 }
+
+// ============================================================
+// ACOMPANHAR / RETIRAR DO ACOMPANHAMENTO
+// ============================================================
+
+export function toggleAcompanhamentoItem(
+  itemId: string
+): ItemBiblioteca {
+  const itens = listarItens();
+
+  const itemEncontrado = itens.find(
+    (item) => item.id === itemId
+  );
+
+  if (!itemEncontrado) {
+    throw new Error(
+      "Item da biblioteca não encontrado."
+    );
+  }
+
+  return atualizarItem(
+    itemId,
+    {
+      emAcompanhamento: !itemEncontrado.emAcompanhamento,
+    }
+  );
+}
