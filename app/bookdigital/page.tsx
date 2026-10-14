@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Tema } from "@/types/bookdigital";
 
@@ -11,11 +11,27 @@ import {
   removerTema,
 } from "@/app/lib/bookdigital-temas";
 
+import type { ItemBiblioteca } from "@/types/bookdigital";
+
+import { listarItens } from "@/app/lib/bookdigital-itens";
+
+import { filtrarItensBookDigital } from "@/app/lib/bookdigital-filtros";
+
+import { obterImagemCapa } from "@/app/lib/bookdigital-imagens";
+
 export default function BookDigitalPage() {
   const [temas, setTemas] = useState<Tema[]>([]);
   const [novoTema, setNovoTema] = useState("");
   const [erro, setErro] = useState("");
   
+  const [buscaGeral, setBuscaGeral] = useState("");
+
+  const [itensBiblioteca, setItensBiblioteca] =
+    useState<ItemBiblioteca[]>([]);
+
+  const [capasBusca, setCapasBusca] =
+    useState<Record<string, string>>({});
+
   const [temaEditandoId, setTemaEditandoId] = useState<string | null>(null);
   const [nomeTemaEditando, setNomeTemaEditando] = useState("");
 
@@ -23,6 +39,19 @@ export default function BookDigitalPage() {
 
   useEffect(() => {
     setTemas(listarTemas());
+    setItensBiblioteca(listarItens());
+
+    const buscaAnterior = sessionStorage.getItem(
+      "bookdigitalBuscaRestaurar"
+    );
+
+    if (buscaAnterior !== null) {
+      setBuscaGeral(buscaAnterior);
+
+      sessionStorage.removeItem(
+        "bookdigitalBuscaRestaurar"
+      );
+    }
   }, []);
 
   function adicionarTema() {
@@ -116,6 +145,59 @@ function excluirTema(
     }
   }
 }
+
+const resultadosBuscaGeral = useMemo(() => {
+  if (!buscaGeral.trim()) {
+    return [];
+  }
+
+  return filtrarItensBookDigital(itensBiblioteca, {
+    busca: buscaGeral,
+    somenteFavoritos: false,
+    somenteComVideo: false,
+    somenteComDocumentos: false,
+    somenteComImagens: false,
+  });
+}, [buscaGeral, itensBiblioteca]);
+ 
+useEffect(() => {
+  let cancelado = false;
+
+  async function carregarCapasBusca() {
+    const novasCapas: Record<string, string> = {};
+
+    await Promise.all(
+      resultadosBuscaGeral.map(async (item) => {
+        if (!item.chaveImagemCapa) return;
+
+        try {
+          const imagem = await obterImagemCapa(
+            item.chaveImagemCapa
+          );
+
+          if (imagem) {
+            novasCapas[item.id] = imagem;
+          }
+        } catch (error) {
+          console.error(
+            "Erro ao carregar capa da busca:",
+            error
+          );
+        }
+      })
+    );
+
+    if (!cancelado) {
+      setCapasBusca(novasCapas);
+    }
+  }
+
+  void carregarCapasBusca();
+
+  return () => {
+    cancelado = true;
+  };
+}, [resultadosBuscaGeral]);
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -252,6 +334,119 @@ function excluirTema(
             </button>
           </div>
         )}
+
+          {/* BUSCA GERAL DO BAÚDIGITAL */}
+          <div className="mt-8 rounded-xl border border-zinc-800 bg-slate-900 p-4">
+
+            <h2 className="text-xl font-bold text-white">
+              Buscar no BaúDigital
+            </h2>
+
+            <p className="mt-2 text-sm text-zinc-400">
+              Encontre informações armazenadas em qualquer Tema.
+            </p>
+
+            <label className="mt-5 block text-sm font-medium text-white">
+              O que você procura?
+            </label>
+
+            <input
+              type="text"
+              value={buscaGeral}
+              onChange={(e) => setBuscaGeral(e.target.value)}
+              placeholder="Ex.: excel, contrato, cliente"
+              className="mt-2 w-full rounded-lg border border-zinc-600 bg-white p-3 text-black"
+            />
+
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById("resultados-busca-geral")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+              }}
+              className="mt-4 rounded-lg bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-600"
+            >
+              🔍 Procurar informações
+            </button>
+
+          </div>
+
+          {/* RESULTADOS DA BUSCA */}
+          {buscaGeral.trim() && (
+            <div id="resultados-busca-geral" className="mt-8">
+
+              <h2 className="text-xl font-bold">
+                Informações encontradas
+              </h2>
+
+              <p className="mt-2 text-sm text-zinc-400">
+                {resultadosBuscaGeral.length} item(ns) encontrado(s).
+              </p>
+
+              <div className="mt-5 space-y-4">
+                {resultadosBuscaGeral.map((item) => {
+                  const temaDoItem = temas.find(
+                    (tema) => tema.id === item.temaId
+                  );
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-xl border border-zinc-700 bg-slate-900 p-5"
+                    >
+                      <div className="flex items-start gap-4">
+
+                        {capasBusca[item.id] && (
+                          <img
+                            src={capasBusca[item.id]}
+                            alt={item.titulo}
+                            className="h-24 w-24 shrink-0 rounded-lg object-cover"
+                            style={{
+                              objectPosition: `center ${item.posicaoImagemY ?? 50}%`,
+                            }}
+                          />
+                        )}
+
+                        <h3 className="min-w-0 flex-1 break-words text-lg font-semibold text-white">
+                          {item.titulo}
+                        </h3>
+
+                      </div>
+
+                      <p className="mt-2 text-sm text-purple-300">
+                        Tema: {temaDoItem?.nome ?? "Não identificado"}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            "bookdigitalOrigemBuscaGeral",
+                            JSON.stringify({
+                              itemId: item.id,
+                              busca: buscaGeral,
+                            })
+                          );
+
+                          const destino = navigator.onLine
+                            ? `/bookdigital/item/${item.id}`
+                            : `/bookdigital/item/offline?id=${encodeURIComponent(item.id)}`;
+
+                          window.location.assign(destino);
+                        }}
+                        className="mt-4 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-500"
+                      >
+                        VER Item
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
       </div>
     </main>
   );

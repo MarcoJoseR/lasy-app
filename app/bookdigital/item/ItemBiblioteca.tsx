@@ -60,6 +60,54 @@ export default function ItemBiblioteca({
 }: ItemBibliotecaProps) {
   const router = useRouter();
 
+function voltarDaPaginaVer() {
+  if (!item) return;
+
+  const origemSalva = sessionStorage.getItem(
+    "bookdigitalOrigemBuscaGeral"
+  );
+
+  if (origemSalva) {
+    try {
+      const origem = JSON.parse(origemSalva);
+
+      if (origem.itemId === item.id) {
+        sessionStorage.setItem(
+          "bookdigitalBuscaRestaurar",
+          origem.busca ?? ""
+        );
+
+        sessionStorage.removeItem(
+          "bookdigitalOrigemBuscaGeral"
+        );
+
+        sessionStorage.removeItem(
+          "bookdigitalCardRetorno"
+        );
+
+        window.location.assign("/bookdigital");
+        return;
+      }
+    } catch {
+      sessionStorage.removeItem(
+        "bookdigitalOrigemBuscaGeral"
+      );
+    }
+  }
+
+  sessionStorage.setItem(
+    "bookdigitalCardRetorno",
+    JSON.stringify({
+      temaId: item.temaId,
+      itemId: item.id,
+    })
+  );
+
+  window.location.assign(
+    `/bookdigital/tema/offline?id=${encodeURIComponent(item.temaId)}`
+  );
+}
+
 function controlarReproducao(
   audioAtual: HTMLAudioElement
 ) {
@@ -300,9 +348,9 @@ if (itemEncontrado.chaveImagemCapa) {
 
           <button
             type="button"
-            onClick={() =>
-              router.push("/bookdigital")
-            }
+            onClick={() => {
+              router.push("/bookdigital");
+            }}
             className="mt-6 rounded-lg bg-purple-700 px-4 py-3 text-sm font-semibold text-white"
           >
             Voltar ao BookDigital
@@ -329,23 +377,8 @@ if (itemEncontrado.chaveImagemCapa) {
 
           <button
             type="button"
-           onClick={() => {
-              if (!item) return;
-
-              sessionStorage.setItem(
-                "bookdigitalCardRetorno",
-                JSON.stringify({
-                  temaId: item.temaId,
-                  itemId: item.id,
-                })
-              );
-
-              window.location.assign(
-                `/bookdigital/tema/offline?id=${encodeURIComponent(item.temaId)}`
-              );
-            }}
-          
-          className="absolute left-4 top-4 rounded bg-black/60 px-3 py-1 text-white backdrop-blur transition hover:scale-105"
+            onClick={voltarDaPaginaVer}
+            className="absolute left-4 top-4 rounded bg-black/60 px-3 py-1 text-white backdrop-blur transition hover:scale-105"
           >
             ← Voltar
           </button>
@@ -361,23 +394,8 @@ if (itemEncontrado.chaveImagemCapa) {
         <>
           <button
             type="button"
-            onClick={() => {
-              if (!item) return;
-
-              sessionStorage.setItem(
-                "bookdigitalCardRetorno",
-                JSON.stringify({
-                  temaId: item.temaId,
-                  itemId: item.id,
-                })
-              );
-
-              window.location.assign(
-                `/bookdigital/tema/offline?id=${encodeURIComponent(item.temaId)}`
-              );
-            }}
-
-          className="mb-6 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-900"
+            onClick={voltarDaPaginaVer}
+            className="absolute left-4 top-4 rounded bg-black/60 px-3 py-1 text-white backdrop-blur transition hover:scale-105"
           >
             ← Voltar
           </button>

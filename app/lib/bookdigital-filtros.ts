@@ -13,12 +13,19 @@ export type OrdenacaoBookDigital =
   | "antigos"
   | "titulo";
 
+function normalizarTexto(texto: string): string {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export function filtrarItensBookDigital(
   itens: ItemBiblioteca[],
   filtros: FiltrosBookDigital
 ): ItemBiblioteca[] {
   const termoBusca =
-    filtros.busca.trim().toLowerCase();
+  normalizarTexto(filtros.busca.trim());
 
   return itens.filter((item) => {
     if (
@@ -55,20 +62,34 @@ export function filtrarItensBookDigital(
     }
 
     const titulo =
-      item.titulo.toLowerCase();
+      normalizarTexto(item.titulo);
 
     const descricao =
-      item.descricao?.toLowerCase() ?? "";
+      normalizarTexto(item.descricao ?? "");
 
     const palavrasChave =
-      item.palavrasChave
-        .join(" ")
-        .toLowerCase();
+      normalizarTexto(
+        item.palavrasChave.join(" ")
+      );
 
-    return (
-      titulo.includes(termoBusca) ||
-      descricao.includes(termoBusca) ||
-      palavrasChave.includes(termoBusca)
+    const textoPesquisavel = [
+      titulo,
+      descricao,
+      palavrasChave,
+      normalizarTexto(item.origem ?? ""),
+      normalizarTexto(
+        (item.documentos ?? [])
+          .map((documento) => documento.nomeDocumento)
+          .join(" ")
+      ),
+    ].join(" ");
+
+    const termos = termoBusca
+    .split(/[\s,;]+/)
+    .filter(Boolean);
+
+    return termos.every((termo) =>
+      textoPesquisavel.includes(termo)
     );
   });
 }
