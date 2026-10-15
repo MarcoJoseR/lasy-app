@@ -2,17 +2,55 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import {
   LinkPendente,
   listarLinksPendentes,
+  excluirLinkPendente,
 } from "@/app/lib/links-pendentes";
 
+import { listarTemas } from "@/app/lib/bookdigital-temas";
+
 export default function LinksPendentesPage() {
+  const router = useRouter();
+  
   const [links, setLinks] = useState<LinkPendente[]>([]);
   const [carregado, setCarregado] = useState(false);
 
+  const [temas, setTemas] = useState<
+    { id: string; nome: string }[]
+  >([]);
+
+  const [linkSelecionadoId, setLinkSelecionadoId] =
+    useState<string | null>(null);
+
+function guardarNoHealth(link: LinkPendente) {
+  const parametros = new URLSearchParams({
+    title: link.titulo,
+    url: link.url,
+  });
+
+  router.push(
+    `/importar-receita?${parametros.toString()}`
+  );
+}
+
+function retirarDaLista(id: string) {
+  const confirmar = window.confirm(
+    "Deseja retirar este link da lista de pendências?"
+  );
+
+  if (!confirmar) return;
+
+  excluirLinkPendente(id);
+
+  setLinks(listarLinksPendentes());
+}
+
   useEffect(() => {
     setLinks(listarLinksPendentes());
+    setTemas(listarTemas());
     setCarregado(true);
   }, []);
 
@@ -64,6 +102,72 @@ export default function LinksPendentesPage() {
               <p className="mt-1 text-xs text-amber-400">
                 Pendente de organização
               </p>
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => guardarNoHealth(link)}
+                  className="rounded-lg border border-green-700 bg-green-900/30 px-4 py-2 text-sm font-semibold text-green-300 hover:bg-green-900/50"
+                >
+                  Guardar no Health
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLinkSelecionadoId(
+                      linkSelecionadoId === link.id ? null : link.id
+                    )
+                  }
+                  className="rounded-lg border border-purple-700 px-4 py-2 text-sm font-semibold text-purple-300 hover:bg-purple-900/30"
+                >
+                  Guardar no BaúDigital
+                </button>
+
+        {linkSelecionadoId === link.id && (
+          <div className="w-full rounded-lg border border-purple-800 bg-zinc-950 p-3">
+            <p className="mb-2 text-sm font-semibold text-purple-300">
+              Escolha o Tema de destino:
+            </p>
+
+            {temas.length === 0 ? (
+              <p className="text-sm text-zinc-400">
+                Nenhum Tema cadastrado no BaúDigital.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {temas.map((tema) => (
+                  <button
+                    key={tema.id}
+                    type="button"
+                    onClick={() => {
+                      const parametros = new URLSearchParams({
+                        id: tema.id,
+                        titulo: link.titulo,
+                        link: link.url,
+                      });
+
+                      window.location.assign(
+                        `/bookdigital/tema/offline?${parametros.toString()}`
+                      );
+                    }}
+                    className="rounded-lg border border-purple-700 px-3 py-2 text-sm font-medium text-white hover:bg-purple-900/30"
+                  >
+                    {tema.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+                <button
+                  type="button"
+                  onClick={() => retirarDaLista(link.id)}
+                  className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-300 hover:bg-zinc-800"
+                >
+                  Retirar da lista
+                </button>
+              </div>
             </div>
           ))}
         </div>

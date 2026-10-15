@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 
 import type {
   ItemBiblioteca,
@@ -83,6 +86,10 @@ export default function TemaBiblioteca({
   temaId,
 }: TemaBibliotecaProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const tituloRecebido = searchParams.get("titulo") || "";
+  const linkRecebido = searchParams.get("link") || "";
 
   const [tema, setTema] = useState<Tema | null>(null);
   const [itens, setItens] = useState<ItemBiblioteca[]>([]);
@@ -105,6 +112,7 @@ export default function TemaBiblioteca({
 
   const [mostrarFormulario, setMostrarFormulario] =
     useState(false);
+  const importacaoLinkIniciada = useRef(false);
 
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -223,16 +231,19 @@ useEffect(() => {
     "recentes" | "antigos" | "titulo"
   >("recentes");
 
-function iniciarNovoItem() {
+function iniciarNovoItem(
+  tituloInicial = "",
+  linkInicial = ""
+) {
   cancelarGravacaoAudio();
   limparAudiosExistentes();
   setItemEditandoId(null);
-  setTitulo("");
+  setTitulo(tituloInicial);
   setDescricao("");
   setPalavrasChave("");
   setOrigem("");
   setVideo("");
-  setLinks([""]);
+  setLinks([linkInicial]);
 
   setImagemCapa("");
   setImagemCapaAtual("");
@@ -252,6 +263,33 @@ function iniciarNovoItem() {
   setErro("");
   setMostrarFormulario(true);
 }
+
+// ============================================================
+// ABRIR NOVO ITEM RECEBIDO DOS LINKS PENDENTES
+// ============================================================
+
+useEffect(() => {
+  if (!linkRecebido || !temaId) return;
+
+  if (importacaoLinkIniciada.current) return;
+
+  importacaoLinkIniciada.current = true;
+
+  iniciarNovoItem(tituloRecebido, linkRecebido);
+
+  // Retira os dados de importação da URL,
+  // preservando o identificador do Tema.
+  const url = new URL(window.location.href);
+
+  url.searchParams.delete("titulo");
+  url.searchParams.delete("link");
+
+  window.history.replaceState(
+    window.history.state,
+    "",
+    url.pathname + url.search + url.hash
+  );
+}, [temaId, tituloRecebido, linkRecebido]);
 
 async function iniciarGravacaoAudio() {
   if (
