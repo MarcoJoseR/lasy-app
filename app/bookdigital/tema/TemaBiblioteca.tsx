@@ -241,9 +241,9 @@ function iniciarNovoItem(
   setTitulo(tituloInicial);
   setDescricao("");
   setPalavrasChave("");
-  setOrigem("");
+  setOrigem(linkInicial);
   setVideo("");
-  setLinks([linkInicial]);
+  setLinks([""]);
 
   setImagemCapa("");
   setImagemCapaAtual("");
