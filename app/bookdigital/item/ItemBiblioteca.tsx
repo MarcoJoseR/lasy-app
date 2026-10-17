@@ -634,7 +634,10 @@ async function prepararAudioCompartilhamento(
       );
 
       window.alert(
-        "Não foi possível compartilhar o áudio."
+        "Erro ao compartilhar áudio:\n" +
+        (erro instanceof Error
+          ? `${erro.name}: ${erro.message}`
+          : String(erro))
       );
     }
   }
