@@ -558,7 +558,16 @@ async function prepararAudioCompartilhamento(
   }
 
   // Preservar o formato original do arquivo
-  const tipo = arquivo.type || "application/octet-stream";
+  const tipo =
+  arquivo.type.split(";")[0] ||
+  "application/octet-stream";
+
+  // DIAGNÓSTICO — Formato original do áudio
+  console.log("DIAGNÓSTICO ÁUDIO:", {
+    chave: chaveAudio,
+    tipoOriginal: arquivo.type,
+    tamanhoBytes: arquivo.size,
+  });
 
   let extensao = "bin";
 
@@ -598,14 +607,26 @@ async function prepararAudioCompartilhamento(
     }
 
     try {
-      const indice = audiosExistentes.findIndex(
-        (audio) => audio.chave === chaveAudio
-      );
+      // Utilizar o áudio preparado antecipadamente
+      if (!audioPreparado) {
+        window.alert(
+          "O áudio ainda está sendo preparado. Aguarde um instante e tente novamente."
+        );
+        return;
+      }
 
-      const arquivo = await prepararAudioCompartilhamento(
-        chaveAudio,
-        indice >= 0 ? indice + 1 : 1
-      );
+      const arquivo = audioPreparado;
+
+// DIAGNÓSTICO — Verificar o arquivo real
+console.log("CANSHARE ÁUDIO REAL:", {
+  nome: arquivo.name,
+  tipo: arquivo.type,
+  tamanho: arquivo.size,
+  aceito:
+    typeof navigator.canShare === "function"
+      ? navigator.canShare({ files: [arquivo] })
+      : "canShare indisponível",
+});
 
       if (
         typeof navigator.canShare === "function" &&
@@ -794,6 +815,10 @@ async function prepararAudioCompartilhamento(
   // COMPARTILHAR ITEM — Áudios selecionados
   const [audiosSelecionados, setAudiosSelecionados] =
     useState<string[]>([]);
+
+// COMPARTILHAR ITEM — Áudio preparado para envio
+const [audioPreparado, setAudioPreparado] =
+  useState<File | null>(null);
 
   // COMPARTILHAR ITEM — Links selecionados
   const [linksSelecionados, setLinksSelecionados] =
@@ -1029,6 +1054,53 @@ if (itemEncontrado.chaveImagemCapa) {
       audiosSelecionados,
       linksSelecionados,
     ]);
+
+// COMPARTILHAR ITEM — Preparação antecipada do áudio
+useEffect(() => {
+  let cancelado = false;
+
+  // Limpar o arquivo preparado anteriormente
+  setAudioPreparado(null);
+
+  if (
+    !compartilhamentoAberto ||
+    audiosSelecionados.length === 0
+  ) {
+    return;
+  }
+
+  const chaveAudio = audiosSelecionados[0];
+
+  const indice = audiosExistentes.findIndex(
+    (audio) => audio.chave === chaveAudio
+  );
+
+  prepararAudioCompartilhamento(
+    chaveAudio,
+    indice >= 0 ? indice + 1 : 1
+  )
+    .then((arquivo) => {
+      if (!cancelado) {
+        setAudioPreparado(arquivo);
+      }
+    })
+    .catch((erro) => {
+      if (!cancelado) {
+        console.error(
+          "Erro ao preparar áudio antecipadamente:",
+          erro
+        );
+      }
+    });
+
+  return () => {
+    cancelado = true;
+  };
+}, [
+  compartilhamentoAberto,
+  audiosSelecionados,
+  audiosExistentes,
+]);
 
   if (carregando) {
 
