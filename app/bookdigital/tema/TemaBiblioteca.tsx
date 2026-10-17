@@ -347,8 +347,25 @@ async function iniciarGravacaoAudio() {
     microfoneRef.current = microfone;
     partesAudioRef.current = [];
 
-    const gravador =
-      new MediaRecorder(microfone);
+    const formatoAudio =
+      MediaRecorder.isTypeSupported(
+        "audio/mp4;codecs=mp4a.40.2"
+      )
+        ? "audio/mp4;codecs=mp4a.40.2"
+        : undefined;
+
+    const gravador = new MediaRecorder(
+      microfone,
+      formatoAudio
+        ? { mimeType: formatoAudio }
+        : undefined
+    );
+
+// DIAGNÓSTICO — Formato efetivo da gravação
+console.log("FORMATO DO GRAVADOR:", {
+  formatoSolicitado: formatoAudio,
+  formatoEfetivo: gravador.mimeType,
+});
 
     gravadorRef.current = gravador;
 
