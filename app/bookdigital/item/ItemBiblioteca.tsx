@@ -580,7 +580,7 @@ if (
     chaveImagensPreparadas !== chaveSelecaoImagens
   )
 ) {
-  
+
   window.alert(
     "As imagens ainda estão sendo preparadas. Tente novamente."
   );
@@ -1797,8 +1797,26 @@ useEffect(() => {
                   >
                     ↗ Compartilhar
                   </button>
-
                 </div>
+
+                {/* ORIENTAÇÃO DE COMPARTILHAMENTO — FASE INICIAL */}
+                <div className="mt-4 rounded-lg border border-zinc-700 bg-zinc-800/50 p-3 text-sm text-zinc-300">
+                  <p className="font-semibold text-zinc-200">
+                    Compartilhamento — Fase inicial de testes
+                  </p>
+
+                  <p className="mt-2">
+                    <strong>WhatsApp:</strong> até 10 imagens.
+                    Para PDFs ou áudios, prefira grupos de até 2 arquivos
+                    do mesmo tipo, separadamente.
+                  </p>
+
+                  <p className="mt-2">
+                    <strong>Gmail:</strong> recomendado para pacotes mistos
+                    de até 10 arquivos.
+                  </p>
+                </div>
+
               </div>
             )}
 
