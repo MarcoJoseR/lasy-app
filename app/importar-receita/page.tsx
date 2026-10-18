@@ -19,7 +19,7 @@ export default function ImportarReceitaPage() {
   const title = searchParams.get("title") || "";
   const text = searchParams.get("text") || "";
   const url = searchParams.get("url") || "";
-
+  
   const textoLimpo = text.trim();
 
   const urlEncontradaNoTexto =
@@ -384,12 +384,22 @@ function guardarLinkParaDepois() {
     }
   }
 
-  
   return (
     <main className="mx-auto max-w-3xl p-6 text-white">
       <h1 className="mb-6 text-2xl font-bold">
         📥 Importar Receita
       </h1>
+
+      {/* CAPTURA RÁPIDA — Guardar link */}
+        {tipoImportacao === "receita" && (
+          <button
+            type="button"
+            onClick={guardarLinkParaDepois}
+            className="mb-6 w-full rounded-lg bg-green-700 px-4 py-3 font-semibold text-white hover:bg-green-600"
+          >
+            📌 Guardar link para depois
+          </button>
+        )}
 
       {/* ======================================================
           ESCOLHA DO TIPO DE CONTEÚDO
@@ -505,15 +515,7 @@ function guardarLinkParaDepois() {
           </p>
         </div>
       )}
-
-          <button
-            type="button"
-            onClick={guardarLinkParaDepois}
-            className="w-full rounded-lg bg-green-700 px-4 py-3 font-semibold text-white hover:bg-green-600"
-          >
-            📌 Guardar link para depois
-          </button>
-
+       
           <button
             type="button"
             onClick={continuarParaFormulario}
