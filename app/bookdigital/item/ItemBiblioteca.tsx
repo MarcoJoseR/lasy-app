@@ -743,7 +743,49 @@ console.log("CANSHARE ÁUDIO REAL:", {
         }
 
         try {
-          const arquivos = await prepararPacoteCompartilhamento();
+          // Verificar se as imagens selecionadas estão prontas
+if (
+  imagensPreparando ||
+  imagensPreparadas.length !== imagensSelecionadas.length ||
+  chaveImagensPreparadas !== chaveSelecaoImagens
+) {
+
+  window.alert(
+    "As imagens ainda estão sendo preparadas. Tente novamente."
+  );
+  return;
+}
+
+// Aproveitar as imagens preparadas antecipadamente
+const arquivos: File[] = [...imagensPreparadas];
+
+// Preparar os PDFs selecionados
+for (const documento of item.documentos || []) {
+  if (!documentosSelecionados.includes(documento.chaveDocumento)) {
+    continue;
+  }
+
+  arquivos.push(
+    await prepararPDFCompartilhamento(
+      documento.chaveDocumento,
+      documento.nomeDocumento
+    )
+  );
+}
+
+// Preparar os áudios selecionados
+for (const [indice, audio] of audiosExistentes.entries()) {
+  if (!audiosSelecionados.includes(audio.chave)) {
+    continue;
+  }
+
+  arquivos.push(
+    await prepararAudioCompartilhamento(
+      audio.chave,
+      indice + 1
+    )
+  );
+}
 
           // Preparar somente os links selecionados
           const linksAtuais = [
@@ -828,6 +870,20 @@ window.alert(
   // COMPARTILHAR ITEM — Imagens selecionadas
   const [imagensSelecionadas, setImagensSelecionadas] =
     useState<number[]>([]);
+
+    // COMPARTILHAR ITEM — Imagens preparadas antecipadamente
+const [imagensPreparadas, setImagensPreparadas] =
+  useState<File[]>([]);
+
+const [imagensPreparando, setImagensPreparando] =
+  useState(false);
+
+  // Identificação da seleção correspondente ao pacote
+const [chaveImagensPreparadas, setChaveImagensPreparadas] =
+  useState<string | null>(null);
+
+const chaveSelecaoImagens =
+  JSON.stringify(imagensSelecionadas);
 
   // COMPARTILHAR ITEM — Documentos selecionados
   const [documentosSelecionados, setDocumentosSelecionados] =
@@ -1075,6 +1131,79 @@ if (itemEncontrado.chaveImagemCapa) {
       audiosSelecionados,
       linksSelecionados,
     ]);
+
+// =============================================
+// COMPARTILHAR ITEM — Preparação antecipada das imagens
+// =============================================
+useEffect(() => {
+  let cancelado = false;
+
+  // Invalidar o pacote anterior
+  setImagensPreparadas([]);
+  setImagensPreparando(false);
+  setChaveImagensPreparadas(null);
+
+  if (
+    !compartilhamentoAberto ||
+    imagensSelecionadas.length === 0
+  ) {
+    return;
+  }
+
+  setImagensPreparando(true);
+
+  async function prepararImagens() {
+    try {
+      const arquivos = await Promise.all(
+        imagensSelecionadas.map(async (indice) => {
+          const imagem = imagensItem[indice];
+
+          if (!imagem) {
+            throw new Error(
+              `Imagem ${indice + 1} não encontrada.`
+            );
+          }
+
+          return prepararImagemCompartilhamento(
+            imagem,
+            indice + 1
+          );
+        })
+      );
+
+      if (!cancelado) {
+  setImagensPreparadas(arquivos);
+  setChaveImagensPreparadas(
+    JSON.stringify(imagensSelecionadas)
+  );
+}
+
+    } catch (erro) {
+      if (!cancelado) {
+        console.error(
+          "Erro ao preparar imagens para compartilhamento:",
+          erro
+        );
+        setImagensPreparadas([]);
+      }
+    } finally {
+      if (!cancelado) {
+        setImagensPreparando(false);
+      }
+    }
+  }
+
+  prepararImagens();
+
+  return () => {
+    cancelado = true;
+  };
+}, [
+  compartilhamentoAberto,
+  imagensSelecionadas,
+  imagensItem,
+]);
+
 
 // COMPARTILHAR ITEM — Preparação antecipada do áudio
 useEffect(() => {
