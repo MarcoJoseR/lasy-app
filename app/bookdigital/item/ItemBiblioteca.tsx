@@ -1818,6 +1818,72 @@ useEffect(() => {
 </button>
 
 
+{/* DIAGNÓSTICO — Compartilhamento de áudio externo */}
+<div className="mt-3 space-y-2">
+  <input
+    type="file"
+    accept=".mp4,.m4a,audio/*"
+    id="teste-audio-externo"
+    className="block w-full text-sm"
+  />
+
+  <button
+    type="button"
+    onClick={async () => {
+      try {
+        const entrada = document.getElementById(
+          "teste-audio-externo"
+        ) as HTMLInputElement | null;
+
+        const arquivo = entrada?.files?.[0];
+
+        if (!arquivo) {
+          window.alert("Selecione primeiro o arquivo de áudio.");
+          return;
+        }
+
+        console.log("TESTE ÁUDIO EXTERNO:", {
+          nome: arquivo.name,
+          tipo: arquivo.type,
+          tamanho: arquivo.size,
+          ativacao: navigator.userActivation?.isActive,
+          podeCompartilhar:
+            typeof navigator.canShare === "function"
+              ? navigator.canShare({ files: [arquivo] })
+              : "indisponível",
+        });
+
+        if (
+          typeof navigator.share !== "function" ||
+          typeof navigator.canShare !== "function" ||
+          !navigator.canShare({ files: [arquivo] })
+        ) {
+          window.alert("Compartilhamento indisponível.");
+          return;
+        }
+
+        await navigator.share({
+          files: [arquivo],
+        });
+
+        console.log("ÁUDIO EXTERNO COMPARTILHADO");
+      } catch (erro) {
+        console.error("ERRO ÁUDIO EXTERNO:", erro);
+        window.alert(
+          erro instanceof Error
+            ? `${erro.name}: ${erro.message}`
+            : String(erro)
+        );
+      }
+    }}
+    className="rounded-lg bg-purple-700 px-5 py-3 text-sm font-semibold text-white"
+  >
+    Testar áudio externo
+  </button>
+</div>
+
+
+
                   {/* COMPARTILHAR ITEM — Teste experimental de áudio */}
                   <button
                     type="button"
