@@ -184,24 +184,43 @@ async function recuperarUltimaSelecao() {
     setImagensSelecionadas(indicesRecuperados);
 
     // Recuperar documentos que ainda existem
-    setDocumentosSelecionados(
-      (item.documentos || [])
-        .filter((documento) =>
-          preparacao.documentosSelecionados.includes(
-            documento.chaveDocumento
-          )
+    const documentosRecuperados = (item.documentos || [])
+      .filter((documento) =>
+        preparacao.documentosSelecionados.includes(
+          documento.chaveDocumento
         )
-        .map((documento) => documento.chaveDocumento)
-    );
+      )
+      .map((documento) => documento.chaveDocumento);
 
     // Recuperar áudios que ainda existem
-    setAudiosSelecionados(
-      audiosExistentes
-        .filter((audio) =>
-          preparacao.audiosSelecionados.includes(audio.chave)
-        )
-        .map((audio) => audio.chave)
-    );
+    const audiosRecuperados = audiosExistentes
+      .filter((audio) =>
+        preparacao.audiosSelecionados.includes(audio.chave)
+      )
+      .map((audio) => audio.chave);
+      
+    // Conferir a quantidade total de arquivos
+    const totalRecuperado =
+      indicesRecuperados.length +
+      documentosRecuperados.length +
+      audiosRecuperados.length;
+
+    // Preservar integralmente a preparação anterior
+    if (totalRecuperado > 10) {
+      window.alert(
+        "A preparação anterior contém " +
+        totalRecuperado +
+        " arquivos.\n\n" +
+        "O limite atual é de 10 arquivos por envio.\n\n" +
+        "Sua preparação foi preservada. " +
+        "Desmarque os arquivos excedentes antes de compartilhar."
+      );
+    }
+
+    // Restaurar a seleção sem excluir arquivos
+    setImagensSelecionadas(indicesRecuperados);
+    setDocumentosSelecionados(documentosRecuperados);
+    setAudiosSelecionados(audiosRecuperados);
 
     // Recuperar links por endereço original
     const linksAtuais = [
@@ -237,6 +256,9 @@ async function recuperarUltimaSelecao() {
       ultimaVersaoSalva.current = versaoSelecao.current;
 
       setRevisaoCompartilhamento(false);
+
+      // Confirmar que a seleção foi recuperada
+      setSelecaoRecuperada(true);
 
       } catch (erro) {
 
@@ -412,57 +434,6 @@ async function prepararImagemCompartilhamento(
   );
 }
 
-// COMPARTILHAR ITEM — Teste de envio de imagem
-  async function testarCompartilhamentoImagem() {
-    const indice = imagensSelecionadas[0];
-
-    if (indice === undefined || !imagensItem[indice]) {
-      window.alert("Selecione uma imagem para compartilhar.");
-      return;
-    }
-
-    if (typeof navigator.share !== "function") {
-      window.alert(
-        "Este navegador não oferece compartilhamento nativo."
-      );
-      return;
-    }
-
-    try {
-      const arquivo = await prepararImagemCompartilhamento(
-        imagensItem[indice],
-        indice + 1
-      );
-
-      if (
-        typeof navigator.canShare === "function" &&
-        !navigator.canShare({ files: [arquivo] })
-      ) {
-        window.alert(
-          "Este navegador não aceita compartilhar esta imagem."
-        );
-        return;
-      }
-
-      await navigator.share({
-        files: [arquivo],
-      });
-    } catch (erro) {
-      if (
-        erro instanceof DOMException &&
-        erro.name === "AbortError"
-      ) {
-        return;
-      }
-
-      console.error("Erro ao compartilhar imagem:", erro);
-
-      window.alert(
-        "Não foi possível compartilhar a imagem."
-      );
-    }
-  }
-
 // COMPARTILHAR ITEM — Preparar documento PDF
   async function prepararPDFCompartilhamento(
     chaveDocumento: string,
@@ -483,67 +454,6 @@ async function prepararImagemCompartilhamento(
       nomeArquivo,
       { type: "application/pdf" }
     );
-  }
-
-  // COMPARTILHAR ITEM — Teste de envio de PDF
-  async function testarCompartilhamentoPDF() {
-    if (!item) return;
-
-    const documento = (item.documentos || []).find(
-      (documento) =>
-        documentosSelecionados.includes(
-          documento.chaveDocumento
-        )
-    );
-
-    if (!documento) {
-      window.alert("Selecione um documento PDF.");
-      return;
-    }
-
-    if (typeof navigator.share !== "function") {
-      window.alert(
-        "Este navegador não oferece compartilhamento nativo."
-      );
-      return;
-    }
-
-    try {
-      const arquivo = await prepararPDFCompartilhamento(
-        documento.chaveDocumento,
-        documento.nomeDocumento
-      );
-
-      if (
-        typeof navigator.canShare === "function" &&
-        !navigator.canShare({ files: [arquivo] })
-      ) {
-        window.alert(
-          "Este navegador não aceita compartilhar este PDF."
-        );
-        return;
-      }
-
-      await navigator.share({
-        files: [arquivo],
-      });
-    } catch (erro) {
-      if (
-        erro instanceof DOMException &&
-        erro.name === "AbortError"
-      ) {
-        return;
-      }
-
-      console.error(
-        "Erro ao compartilhar PDF:",
-        erro
-      );
-
-      window.alert(
-        "Não foi possível compartilhar o documento PDF."
-      );
-    }
   }
 
 // COMPARTILHAR ITEM — Preparar áudio
@@ -596,88 +506,6 @@ return new File(
 );
 
 }
-
-// COMPARTILHAR ITEM — Teste de envio de áudio
-  async function testarCompartilhamentoAudio() {
-    const chaveAudio = audiosSelecionados[0];
-
-    if (!chaveAudio) {
-      window.alert("Selecione um áudio para compartilhar.");
-      return;
-    }
-
-    if (typeof navigator.share !== "function") {
-      window.alert(
-        "Este navegador não oferece compartilhamento nativo."
-      );
-      return;
-    }
-
-    try {
-      // Utilizar o áudio preparado antecipadamente
-      if (!audioPreparado) {
-        window.alert(
-          "O áudio ainda está sendo preparado. Aguarde um instante e tente novamente."
-        );
-        return;
-      }
-
-      const arquivo = audioPreparado;
-
-      console.log("DIAGNÓSTICO SHARE:", {
-  nome: arquivo.name,
-  tipo: arquivo.type,
-  tamanho: arquivo.size,
-  ativacaoUsuario:
-    navigator.userActivation?.isActive ?? "indisponível",
-  ambienteSeguro: window.isSecureContext,
-});
-
-// DIAGNÓSTICO — Verificar o arquivo real
-console.log("CANSHARE ÁUDIO REAL:", {
-  nome: arquivo.name,
-  tipo: arquivo.type,
-  tamanho: arquivo.size,
-  aceito:
-    typeof navigator.canShare === "function"
-      ? navigator.canShare({ files: [arquivo] })
-      : "canShare indisponível",
-});
-
-      if (
-        typeof navigator.canShare === "function" &&
-        !navigator.canShare({ files: [arquivo] })
-      ) {
-        window.alert(
-          "Este navegador não aceita compartilhar este áudio."
-        );
-        return;
-      }
-
-      await navigator.share({
-        files: [arquivo],
-      });
-    } catch (erro) {
-      if (
-        erro instanceof DOMException &&
-        erro.name === "AbortError"
-      ) {
-        return;
-      }
-
-      console.error(
-        "Erro ao compartilhar áudio:",
-        erro
-      );
-
-      window.alert(
-        "Erro ao compartilhar áudio:\n" +
-        (erro instanceof Error
-          ? `${erro.name}: ${erro.message}`
-          : String(erro))
-      );
-    }
-  }
 
   // COMPARTILHAR ITEM — Preparar pacote de arquivos
     async function prepararPacoteCompartilhamento(): Promise<File[]> {
@@ -745,11 +573,14 @@ console.log("CANSHARE ÁUDIO REAL:", {
         try {
           // Verificar se as imagens selecionadas estão prontas
 if (
-  imagensPreparando ||
-  imagensPreparadas.length !== imagensSelecionadas.length ||
-  chaveImagensPreparadas !== chaveSelecaoImagens
+  imagensSelecionadas.length > 0 &&
+  (
+    imagensPreparando ||
+    imagensPreparadas.length !== imagensSelecionadas.length ||
+    chaveImagensPreparadas !== chaveSelecaoImagens
+  )
 ) {
-
+  
   window.alert(
     "As imagens ainda estão sendo preparadas. Tente novamente."
   );
@@ -820,6 +651,29 @@ for (const [indice, audio] of audiosExistentes.entries()) {
             return;
           }
 
+        // COMPARTILHAR ITEM — Limite de arquivos do navegador
+          if (arquivos.length > 10) {
+            const resultado = await salvarSelecaoAtual();
+
+            if (resultado !== true) {
+              window.alert(
+                "O navegador permite compartilhar até 10 arquivos por vez.\n\n" +
+                "Não foi possível confirmar o salvamento da seleção. " +
+                "Verifique sua seleção antes de continuar."
+              );
+              return;
+            }
+
+            window.alert(
+              "Limite de compartilhamento atingido.\n\n" +
+              "O navegador permite compartilhar até 10 arquivos por vez.\n\n" +
+              "Sua seleção foi preservada. Envie os arquivos " +
+              "em grupos menores e utilize 'Recuperar última seleção' " +
+              "para continuar."
+            );
+            return;
+          }
+
           const dados: ShareData = {
             ...(texto ? { text: texto } : {}),
             ...(arquivos.length > 0 ? { files: arquivos } : {}),
@@ -847,21 +701,17 @@ for (const [indice, audio] of audiosExistentes.entries()) {
           }
 
           const detalhe =
-  erro instanceof Error
-    ? `${erro.name}: ${erro.message}`
-    : String(erro);
-
-window.alert(
-  "Não foi possível compartilhar o pacote completo.\n\n" +
-  detalhe
-);
+            erro instanceof Error
+              ? `${erro.name}: ${erro.message}`
+              : String(erro);
 
           window.alert(
-            "Não foi possível compartilhar o pacote completo."
+            "Não foi possível compartilhar o pacote completo.\n\n" +
+            detalhe
           );
+
         }
       }
-
       
   // Texto temporário para compartilhamento
   const [descricaoCompartilhar, setDescricaoCompartilhar] =
@@ -878,6 +728,10 @@ const [imagensPreparadas, setImagensPreparadas] =
 const [imagensPreparando, setImagensPreparando] =
   useState(false);
 
+// COMPARTILHAR ITEM — Confirmação da recuperação
+const [selecaoRecuperada, setSelecaoRecuperada] =
+  useState(false);
+
   // Identificação da seleção correspondente ao pacote
 const [chaveImagensPreparadas, setChaveImagensPreparadas] =
   useState<string | null>(null);
@@ -892,10 +746,6 @@ const chaveSelecaoImagens =
   // COMPARTILHAR ITEM — Áudios selecionados
   const [audiosSelecionados, setAudiosSelecionados] =
     useState<string[]>([]);
-
-// COMPARTILHAR ITEM — Áudio preparado para envio
-const [audioPreparado, setAudioPreparado] =
-  useState<File | null>(null);
 
   // COMPARTILHAR ITEM — Links selecionados
   const [linksSelecionados, setLinksSelecionados] =
@@ -1204,54 +1054,6 @@ useEffect(() => {
   imagensItem,
 ]);
 
-
-// COMPARTILHAR ITEM — Preparação antecipada do áudio
-useEffect(() => {
-  let cancelado = false;
-
-  // Limpar o arquivo preparado anteriormente
-  setAudioPreparado(null);
-
-  if (
-    !compartilhamentoAberto ||
-    audiosSelecionados.length === 0
-  ) {
-    return;
-  }
-
-  const chaveAudio = audiosSelecionados[0];
-
-  const indice = audiosExistentes.findIndex(
-    (audio) => audio.chave === chaveAudio
-  );
-
-  prepararAudioCompartilhamento(
-    chaveAudio,
-    indice >= 0 ? indice + 1 : 1
-  )
-    .then((arquivo) => {
-      if (!cancelado) {
-        setAudioPreparado(arquivo);
-      }
-    })
-    .catch((erro) => {
-      if (!cancelado) {
-        console.error(
-          "Erro ao preparar áudio antecipadamente:",
-          erro
-        );
-      }
-    });
-
-  return () => {
-    cancelado = true;
-  };
-}, [
-  compartilhamentoAberto,
-  audiosSelecionados,
-  audiosExistentes,
-]);
-
   if (carregando) {
 
     return (
@@ -1414,6 +1216,16 @@ useEffect(() => {
             >
               Recuperar última seleção
             </button>
+
+            {selecaoRecuperada && (
+              <p
+                role="status"
+                className="mt-2 text-sm text-green-400"
+              >
+                ✓ Última seleção recuperada.
+              </p>
+            )}
+
           </div>
         )}
 
@@ -1457,14 +1269,46 @@ useEffect(() => {
                         type="checkbox"
                         checked={imagensSelecionadas.includes(indice)}
                         onChange={() => {
-                          setImagensSelecionadas((anteriores) =>
-                            anteriores.includes(indice)
-                              ? anteriores.filter((numero) => numero !== indice)
-                              : [...anteriores, indice]
-                          );
+                          const jaSelecionada =
+                            imagensSelecionadas.includes(indice);
+
+                          // Desmarcar sempre é permitido
+                          if (jaSelecionada) {
+                            setImagensSelecionadas((anteriores) =>
+                              anteriores.filter((numero) => numero !== indice)
+                            );
+
+                            registrarAlteracaoSelecao();
+                            return;
+                          }
+
+                          // Contar todos os tipos de arquivos selecionados
+                          const totalArquivos =
+                            imagensSelecionadas.length +
+                            documentosSelecionados.length +
+                            audiosSelecionados.length;
+
+                          // Impedir apenas uma nova marcação acima do limite
+                          if (totalArquivos >= 10) {
+                            window.alert(
+                              "Limite de 10 arquivos por envio.\n\n" +
+                              "Você já selecionou 10 arquivos.\n\n" +
+                              "Para adicionar outro, desmarque um dos arquivos " +
+                              "selecionados ou compartilhe este grupo e depois " +
+                              "inicie uma nova seleção."
+                            );
+                            return;
+                          }
+
+                          // Adicionar a imagem selecionada
+                          setImagensSelecionadas((anteriores) => [
+                            ...anteriores,
+                            indice,
+                          ]);
 
                           registrarAlteracaoSelecao();
                         }}
+
                         className="h-4 w-4 accent-purple-600"
                       />
 
@@ -1502,20 +1346,50 @@ useEffect(() => {
                           documento.chaveDocumento
                         )}
                         onChange={() => {
-                          setDocumentosSelecionados((anteriores) =>
-                            anteriores.includes(documento.chaveDocumento)
-                              ? anteriores.filter(
-                                  (chave) =>
-                                    chave !== documento.chaveDocumento
-                                )
-                              : [
-                                  ...anteriores,
-                                  documento.chaveDocumento,
-                                ]
-                          );
+                          const jaSelecionado =
+                            documentosSelecionados.includes(
+                              documento.chaveDocumento
+                            );
+
+                          // Desmarcar sempre é permitido
+                          if (jaSelecionado) {
+                            setDocumentosSelecionados((anteriores) =>
+                              anteriores.filter(
+                                (chave) => chave !== documento.chaveDocumento
+                              )
+                            );
+
+                            registrarAlteracaoSelecao();
+                            return;
+                          }
+
+                          // Contar todos os arquivos selecionados
+                          const totalArquivos =
+                            imagensSelecionadas.length +
+                            documentosSelecionados.length +
+                            audiosSelecionados.length;
+
+                          // Impedir uma nova marcação acima do limite
+                          if (totalArquivos >= 10) {
+                            window.alert(
+                              "Limite de 10 arquivos por envio.\n\n" +
+                              "Você já selecionou 10 arquivos.\n\n" +
+                              "Para adicionar outro, desmarque um dos arquivos " +
+                              "selecionados ou compartilhe este grupo e depois " +
+                              "inicie uma nova seleção."
+                            );
+                            return;
+                          }
+
+                          // Adicionar o documento selecionado
+                          setDocumentosSelecionados((anteriores) => [
+                            ...anteriores,
+                            documento.chaveDocumento,
+                          ]);
 
                           registrarAlteracaoSelecao();
                         }}
+
                         className="h-4 w-4 accent-purple-600"
                       />
 
@@ -1545,16 +1419,48 @@ useEffect(() => {
                         type="checkbox"
                         checked={audiosSelecionados.includes(audio.chave)}
                         onChange={() => {
-                          setAudiosSelecionados((anteriores) =>
-                            anteriores.includes(audio.chave)
-                              ? anteriores.filter(
-                                  (chave) => chave !== audio.chave
-                                )
-                              : [...anteriores, audio.chave]
-                          );
+                          const jaSelecionado =
+                            audiosSelecionados.includes(audio.chave);
+
+                          // Desmarcar sempre é permitido
+                          if (jaSelecionado) {
+                            setAudiosSelecionados((anteriores) =>
+                              anteriores.filter(
+                                (chave) => chave !== audio.chave
+                              )
+                            );
+
+                            registrarAlteracaoSelecao();
+                            return;
+                          }
+
+                          // Contar todos os arquivos selecionados
+                          const totalArquivos =
+                            imagensSelecionadas.length +
+                            documentosSelecionados.length +
+                            audiosSelecionados.length;
+
+                          // Impedir uma nova marcação acima do limite
+                          if (totalArquivos >= 10) {
+                            window.alert(
+                              "Limite de 10 arquivos por envio.\n\n" +
+                              "Você já selecionou 10 arquivos.\n\n" +
+                              "Para adicionar outro, desmarque um dos arquivos " +
+                              "selecionados ou compartilhe este grupo e depois " +
+                              "inicie uma nova seleção."
+                            );
+                            return;
+                          }
+
+                          // Adicionar o áudio selecionado
+                          setAudiosSelecionados((anteriores) => [
+                            ...anteriores,
+                            audio.chave,
+                          ]);
 
                           registrarAlteracaoSelecao();
                         }}
+
                         className="mt-1 h-4 w-4 accent-purple-600"
                       />
 
@@ -1882,188 +1788,14 @@ useEffect(() => {
                   >
                     ← Voltar à seleção
                   </button>
-                
-                {/* COMPARTILHAR ITEM — Teste experimental */}
-                  <button
-                    type="button"
-                    onClick={testarCompartilhamentoImagem}
-                    disabled={imagensSelecionadas.length === 0}
-                    className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    ↗ Testar envio de imagem
-                  </button>
-                
-                  {/* COMPARTILHAR ITEM — Teste de PDF */}
-                  <button
-                    type="button"
-                    onClick={testarCompartilhamentoPDF}
-                    disabled={documentosSelecionados.length === 0}
-                    className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    ↗ Testar envio de PDF
-                  </button>
-
-
-{/* DIAGNÓSTICO — Compartilhamento de arquivo TXT */}
-<button
-  type="button"
-  onClick={async () => {
-    try {
-      const arquivo = new File(
-        ["Teste de compartilhamento do Health BaúDigital."],
-        "teste-health.txt",
-        { type: "text/plain" }
-      );
-
-      console.log("TESTE ARQUIVO TXT:", {
-        ativacao: navigator.userActivation?.isActive,
-        shareDisponivel:
-          typeof navigator.share === "function",
-        canShareDisponivel:
-          typeof navigator.canShare === "function",
-        tamanho: arquivo.size,
-        tipo: arquivo.type,
-      });
-
-      if (
-        typeof navigator.share !== "function" ||
-        typeof navigator.canShare !== "function"
-      ) {
-        console.error("Compartilhamento de arquivos indisponível");
-        return;
-      }
-
-      const permitido = navigator.canShare({
-        files: [arquivo],
-      });
-
-      console.log("CAN SHARE TXT:", permitido);
-
-      if (!permitido) {
-        console.error("Arquivo TXT não aceito para compartilhamento");
-        return;
-      }
-
-      await navigator.share({
-        files: [arquivo],
-      });
-
-      console.log("Compartilhamento TXT concluído");
-    } catch (erro) {
-      console.error("ERRO COMPARTILHAMENTO TXT:", erro);
-    }
-  }}
-  className="rounded-lg bg-purple-700 px-5 py-3 text-sm font-semibold text-white"
->
-  Testar compartilhamento TXT
-</button>
-
-
-{/* DIAGNÓSTICO — Compartilhamento de áudio externo */}
-<div className="mt-3 space-y-2">
-  <input
-    type="file"
-    accept=".mp4,.m4a,audio/*"
-    id="teste-audio-externo"
-    className="block w-full text-sm"
-  />
-
-  <button
-    type="button"
-    onClick={async () => {
-      try {
-        const entrada = document.getElementById(
-          "teste-audio-externo"
-        ) as HTMLInputElement | null;
-
-        const arquivo = entrada?.files?.[0];
-
-        if (!arquivo) {
-          window.alert("Selecione primeiro o arquivo de áudio.");
-          return;
-        }
-
-
-// DIAGNÓSTICO — Recriar o áudio externo como File
-const arquivoRecriado = new File(
-  [arquivo],
-  arquivo.name,
-  { type: arquivo.type }
-);
-
-console.log("COMPARAÇÃO FILE:", {
-  original: {
-    nome: arquivo.name,
-    tipo: arquivo.type,
-    tamanho: arquivo.size,
-  },
-  recriado: {
-    nome: arquivoRecriado.name,
-    tipo: arquivoRecriado.type,
-    tamanho: arquivoRecriado.size,
-  },
-});
-
-
-        console.log("TESTE ÁUDIO EXTERNO:", {
-          nome: arquivo.name,
-          tipo: arquivo.type,
-          tamanho: arquivo.size,
-          ativacao: navigator.userActivation?.isActive,
-          podeCompartilhar:
-            typeof navigator.canShare === "function"
-              ? navigator.canShare({ files: [arquivoRecriado] })
-              : "indisponível",
-        });
-
-        if (
-          typeof navigator.share !== "function" ||
-          typeof navigator.canShare !== "function" ||
-          !navigator.canShare({ files: [arquivoRecriado] })
-        ) {
-          window.alert("Compartilhamento indisponível.");
-          return;
-        }
-
-        await navigator.share({
-          files: [arquivoRecriado],
-        });
-
-        console.log("ÁUDIO EXTERNO COMPARTILHADO");
-      } catch (erro) {
-        console.error("ERRO ÁUDIO EXTERNO:", erro);
-        window.alert(
-          erro instanceof Error
-            ? `${erro.name}: ${erro.message}`
-            : String(erro)
-        );
-      }
-    }}
-    className="rounded-lg bg-purple-700 px-5 py-3 text-sm font-semibold text-white"
-  >
-    Testar áudio externo
-  </button>
-</div>
-
-
-
-                  {/* COMPARTILHAR ITEM — Teste experimental de áudio */}
-                  <button
-                    type="button"
-                    onClick={testarCompartilhamentoAudio}
-                    disabled={audiosSelecionados.length === 0}
-                    className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    ↗ Testar envio de áudio
-                  </button>
-
-                  {/* COMPARTILHAR ITEM — Teste do pacote completo */}
+       
+                  {/* COMPARTILHAR ITEM — Botão definitivo */}
                   <button
                     type="button"
                     onClick={testarCompartilhamentoCompleto}
                     className="rounded-lg bg-green-700 px-5 py-3 text-sm font-semibold text-white hover:bg-green-600"
                   >
-                    ↗ Testar envio completo
+                    ↗ Compartilhar
                   </button>
 
                 </div>
