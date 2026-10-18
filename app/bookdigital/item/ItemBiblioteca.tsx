@@ -804,10 +804,15 @@ console.log("CANSHARE ÁUDIO REAL:", {
             return;
           }
 
-          console.error(
-            "Erro no compartilhamento completo:",
-            erro
-          );
+          const detalhe =
+  erro instanceof Error
+    ? `${erro.name}: ${erro.message}`
+    : String(erro);
+
+window.alert(
+  "Não foi possível compartilhar o pacote completo.\n\n" +
+  detalhe
+);
 
           window.alert(
             "Não foi possível compartilhar o pacote completo."
