@@ -583,11 +583,18 @@ async function prepararAudioCompartilhamento(
     extensao = "wav";
   }
 
-  return new File(
-    [arquivo],
-    `audio-${numero}.${extensao}`,
-    { type: tipo }
-  );
+  
+return new File(
+  [arquivo],
+  `audio-${numero}.${extensao}`,
+  {
+    type:
+      extensao === "m4a"
+        ? "audio/x-m4a"
+        : tipo,
+  }
+);
+
 }
 
 // COMPARTILHAR ITEM — Teste de envio de áudio
