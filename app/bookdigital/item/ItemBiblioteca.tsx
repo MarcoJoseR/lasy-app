@@ -393,6 +393,8 @@ function controlarReproducao(
   const [revisaoCompartilhamento, setRevisaoCompartilhamento] =
     useState(false);
 
+  const inicioRevisaoRef = useRef<HTMLDivElement>(null);
+
   // COMPARTILHAR ITEM — Última preparação disponível
   const [ultimaPreparacaoDisponivel, setUltimaPreparacaoDisponivel] =
     useState(false);
@@ -759,6 +761,19 @@ const chaveSelecaoImagens =
           url: string;
         }[]
       >([]);
+
+  useEffect(() => {
+    if (!revisaoCompartilhamento) return;
+
+    const id = requestAnimationFrame(() => {
+      inicioRevisaoRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "start",
+      });
+    });
+
+    return () => cancelAnimationFrame(id);
+  }, [revisaoCompartilhamento]);
 
   useEffect(() => {
     const urlsCriadas: string[] = [];
@@ -1591,9 +1606,10 @@ useEffect(() => {
 
                     setUltimaPreparacaoDisponivel(true);
                     setRevisaoCompartilhamento(true);
-                  }}
-                  className="rounded-lg bg-purple-700 px-5 py-2 text-sm font-semibold text-white hover:bg-purple-600"
-                >
+                   }}
+                   
+                   className="rounded-lg bg-purple-700 px-5 py-2 text-sm font-semibold text-white hover:bg-purple-600"
+                  >
                   Revisar seleção
                 </button>
               </div>
@@ -1603,7 +1619,8 @@ useEffect(() => {
 
            {/* COMPARTILHAR ITEM — Revisão final */}
             {revisaoCompartilhamento && (
-              <div>
+              <div ref={inicioRevisaoRef}>
+                    
                 <h2 className="text-lg font-bold text-white">
                   Revisar compartilhamento
                 </h2>
