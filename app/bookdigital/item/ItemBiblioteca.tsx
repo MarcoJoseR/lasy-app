@@ -1842,6 +1842,28 @@ useEffect(() => {
           return;
         }
 
+
+// DIAGNÓSTICO — Recriar o áudio externo como File
+const arquivoRecriado = new File(
+  [arquivo],
+  arquivo.name,
+  { type: arquivo.type }
+);
+
+console.log("COMPARAÇÃO FILE:", {
+  original: {
+    nome: arquivo.name,
+    tipo: arquivo.type,
+    tamanho: arquivo.size,
+  },
+  recriado: {
+    nome: arquivoRecriado.name,
+    tipo: arquivoRecriado.type,
+    tamanho: arquivoRecriado.size,
+  },
+});
+
+
         console.log("TESTE ÁUDIO EXTERNO:", {
           nome: arquivo.name,
           tipo: arquivo.type,
@@ -1849,21 +1871,21 @@ useEffect(() => {
           ativacao: navigator.userActivation?.isActive,
           podeCompartilhar:
             typeof navigator.canShare === "function"
-              ? navigator.canShare({ files: [arquivo] })
+              ? navigator.canShare({ files: [arquivoRecriado] })
               : "indisponível",
         });
 
         if (
           typeof navigator.share !== "function" ||
           typeof navigator.canShare !== "function" ||
-          !navigator.canShare({ files: [arquivo] })
+          !navigator.canShare({ files: [arquivoRecriado] })
         ) {
           window.alert("Compartilhamento indisponível.");
           return;
         }
 
         await navigator.share({
-          files: [arquivo],
+          files: [arquivoRecriado],
         });
 
         console.log("ÁUDIO EXTERNO COMPARTILHADO");
