@@ -617,6 +617,15 @@ async function prepararAudioCompartilhamento(
 
       const arquivo = audioPreparado;
 
+      console.log("DIAGNÓSTICO SHARE:", {
+  nome: arquivo.name,
+  tipo: arquivo.type,
+  tamanho: arquivo.size,
+  ativacaoUsuario:
+    navigator.userActivation?.isActive ?? "indisponível",
+  ambienteSeguro: window.isSecureContext,
+});
+
 // DIAGNÓSTICO — Verificar o arquivo real
 console.log("CANSHARE ÁUDIO REAL:", {
   nome: arquivo.name,
@@ -1752,6 +1761,62 @@ useEffect(() => {
                   >
                     ↗ Testar envio de PDF
                   </button>
+
+
+{/* DIAGNÓSTICO — Compartilhamento de arquivo TXT */}
+<button
+  type="button"
+  onClick={async () => {
+    try {
+      const arquivo = new File(
+        ["Teste de compartilhamento do Health BaúDigital."],
+        "teste-health.txt",
+        { type: "text/plain" }
+      );
+
+      console.log("TESTE ARQUIVO TXT:", {
+        ativacao: navigator.userActivation?.isActive,
+        shareDisponivel:
+          typeof navigator.share === "function",
+        canShareDisponivel:
+          typeof navigator.canShare === "function",
+        tamanho: arquivo.size,
+        tipo: arquivo.type,
+      });
+
+      if (
+        typeof navigator.share !== "function" ||
+        typeof navigator.canShare !== "function"
+      ) {
+        console.error("Compartilhamento de arquivos indisponível");
+        return;
+      }
+
+      const permitido = navigator.canShare({
+        files: [arquivo],
+      });
+
+      console.log("CAN SHARE TXT:", permitido);
+
+      if (!permitido) {
+        console.error("Arquivo TXT não aceito para compartilhamento");
+        return;
+      }
+
+      await navigator.share({
+        files: [arquivo],
+      });
+
+      console.log("Compartilhamento TXT concluído");
+    } catch (erro) {
+      console.error("ERRO COMPARTILHAMENTO TXT:", erro);
+    }
+  }}
+  className="rounded-lg bg-purple-700 px-5 py-3 text-sm font-semibold text-white"
+>
+  Testar compartilhamento TXT
+</button>
+
 
                   {/* COMPARTILHAR ITEM — Teste experimental de áudio */}
                   <button
