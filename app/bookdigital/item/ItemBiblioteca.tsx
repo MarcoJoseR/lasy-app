@@ -1139,7 +1139,7 @@ useEffect(() => {
           <button
             type="button"
             onClick={voltarDaPaginaVer}
-            className="absolute left-4 top-4 rounded bg-black/60 px-3 py-1 text-white backdrop-blur transition hover:scale-105"
+            className="mb-5 rounded bg-zinc-800 px-3 py-2 text-white transition hover:bg-zinc-700"
           >
             ← Voltar
           </button>
