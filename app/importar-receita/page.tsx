@@ -32,6 +32,8 @@ export default function ImportarReceitaPage() {
     ? textoLimpo.replace(urlEncontradaNoTexto, "").trim()
     : textoLimpo;
 
+  const [linkGuardado, setLinkGuardado] = useState(false);
+  
   const [tipoImportacao, setTipoImportacao] =
     useState<TipoImportacao>("receita");
 
@@ -58,6 +60,7 @@ export default function ImportarReceitaPage() {
 
   useEffect(() => {
     setLinkOrigemEditavel(linkRecebido);
+    setLinkGuardado(false);
   }, [linkRecebido]);
 
   useEffect(() => {
@@ -142,8 +145,6 @@ ingredientes = ingredientes
   // ============================================================
   // TRANSFERÊNCIA DA RECEITA EM TEXTO PARA O FORMULÁRIO
   // ============================================================
-
-
 function guardarLinkParaDepois() {
   const link = linkOrigemEditavel.trim();
 
@@ -154,6 +155,8 @@ function guardarLinkParaDepois() {
 
   try {
     salvarLinkPendente(link, title);
+
+    setLinkGuardado(true);
 
     window.alert(
       "✅ Link guardado com sucesso! Você poderá organizá-lo depois."
@@ -394,10 +397,18 @@ function guardarLinkParaDepois() {
         {tipoImportacao === "receita" && (
           <button
             type="button"
-            onClick={guardarLinkParaDepois}
+            onClick={() => {
+              if (linkGuardado) {
+                window.location.assign("/links-pendentes");
+              } else {
+                guardarLinkParaDepois();
+              }
+            }}
             className="mb-6 w-full rounded-lg bg-green-700 px-4 py-3 font-semibold text-white hover:bg-green-600"
           >
-            📌 Guardar link para depois
+            {linkGuardado
+              ? "📌 Ver Links Pendentes"
+              : "📌 Guardar link para depois"}
           </button>
         )}
 
