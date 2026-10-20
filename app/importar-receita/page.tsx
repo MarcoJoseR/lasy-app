@@ -424,7 +424,18 @@ function guardarLinkParaDepois() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             type="button"
-            onClick={() => setTipoImportacao("receita")}
+            onClick={() => {
+              setTipoImportacao("receita");
+
+              setTimeout(() => {
+                document
+                  .getElementById("continuar-formulario")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                  });
+              }, 100);
+            }}
             className={`rounded-lg px-4 py-3 font-semibold ${
               tipoImportacao === "receita"
                 ? "bg-amber-500 text-zinc-950"
@@ -528,6 +539,7 @@ function guardarLinkParaDepois() {
       )}
        
           <button
+            id="continuar-formulario"
             type="button"
             onClick={continuarParaFormulario}
             className="w-full rounded-lg bg-amber-500 px-4 py-3 font-semibold text-zinc-950 hover:bg-amber-400"
