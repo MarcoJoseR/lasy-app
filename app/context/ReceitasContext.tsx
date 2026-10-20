@@ -122,76 +122,67 @@ export function ReceitasProvider({ children }: { children: ReactNode }) {
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [carregado, setCarregado] = useState(false);
 
+
 useEffect(() => {
   async function carregarEMigrarReceitas() {
-    let receitasParaCarregar: Receita[] = [];
+    const CHAVE_INICIALIZACAO = "healthReceitasInicializadoV1";
 
     try {
-      const CHAVE_INICIALIZACAO =
-        "healthReceitasInicializadoV1";
-
+      const dadosSalvos = localStorage.getItem(STORAGE_KEY);
       const jaInicializado =
         localStorage.getItem(CHAVE_INICIALIZACAO) === "1";
 
-      const dadosSalvos =
-        localStorage.getItem(STORAGE_KEY);
+      let receitasParaCarregar: Receita[];
 
-      // ============================================================
-      // PRIMEIRA INSTALAÇÃO
-      // ============================================================
+      if (dadosSalvos !== null) {
+        // A biblioteca existente tem prioridade sobre o pacote inicial.
+        const dadosInterpretados: unknown = JSON.parse(dadosSalvos);
 
-      if (!jaInicializado) {
-        const resultadoPacote =
-          await inicializarPacoteUsuarios();
+        if (
+          !Array.isArray(dadosInterpretados) ||
+          !dadosInterpretados.every(
+            (receita) =>
+              receita !== null &&
+              typeof receita === "object" &&
+              !Array.isArray(receita) &&
+              typeof receita.id === "string" &&
+              typeof receita.nome === "string"
+          )
+        ) {
+          throw new Error(
+            "Minha Biblioteca contém dados inválidos. Gravação bloqueada."
+          );
+        }
 
-        receitasParaCarregar =
-          resultadoPacote.receitas;
+        receitasParaCarregar = dadosInterpretados as Receita[];
+
+        if (!jaInicializado) {
+          localStorage.setItem(CHAVE_INICIALIZACAO, "1");
+        }
+      } else if (jaInicializado) {
+        // Ausência inesperada em instalação já inicializada.
+        // Não recriar uma biblioteca vazia nem reinstalar o pacote.
+        throw new Error(
+          "Minha Biblioteca ausente em instalação já inicializada."
+        );
+      } else {
+        // Instalação nova, sem biblioteca e sem inicialização anterior.
+        const resultadoPacote = await inicializarPacoteUsuarios();
+
+        receitasParaCarregar = resultadoPacote.receitas;
 
         localStorage.setItem(
           STORAGE_KEY,
           JSON.stringify(receitasParaCarregar)
         );
 
-        localStorage.setItem(
-          CHAVE_INICIALIZACAO,
-          "1"
-        );
+        localStorage.setItem(CHAVE_INICIALIZACAO, "1");
 
-        console.log(
-          "Pacote inicial de usuários carregado:",
-          {
-            oficiais:
-              resultadoPacote.quantidadeOficiais,
-            pessoais:
-              resultadoPacote.quantidadePessoais,
-            carrosseis:
-              resultadoPacote.quantidadeCarrosseis,
-            prints:
-              resultadoPacote.quantidadePrints,
-            capas:
-              resultadoPacote.quantidadeCapas,
-          }
-        );
-
-        setReceitas(receitasParaCarregar);
-        return;
+        console.log("Pacote inicial de usuários carregado.");
       }
 
-      // ============================================================
-      // USUÁRIO JÁ INICIALIZADO
-      // ============================================================
-
-      if (dadosSalvos) {
-        receitasParaCarregar =
-          JSON.parse(dadosSalvos) as Receita[];
-      }
-
-      // ============================================================
-      // MIGRAÇÃO DE CAPAS ANTIGAS BASE64
-      // ============================================================
-
+      // Migração das capas antigas para IndexedDB.
       let quantidadeMigrada = 0;
-
       const receitasMigradas: Receita[] = [];
 
       for (const receita of receitasParaCarregar) {
@@ -199,15 +190,9 @@ useEffect(() => {
           receita.imagem &&
           receita.imagem.startsWith("data:image/")
         ) {
-          await salvarCapaReceita(
-            receita.id,
-            receita.imagem
-          );
+          await salvarCapaReceita(receita.id, receita.imagem);
 
-          const {
-            imagem,
-            ...receitaSemImagem
-          } = receita;
+          const { imagem, ...receitaSemImagem } = receita;
 
           receitasMigradas.push({
             ...receitaSemImagem,
@@ -233,17 +218,13 @@ useEffect(() => {
       }
 
       setReceitas(receitasMigradas);
+      setCarregado(true);
     } catch (error) {
       console.error(
-        "Erro ao carregar ou inicializar receitas:",
+        "Erro ao carregar ou inicializar receitas. Gravações bloqueadas:",
         error
       );
-
-      if (receitasParaCarregar.length > 0) {
-        setReceitas(receitasParaCarregar);
-      }
-    } finally {
-      setCarregado(true);
+      // Mantém carregado=false para impedir gravações automáticas.
     }
   }
 

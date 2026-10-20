@@ -16,21 +16,45 @@ export function listarTemas(): Tema[] {
     return [];
   }
 
-  try {
-    const dados = localStorage.getItem(CHAVE_TEMAS);
+  const dados = localStorage.getItem(CHAVE_TEMAS);
 
-    if (!dados) {
-      return [];
-    }
-
-    const temas = JSON.parse(dados) as Tema[];
-
-    return temas.sort((a, b) => a.ordem - b.ordem);
-  } catch (error) {
-    console.error("Erro ao carregar temas do BookDigital:", error);
+  if (dados === null) {
     return [];
   }
+
+  try {
+    const temas: unknown = JSON.parse(dados);
+
+    if (
+      !Array.isArray(temas) ||
+      !temas.every(
+        (tema) =>
+          tema !== null &&
+          typeof tema === "object" &&
+          !Array.isArray(tema) &&
+          typeof tema.id === "string" &&
+          typeof tema.nome === "string" &&
+          typeof tema.ordem === "number"
+      )
+    ) {
+      throw new Error("Dados dos Temas inválidos.");
+    }
+
+    return (temas as Tema[]).sort(
+      (a, b) => a.ordem - b.ordem
+    );
+  } catch (error) {
+    console.error(
+      "Erro ao carregar Temas. Gravação bloqueada:",
+      error
+    );
+
+    throw new Error(
+      "Não foi possível recuperar os Temas. Nenhuma alteração foi realizada."
+    );
+  }
 }
+
 
 // ============================================================
 // SALVAR TEMAS

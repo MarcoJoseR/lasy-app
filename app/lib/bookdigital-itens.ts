@@ -11,21 +11,40 @@ export function listarItens(): ItemBiblioteca[] {
     return [];
   }
 
-  try {
-    const dados = localStorage.getItem(CHAVE_ITENS);
+  const dados = localStorage.getItem(CHAVE_ITENS);
 
-    if (!dados) {
-      return [];
+  if (dados === null) {
+    return [];
+  }
+
+  try {
+    const itens: unknown = JSON.parse(dados);
+
+    if (
+      !Array.isArray(itens) ||
+      !itens.every(
+        (item) =>
+          item !== null &&
+          typeof item === "object" &&
+          !Array.isArray(item) &&
+          typeof item.id === "string" &&
+          typeof item.temaId === "string" &&
+          typeof item.titulo === "string"
+      )
+    ) {
+      throw new Error("Dados dos Itens inválidos.");
     }
 
-    return JSON.parse(dados) as ItemBiblioteca[];
+    return itens as ItemBiblioteca[];
   } catch (error) {
     console.error(
-      "Erro ao carregar itens do BookDigital:",
+      "Erro ao carregar Itens. Gravação bloqueada:",
       error
     );
 
-    return [];
+    throw new Error(
+      "Não foi possível recuperar os Itens. Nenhuma alteração foi realizada."
+    );
   }
 }
 
