@@ -632,6 +632,14 @@ useEffect(() => {
   // ============================================================
 
   async function salvarReceita() {
+    if (!carregado) {
+      window.alert(
+        "Não foi possível acessar sua biblioteca. " +
+        "O salvamento foi bloqueado para proteger seus dados."
+      );
+      return;
+    }
+
     console.log("salvarReceita executada", {
       nome,
       categoria,

@@ -254,12 +254,52 @@ useEffect(() => {
     try {
       const dadosSalvos = localStorage.getItem(STORAGE_KEY);
 
-      if (!dadosSalvos) return;
+      if (dadosSalvos === null) {
+        console.error(
+          "Minha Biblioteca ausente. Atualização automática bloqueada."
+        );
+        return;
+      }
 
-      const receitasSalvas = JSON.parse(dadosSalvos) as Receita[];
-      setReceitas(receitasSalvas);
+      const dadosInterpretados: unknown = JSON.parse(dadosSalvos);
+
+      if (
+        !Array.isArray(dadosInterpretados) ||
+        !dadosInterpretados.every(
+          (receita) =>
+            receita !== null &&
+            typeof receita === "object" &&
+            !Array.isArray(receita) &&
+            typeof receita.id === "string" &&
+            typeof receita.nome === "string"
+        )
+      ) {
+        console.error(
+          "Minha Biblioteca inválida. Atualização automática bloqueada."
+        );
+        return;
+      }
+
+      const receitasSalvas = dadosInterpretados as Receita[];
+
+      setReceitas((receitasAtuais) => {
+        if (
+          receitasAtuais.length > 0 &&
+          receitasSalvas.length === 0
+        ) {
+          console.error(
+            "Biblioteca inesperadamente vazia. Atualização automática bloqueada."
+          );
+          return receitasAtuais;
+        }
+
+        return receitasSalvas;
+      });
     } catch (error) {
-      console.error("Erro ao atualizar receitas:", error);
+      console.error(
+        "Erro ao atualizar receitas. Dados atuais preservados:",
+        error
+      );
     }
   }
 
@@ -286,8 +326,15 @@ useEffect(() => {
     "id" | "tipo" | "criadoEm" | "atualizadoEm"
   >
 ): boolean {
-  const agora = new Date().toISOString();
+  if (!carregado) {
+    window.alert(
+      "Não foi possível acessar sua biblioteca. " +
+      "A receita não foi salva para proteger seus dados."
+    );
+    return false;
+  }
 
+  const agora = new Date().toISOString();
   const novaReceita: Receita = {
     ...receita,
     id: gerarId(),
@@ -400,6 +447,14 @@ function adicionarReceitasOficiaisEmLote(
   >[]
 ): boolean {
 
+  if (!carregado) {
+    window.alert(
+      "Não foi possível acessar a biblioteca. " +
+      "A importação foi bloqueada para proteger seus dados."
+    );
+    return false;
+  }
+
   if (receitasParaImportar.length === 0) {
     return false;
   }
@@ -459,6 +514,12 @@ function adicionarReceitasOficiaisEmLote(
 async function adicionarNaBiblioteca(
   receita: Receita
 ): Promise<Receita> {
+  if (!carregado) {
+    throw new Error(
+      "Biblioteca não carregada. Operação bloqueada para proteger seus dados."
+    );
+  }
+
   const agora = new Date().toISOString();
 
   const novaReceitaId = crypto.randomUUID();
@@ -544,12 +605,16 @@ async function adicionarNaBiblioteca(
 }
 
   function removerReceita(id: string) {
+    if (!carregado) return;
+
     setReceitas((receitasAtuais) =>
       receitasAtuais.filter((receita) => receita.id !== id)
     );
   }
 
   function registrarPreparacao(id: string) {
+    if (!carregado) return;
+
     const agora = new Date().toISOString();
 
     setReceitas((receitasAtuais) =>
@@ -568,6 +633,8 @@ async function adicionarNaBiblioteca(
   }
 
   function toggleFavorito(id: string) {
+    if (!carregado) return;
+
     const agora = new Date().toISOString();
 
     setReceitas((receitasAtuais) =>
@@ -587,6 +654,8 @@ async function adicionarNaBiblioteca(
     id: string,
     dadosAtualizados: Partial<Omit<Receita, "id" | "criadoEm">>
   ) {
+    if (!carregado) return;
+
     const agora = new Date().toISOString();
 
     setReceitas((receitasAtuais) =>

@@ -931,6 +931,13 @@ const inputError = "border-2 border-red-500 ring-1 ring-red-400";
     <AcoesFormularioReceita
       editando={Boolean(editandoId)}
       onConfirmar={async () => {
+        if (!carregado) {
+      window.alert(
+        "Não foi possível acessar a biblioteca. " +
+        "O salvamento foi bloqueado para proteger seus dados."
+      );
+      return;
+    }
         if (editandoId) {
           salvarEdicao();
         } else {

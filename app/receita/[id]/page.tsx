@@ -248,8 +248,19 @@ if (!carregado) {
     return;
   }
 
-  const novaReceita =
-  await adicionarNaBiblioteca(receita);
+    let novaReceita;
+
+  try {
+    novaReceita = await adicionarNaBiblioteca(receita);
+  } catch (erro) {
+    console.error("Erro ao adicionar à biblioteca:", erro);
+
+    setMensagemSucesso(
+      "Não foi possível salvar. Sua biblioteca não foi alterada."
+    );
+
+    return;
+  }
 
 if (receita.tipoConteudo === "carrossel") {
   setMensagemSucesso(

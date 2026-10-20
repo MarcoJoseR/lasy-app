@@ -137,10 +137,24 @@ async function marcarReceitaRealizada() {
     if (receitaExistente) {
       receitaIdParaRegistrar = String(receitaExistente.id);
     } else {
-      const novaReceita =
-        await adicionarNaBiblioteca(receitaCompleta);
+      try {
+        const novaReceita =
+          await adicionarNaBiblioteca(receitaCompleta);
 
-      receitaIdParaRegistrar = String(novaReceita.id);
+        receitaIdParaRegistrar = String(novaReceita.id);
+      } catch (erro) {
+        console.error(
+          "Erro ao adicionar receita durante a preparação:",
+          erro
+        );
+
+        window.alert(
+          "Não foi possível salvar a receita na Minha Biblioteca. " +
+          "O registro da preparação foi interrompido para proteger seus dados."
+        );
+
+        return;
+      }
     }
   }
 

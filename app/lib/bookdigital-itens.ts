@@ -85,6 +85,38 @@ export function criarItem(
     "id" | "criadoEm" | "atualizadoEm"
   >
 ): ItemBiblioteca {
+  const temasSalvos = localStorage.getItem("bookdigitalTemas");
+
+  if (temasSalvos === null) {
+    throw new Error(
+      "Os Temas não estão disponíveis. O Item não foi salvo."
+    );
+  }
+
+  let temas: unknown;
+
+  try {
+    temas = JSON.parse(temasSalvos);
+  } catch {
+    throw new Error(
+      "Não foi possível ler os Temas. O Item não foi salvo."
+    );
+  }
+
+  if (
+    !Array.isArray(temas) ||
+    !temas.some(
+      (tema) =>
+        tema !== null &&
+        typeof tema === "object" &&
+        tema.id === dados.temaId
+    )
+  ) {
+    throw new Error(
+      "O Tema deste Item não foi encontrado. O Item não foi salvo."
+    );
+  }
+
   const itens = listarItens();
 
   const agora = new Date().toISOString();

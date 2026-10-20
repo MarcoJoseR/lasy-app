@@ -896,6 +896,18 @@ async function carregarCapas(
     try {
       setErro("");
 
+    const temaExiste = listarTemas().some(
+      (tema) => tema.id === temaId
+    );
+
+    if (!temaExiste) {
+      setErro(
+        "Não foi possível encontrar este Tema. " +
+        "O Item não foi salvo para proteger seus dados."
+      );
+      return;
+    }
+
       const dadosFormulario =
         prepararDadosFormularioItem({
           titulo,
