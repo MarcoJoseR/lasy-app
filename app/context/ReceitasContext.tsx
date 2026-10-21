@@ -91,7 +91,7 @@ interface ReceitasContextType {
       Receita,
       "id" | "tipo" | "criadoEm" | "atualizadoEm"
     >
-  ) => void;
+  ) => boolean;
 
   adicionarReceitasOficiaisEmLote: (
   receitas: Omit<
@@ -102,14 +102,14 @@ interface ReceitasContextType {
 
   adicionarNaBiblioteca: (receita: Receita) => Promise<Receita>;
   
-  removerReceita: (id: string) => void;
+  removerReceita: (id: string) => boolean;
   toggleFavorito: (id: string) => void;
-  registrarPreparacao: (id: string) => void;
+  registrarPreparacao: (id: string) => boolean;
 
   atualizarReceita: (
     id: string,
     dadosAtualizados: Partial<Omit<Receita, "id" | "criadoEm">>
-  ) => void;
+  ) => boolean;
 }
 
 const ReceitasContext = createContext<ReceitasContextType | undefined>(
@@ -117,6 +117,47 @@ const ReceitasContext = createContext<ReceitasContextType | undefined>(
 );
 
 const STORAGE_KEY = "minhaBiblioteca";
+
+function persistirAlteracaoReceitas(
+  alterar: (receitasAtuais: Receita[]) => Receita[]
+): Receita[] {
+  const dadosSalvos = localStorage.getItem(STORAGE_KEY);
+
+  if (dadosSalvos === null) {
+    throw new Error(
+      "Minha Biblioteca não está disponível. Gravação bloqueada."
+    );
+  }
+
+  const dadosInterpretados: unknown = JSON.parse(dadosSalvos);
+
+  if (
+    !Array.isArray(dadosInterpretados) ||
+    !dadosInterpretados.every(
+      (receita) =>
+        receita !== null &&
+        typeof receita === "object" &&
+        !Array.isArray(receita) &&
+        typeof receita.id === "string" &&
+        typeof receita.nome === "string"
+    )
+  ) {
+    throw new Error(
+      "Minha Biblioteca contém dados inválidos. Gravação bloqueada."
+    );
+  }
+
+  const receitasAtualizadas = alterar(
+    dadosInterpretados as Receita[]
+  );
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(receitasAtualizadas)
+  );
+
+  return receitasAtualizadas;
+}
 
 export function ReceitasProvider({ children }: { children: ReactNode }) {
   const [receitas, setReceitas] = useState<Receita[]>([]);
@@ -231,21 +272,6 @@ useEffect(() => {
   carregarEMigrarReceitas();
 }, []);
 
-  useEffect(() => {
-  if (!carregado) return;
-
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(receitas)
-    );
-  } catch (error) {
-    console.error(
-      "Erro ao atualizar Minha Biblioteca no armazenamento local:",
-      error
-    );
-  }
-}, [receitas, carregado]);
 
 useEffect(() => {
   if (!carregado) return;
@@ -343,16 +369,12 @@ useEffect(() => {
     atualizadoEm: agora,
   };
 
-  const receitasAtualizadas = [
-    ...receitas,
-    novaReceita,
-  ];
-
   try {
-    // Grava imediatamente antes de qualquer navegação.
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(receitasAtualizadas)
+    const receitasAtualizadas = persistirAlteracaoReceitas(
+      (receitasAtuais) => [
+        ...receitasAtuais,
+        novaReceita,
+      ]
     );
 
     setReceitas(receitasAtualizadas);
@@ -423,7 +445,15 @@ useEffect(() => {
 
 function adicionarReceitaOficial(
   receita: Omit<Receita, "id" | "tipo" | "criadoEm" | "atualizadoEm">
-) {
+): boolean {
+  if (!carregado) {
+    window.alert(
+      "Não foi possível acessar a biblioteca. " +
+      "O cadastro foi bloqueado para proteger seus dados."
+    );
+    return false;
+  }
+
   const agora = new Date().toISOString();
 
   const novaReceita: Receita = {
@@ -434,10 +464,26 @@ function adicionarReceitaOficial(
     atualizadoEm: agora,
   };
 
-  setReceitas((receitasAtuais) => [
-    ...receitasAtuais,
-    novaReceita,
-  ]);
+  try {
+    const receitasAtualizadas = persistirAlteracaoReceitas(
+      (receitasAtuais) => [
+        ...receitasAtuais,
+        novaReceita,
+      ]
+    );
+
+    setReceitas(receitasAtualizadas);
+    return true;
+  } catch (error) {
+    console.error("Erro ao adicionar receita oficial:", error);
+
+    window.alert(
+      "Não foi possível salvar a receita oficial. " +
+      "A operação foi interrompida para proteger seus dados."
+    );
+
+    return false;
+  }
 }
 
 function adicionarReceitasOficiaisEmLote(
@@ -474,27 +520,24 @@ function adicionarReceitasOficiaisEmLote(
   );
 
   try {
-    setReceitas((receitasAtuais) => {
-      const idsImportados = new Set(
-        novasReceitas.map((receita) => receita.id)
-      );
+    const receitasAtualizadas = persistirAlteracaoReceitas(
+      (receitasAtuais) => {
+        const idsImportados = new Set(
+          novasReceitas.map((receita) => receita.id)
+        );
 
-      const receitasSemDuplicadas = receitasAtuais.filter(
-        (receita) => !idsImportados.has(receita.id)
-      );
+        const receitasSemDuplicadas = receitasAtuais.filter(
+          (receita) => !idsImportados.has(receita.id)
+        );
 
-      const receitasAtualizadas = [
-        ...receitasSemDuplicadas,
-        ...novasReceitas,
-      ];
+        return [
+          ...receitasSemDuplicadas,
+          ...novasReceitas,
+        ];
+      }
+    );
 
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(receitasAtualizadas)
-      );
-
-      return receitasAtualizadas;
-    });
+    setReceitas(receitasAtualizadas);
 
     return true;
   } catch (error) {
@@ -587,49 +630,86 @@ async function adicionarNaBiblioteca(
     atualizadoEm: agora,
   };
 
-  setReceitas((receitasAtuais) => {
-    const receitasAtualizadas = [
+  const receitasAtualizadas = persistirAlteracaoReceitas(
+    (receitasAtuais) => [
       ...receitasAtuais,
       novaReceita,
-    ];
+    ]
+  );
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(receitasAtualizadas)
-    );
-
-    return receitasAtualizadas;
-  });
+  setReceitas(receitasAtualizadas);
 
   return novaReceita;
 }
 
-  function removerReceita(id: string) {
-    if (!carregado) return;
+  function removerReceita(id: string): boolean {
+    if (!carregado) return false;
 
-    setReceitas((receitasAtuais) =>
-      receitasAtuais.filter((receita) => receita.id !== id)
-    );
+    try {
+      const receitasAtualizadas = persistirAlteracaoReceitas(
+        (receitasAtuais) => {
+          if (!receitasAtuais.some((receita) => receita.id === id)) {
+            throw new Error("Receita não encontrada na biblioteca.");
+          }
+
+          return receitasAtuais.filter(
+            (receita) => receita.id !== id
+          );
+        }
+      );
+
+      setReceitas(receitasAtualizadas);
+      return true;
+    } catch (error) {
+      console.error("Erro ao remover receita:", error);
+
+      window.alert(
+        "Não foi possível remover a receita. " +
+        "A operação foi interrompida para proteger seus dados."
+      );
+
+      return false;
+    }
   }
 
-  function registrarPreparacao(id: string) {
-    if (!carregado) return;
+  function registrarPreparacao(id: string): boolean {
+    if (!carregado) return false;
 
     const agora = new Date().toISOString();
 
-    setReceitas((receitasAtuais) =>
-      receitasAtuais.map((receita) =>
-        receita.id === id
-          ? {
-              ...receita,
-              preparacoes: [
-                ...(receita.preparacoes || []),
-                agora,
-              ],
-            }
-          : receita
-      )
-    );
+    try {
+      const receitasAtualizadas = persistirAlteracaoReceitas(
+        (receitasAtuais) => {
+          if (!receitasAtuais.some((receita) => receita.id === id)) {
+            throw new Error("Receita não encontrada na biblioteca.");
+          }
+
+          return receitasAtuais.map((receita) =>
+            receita.id === id
+              ? {
+                  ...receita,
+                  preparacoes: [
+                    ...(receita.preparacoes || []),
+                    agora,
+                  ],
+                }
+              : receita
+          );
+        }
+      );
+
+      setReceitas(receitasAtualizadas);
+      return true;
+    } catch (error) {
+      console.error("Erro ao registrar preparação:", error);
+
+      window.alert(
+        "Não foi possível registrar a preparação. " +
+        "A operação foi interrompida para proteger seus dados."
+      );
+
+      return false;
+    }
   }
 
   function toggleFavorito(id: string) {
@@ -637,38 +717,75 @@ async function adicionarNaBiblioteca(
 
     const agora = new Date().toISOString();
 
-    setReceitas((receitasAtuais) =>
-      receitasAtuais.map((receita) =>
-        receita.id === id
-          ? {
-              ...receita,
-              favorito: !receita.favorito,
-              atualizadoEm: agora,
-            }
-          : receita
-      )
-    );
+    try {
+      const receitasAtualizadas = persistirAlteracaoReceitas(
+        (receitasAtuais) => {
+          if (!receitasAtuais.some((receita) => receita.id === id)) {
+            throw new Error("Receita não encontrada na biblioteca.");
+          }
+
+          return receitasAtuais.map((receita) =>
+            receita.id === id
+              ? {
+                  ...receita,
+                  favorito: !receita.favorito,
+                  atualizadoEm: agora,
+                }
+              : receita
+          );
+        }
+      );
+
+      setReceitas(receitasAtualizadas);
+    } catch (error) {
+      console.error("Erro ao alterar favorito:", error);
+
+      window.alert(
+        "Não foi possível alterar o favorito. " +
+        "A operação foi interrompida para proteger seus dados."
+      );
+    }
   }
 
   function atualizarReceita(
     id: string,
     dadosAtualizados: Partial<Omit<Receita, "id" | "criadoEm">>
-  ) {
-    if (!carregado) return;
+  ): boolean {
+    if (!carregado) return false;
 
     const agora = new Date().toISOString();
 
-    setReceitas((receitasAtuais) =>
-      receitasAtuais.map((receita) =>
-        receita.id === id
-          ? {
-              ...receita,
-              ...dadosAtualizados,
-              atualizadoEm: agora,
-            }
-          : receita
-      )
-    );
+    try {
+      const receitasAtualizadas = persistirAlteracaoReceitas(
+        (receitasAtuais) => {
+          if (!receitasAtuais.some((receita) => receita.id === id)) {
+            throw new Error("Receita não encontrada na biblioteca.");
+          }
+
+          return receitasAtuais.map((receita) =>
+            receita.id === id
+              ? {
+                  ...receita,
+                  ...dadosAtualizados,
+                  atualizadoEm: agora,
+                }
+              : receita
+          );
+        }
+      );
+
+      setReceitas(receitasAtualizadas);
+      return true;
+    } catch (error) {
+      console.error("Erro ao atualizar receita:", error);
+
+      window.alert(
+        "Não foi possível salvar as alterações da receita. " +
+        "A operação foi interrompida para proteger seus dados."
+      );
+
+      return false;
+    }
   }
 
   return (

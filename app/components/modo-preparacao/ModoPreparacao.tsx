@@ -158,7 +158,13 @@ async function marcarReceitaRealizada() {
     }
   }
 
-  registrarPreparacao(receitaIdParaRegistrar);
+  const preparacaoRegistrada = registrarPreparacao(
+    receitaIdParaRegistrar
+  );
+
+  if (!preparacaoRegistrada) {
+    return;
+  }
 
   const realizadaEm = new Date().toISOString();
 

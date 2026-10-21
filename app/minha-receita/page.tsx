@@ -820,16 +820,20 @@ useEffect(() => {
       }
     }
 
-    atualizarReceita(receitaId, receitaAtualizada);
+    const atualizacaoConcluida = atualizarReceita(
+      receitaId,
+      receitaAtualizada
+    );
+
+    if (!atualizacaoConcluida) {
+      return;
+    }
 
     setMensagemSucesso(
       "Receita atualizada com sucesso"
     );
-
     limparFormulario();
-
     router.replace("/minha-receita");
-
     return;
 
     } else {

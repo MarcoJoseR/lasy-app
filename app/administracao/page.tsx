@@ -474,7 +474,10 @@ if (!carregado) {
 const handleRemover = (receita: Receita) => {
   if (!confirm(`Excluir "${receita.nome}"?`)) return;
 
-  removerReceita(receita.id);
+  const removida = removerReceita(receita.id);
+
+  if (!removida) return;
+
   setToast(`🗑️ "${receita.nome}" removida`);
   setTimeout(() => {
     setToast("");
@@ -629,7 +632,7 @@ if (
   }
 }
 
-  atualizarReceita(editandoId, {
+  const atualizacaoConcluida = atualizarReceita(editandoId, {
     nome,
     categoria,
     subCategoria,
@@ -656,6 +659,9 @@ if (
   : {}),
 
   });
+  if (!atualizacaoConcluida) {
+      return;
+  }
 
   limparImportacao();
 
@@ -992,7 +998,7 @@ if (
   }
 }
 
-          adicionarReceitaOficial({
+          const cadastroConcluido = adicionarReceitaOficial({
             ...montarReceita({
               id: novaReceitaId,
               nome,
@@ -1023,6 +1029,9 @@ if (
                 }
               : {}),
           });
+          if (!cadastroConcluido) {
+            return;
+          }
 
           limparImportacao();
 

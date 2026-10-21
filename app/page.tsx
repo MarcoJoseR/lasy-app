@@ -314,7 +314,10 @@ if (!carregado) {
 const handleRemover = (receita: Receita) => {
   if (!confirm(`Excluir "${receita.nome}"?`)) return;
 
-  removerReceita(receita.id);
+  const removida = removerReceita(receita.id);
+
+  if (!removida) return;
+
   setToast(`🗑️ "${receita.nome}" removida`);
   
   setTimeout(() => {
