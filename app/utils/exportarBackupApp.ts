@@ -27,6 +27,11 @@ type BackupAppV1 = {
   tipo: "backup-geral-app";
   versaoBackup: 1;
   exportadoEm: string;
+  pendencias?: {
+    modulo: "Health" | "BaúDigital";
+    nome: string;
+    problema: string;
+  }[];
 
   dados: {
     health: {
@@ -107,6 +112,13 @@ function blobParaDataURL(
 
 export async function exportarBackupApp() {
   try {
+
+    const pendencias: {
+      modulo: "Health" | "BaúDigital";
+      nome: string;
+      problema: string;
+    }[] = [];
+
     // ============================================================
     // HEALTH - LOCALSTORAGE
     // ============================================================
@@ -134,106 +146,159 @@ export async function exportarBackupApp() {
         )
       : [];
 
+    const receitasValidadas: typeof receitasPessoais = [];
+
     // ============================================================
-    // HEALTH - CARROSSÉIS
-    // ============================================================
+// HEALTH - VALIDAR RECEITAS E ANEXOS
+// ============================================================
 
-    const carrosseisIndexedDB: Record<
-      string,
-      string[]
-    > = {};
+const carrosseisIndexedDB: Record<string, string[]> = {};
+const printsIndexedDB: Record<string, string[]> = {};
+const capasHealthIndexedDB: Record<string, string> = {};
 
-    for (const receita of receitasPessoais) {
-      const chaveImagens =
-        receita?.carrossel?.chaveImagens;
+for (const receita of receitasPessoais) {
+  const nome = receita?.nome || "Receita sem nome";
 
-      if (!chaveImagens) continue;
+  try {
+    const chaveCarrossel =
+      receita?.carrossel?.chaveImagens;
 
-      try {
-        const imagens =
-          await obterImagensCarrossel(
-            chaveImagens
-          );
+    const chavePrints =
+      receita?.chavePrintsLegenda;
 
-        if (imagens.length > 0) {
-          carrosseisIndexedDB[
-            chaveImagens
-          ] = imagens;
-        }
-      } catch (erro) {
-        console.error(
-          `Erro ao incluir carrossel ${chaveImagens}:`,
-          erro
+    const chaveCapa =
+      receita?.chaveImagemCapa;
+
+    let imagensCarrossel: string[] | null = null;
+    let prints: string[] | null = null;
+    let capa: string | null = null;
+
+    // CARROSSEL
+    if (receita?.tipoConteudo === "carrossel") {
+      if (!chaveCarrossel) {
+        throw new Error(
+          "Carrossel sem referência de imagens."
+        );
+      }
+
+      imagensCarrossel =
+        await obterImagensCarrossel(chaveCarrossel);
+
+      if (
+        !Array.isArray(imagensCarrossel) ||
+        imagensCarrossel.length === 0 ||
+        imagensCarrossel.some(
+          (imagem) =>
+            typeof imagem !== "string" ||
+            !imagem.startsWith("data:image/")
+        )
+      ) {
+        throw new Error(
+          "Imagens do carrossel ausentes ou inválidas."
+        );
+      }
+
+      const quantidadeEsperada =
+        receita.carrossel?.quantidadeImagens;
+
+      if (
+        typeof quantidadeEsperada === "number" &&
+        quantidadeEsperada > 0 &&
+        imagensCarrossel.length !== quantidadeEsperada
+      ) {
+        throw new Error(
+          "Quantidade de imagens do carrossel divergente."
         );
       }
     }
 
-    // ============================================================
-    // HEALTH - PRINTS
-    // ============================================================
+    // PRINTS
+    if (chavePrints) {
+      prints = await obterPrintsReceita(chavePrints);
 
-    const printsIndexedDB: Record<
-      string,
-      string[]
-    > = {};
+      if (
+        !Array.isArray(prints) ||
+        prints.length === 0 ||
+        prints.some(
+          (imagem) =>
+            typeof imagem !== "string" ||
+            !imagem.startsWith("data:image/")
+        )
+      ) {
+        throw new Error(
+          "Prints da receita ausentes ou inválidos."
+        );
+      }
 
-    for (const receita of receitasPessoais) {
-      const chavePrints =
-        receita?.chavePrintsLegenda;
+      const quantidadeEsperada =
+        receita?.quantidadePrintsLegenda;
 
-      if (!chavePrints) continue;
+      if (
+        typeof quantidadeEsperada === "number" &&
+        quantidadeEsperada > 0 &&
+        prints.length !== quantidadeEsperada
+      ) {
+        throw new Error(
+          "Quantidade de prints divergente."
+        );
+      }
+    } else if (
+      typeof receita?.quantidadePrintsLegenda === "number" &&
+      receita.quantidadePrintsLegenda > 0
+    ) {
+      throw new Error(
+        "Receita possui prints sem referência de armazenamento."
+      );
+    }
 
-      try {
-        const prints =
-          await obterPrintsReceita(
-            chavePrints
-          );
+    // CAPA
+    if (chaveCapa) {
+      capa = await obterCapaReceita(chaveCapa);
 
-        if (prints.length > 0) {
-          printsIndexedDB[chavePrints] =
-            prints;
-        }
-      } catch (erro) {
-        console.error(
-          `Erro ao incluir prints ${chavePrints}:`,
-          erro
+      if (
+        typeof capa !== "string" ||
+        !capa.startsWith("data:image/")
+      ) {
+        throw new Error(
+          "Capa da receita ausente ou inválida."
         );
       }
     }
 
-    // ============================================================
-    // HEALTH - CAPAS
-    // ============================================================
+    // CONFIRMA A RECEITA SOMENTE APÓS TODAS AS LEITURAS
+    receitasValidadas.push(receita);
 
-    const capasHealthIndexedDB: Record<
-      string,
-      string
-    > = {};
-
-    for (const receita of receitasPessoais) {
-      const chaveCapa =
-        receita?.chaveImagemCapa;
-
-      if (!chaveCapa) continue;
-
-      try {
-        const capa =
-          await obterCapaReceita(
-            chaveCapa
-          );
-
-        if (capa) {
-          capasHealthIndexedDB[
-            chaveCapa
-          ] = capa;
-        }
-      } catch (erro) {
-        console.error(
-          `Erro ao incluir capa ${chaveCapa}:`,
-          erro
-        );
-      }
+    if (chaveCarrossel && imagensCarrossel) {
+      carrosseisIndexedDB[chaveCarrossel] =
+        imagensCarrossel;
     }
+
+    if (chavePrints && prints) {
+      printsIndexedDB[chavePrints] = prints;
+    }
+
+    if (chaveCapa && capa) {
+      capasHealthIndexedDB[chaveCapa] = capa;
+    }
+
+  } catch (erro) {
+    const problema =
+      erro instanceof Error
+        ? erro.message
+        : "Falha ao recuperar os anexos.";
+
+    console.error(
+      `Falha ao validar receita ${nome}:`,
+      erro
+    );
+
+    pendencias.push({
+      modulo: "Health",
+      nome,
+      problema,
+    });
+  }
+}
 
     // ============================================================
     // BOOKDIGITAL - LOCALSTORAGE
@@ -265,164 +330,181 @@ export async function exportarBackupApp() {
       ? itens
       : [];
 
+    const itensValidados: typeof listaItens = [];
+
     // ============================================================
-    // BOOKDIGITAL - CAPAS
+    // BOOKDIGITAL - VALIDAR ITENS E ANEXOS
     // ============================================================
 
-    const capasBookDigitalIndexedDB:
-      Record<string, string> = {};
+    const capasBookDigitalIndexedDB: Record<string, string> = {};
+    const imagensBookDigitalIndexedDB: Record<string, string[]> = {};
+
+    const documentosBookDigitalIndexedDB: Record<
+      string,
+      {
+        nomeDocumento: string;
+        tipoDocumento?: string;
+        conteudo: string;
+      }
+    > = {};
+
+    const audiosBookDigitalIndexedDB: Record<string, string> = {};
 
     for (const item of listaItens) {
-      const chaveCapa =
-        item?.chaveImagemCapa;
-
-      if (!chaveCapa) continue;
+      const nome = item?.titulo || "Item sem título";
 
       try {
-        const capa =
-          await obterImagemCapa(
-            chaveCapa
-          );
+        const chaveCapa = item?.chaveImagemCapa;
+        const chaveImagens = item?.chaveImagens;
 
-        if (capa) {
-          capasBookDigitalIndexedDB[
-            chaveCapa
-          ] = capa;
-        }
-      } catch (erro) {
-        console.error(
-          `Erro ao incluir capa BookDigital ${chaveCapa}:`,
-          erro
-        );
-      }
-    }
+        let capa: string | null = null;
+        let imagens: string[] | null = null;
 
-    // ============================================================
-    // BOOKDIGITAL - IMAGENS DOS ITENS
-    // ============================================================
+        const documentosDoItem: typeof documentosBookDigitalIndexedDB = {};
+        const audiosDoItem: Record<string, string> = {};
 
-    const imagensBookDigitalIndexedDB:
-      Record<string, string[]> = {};
+        // CAPA
+        if (chaveCapa) {
+          capa = await obterImagemCapa(chaveCapa);
 
-    for (const item of listaItens) {
-      const chaveImagens =
-        item?.chaveImagens;
-
-      if (!chaveImagens) continue;
-
-      try {
-        const imagens =
-          await obterImagensItem(
-            chaveImagens
-          );
-
-        if (imagens.length > 0) {
-          imagensBookDigitalIndexedDB[
-            chaveImagens
-          ] = imagens;
-        }
-      } catch (erro) {
-        console.error(
-          `Erro ao incluir imagens BookDigital ${chaveImagens}:`,
-          erro
-        );
-      }
-    }
-
-    // ============================================================
-    // BOOKDIGITAL - DOCUMENTOS
-    // ============================================================
-
-    const documentosBookDigitalIndexedDB:
-      Record<
-        string,
-        {
-          nomeDocumento: string;
-          tipoDocumento?: string;
-          conteudo: string;
-        }
-      > = {};
-
-    for (const item of listaItens) {
-      if (
-        !Array.isArray(item?.documentos)
-      ) {
-        continue;
-      }
-
-      for (const documento of item.documentos) {
-        const chaveDocumento =
-          documento?.chaveDocumento;
-
-        if (!chaveDocumento) continue;
-
-        try {
-          const arquivo =
-            await obterDocumento(
-              chaveDocumento
-            );
-
-          if (!arquivo) continue;
-
-          const conteudo =
-            await blobParaDataURL(
-              arquivo
-            );
-
-          documentosBookDigitalIndexedDB[
-            chaveDocumento
-          ] = {
-            nomeDocumento:
-              documento.nomeDocumento,
-
-            tipoDocumento:
-              documento.tipoDocumento,
-
-            conteudo,
-          };
-        } catch (erro) {
-          console.error(
-            `Erro ao incluir documento ${chaveDocumento}:`,
-            erro
-          );
-        }
-      }
-    }
-
-    // ============================================================
-    // BOOKDIGITAL - ÁUDIOS DOS ITENS
-    // ============================================================
-
-    const audiosBookDigitalIndexedDB:
-      Record<string, string> = {};
-
-    const chavesAudios = new Set<string>();
-
-    for (const item of listaItens) {
-      if (item?.chaveAudio) {
-        chavesAudios.add(item.chaveAudio);
-      }
-
-      if (Array.isArray(item?.chavesAudios)) {
-        item.chavesAudios.forEach((chave: string) => {
-          if (chave) {
-            chavesAudios.add(chave);
+          if (
+            typeof capa !== "string" ||
+            !capa.startsWith("data:image/")
+          ) {
+            throw new Error("Capa ausente ou inválida.");
           }
+        }
+
+        // IMAGENS
+        if (chaveImagens) {
+          imagens = await obterImagensItem(chaveImagens);
+
+          if (
+            !Array.isArray(imagens) ||
+            imagens.length === 0 ||
+            imagens.some(
+              (imagem) =>
+                typeof imagem !== "string" ||
+                !imagem.startsWith("data:image/")
+            )
+          ) {
+            throw new Error("Imagens ausentes ou inválidas.");
+          }
+
+          if (
+            typeof item.quantidadeImagens === "number" &&
+            item.quantidadeImagens > 0 &&
+            imagens.length !== item.quantidadeImagens
+          ) {
+            throw new Error("Quantidade de imagens divergente.");
+          }
+        } else if (
+          typeof item?.quantidadeImagens === "number" &&
+          item.quantidadeImagens > 0
+        ) {
+          throw new Error("Imagens sem referência de armazenamento.");
+        }
+
+        // DOCUMENTOS
+        if (Array.isArray(item?.documentos)) {
+          for (const documento of item.documentos) {
+            const chave = documento?.chaveDocumento;
+
+            if (!chave) {
+              throw new Error("Documento sem referência de armazenamento.");
+            }
+
+            const arquivo = await obterDocumento(chave);
+
+            if (!arquivo || arquivo.size === 0) {
+              throw new Error(
+                `Documento ausente: ${documento.nomeDocumento || "sem nome"}`
+              );
+            }
+
+            const conteudo = await blobParaDataURL(arquivo);
+
+            if (!conteudo.startsWith("data:")) {
+              throw new Error("Documento inválido.");
+            }
+
+            documentosDoItem[chave] = {
+              nomeDocumento: documento.nomeDocumento || "",
+              tipoDocumento: documento.tipoDocumento,
+              conteudo,
+            };
+          }
+        }
+
+        // ÁUDIOS
+        const chavesAudiosItem = new Set<string>();
+
+        if (item?.chaveAudio) {
+          chavesAudiosItem.add(item.chaveAudio);
+        }
+
+        if (Array.isArray(item?.chavesAudios)) {
+          for (const chave of item.chavesAudios) {
+            if (typeof chave === "string" && chave) {
+              chavesAudiosItem.add(chave);
+            }
+          }
+        }
+
+        for (const chave of chavesAudiosItem) {
+          const arquivo = await obterAudio(chave);
+
+          if (!arquivo || arquivo.size === 0) {
+            throw new Error("Áudio ausente ou vazio.");
+          }
+
+          const conteudo = await blobParaDataURL(arquivo);
+
+          if (!conteudo.startsWith("data:audio/")) {
+            throw new Error("Áudio inválido.");
+          }
+
+          audiosDoItem[chave] = conteudo;
+        }
+
+        // CONFIRMAR O ITEM SOMENTE APÓS TODAS AS LEITURAS
+        itensValidados.push(item);
+
+        if (chaveCapa && capa) {
+          capasBookDigitalIndexedDB[chaveCapa] = capa;
+        }
+
+        if (chaveImagens && imagens) {
+          imagensBookDigitalIndexedDB[chaveImagens] = imagens;
+        }
+
+        Object.assign(
+          documentosBookDigitalIndexedDB,
+          documentosDoItem
+        );
+
+        Object.assign(
+          audiosBookDigitalIndexedDB,
+          audiosDoItem
+        );
+
+      } catch (erro) {
+        const problema =
+          erro instanceof Error
+            ? erro.message
+            : "Falha ao recuperar anexos do item.";
+
+        console.error(
+          `Falha ao validar item ${nome}:`,
+          erro
+        );
+
+        pendencias.push({
+          modulo: "BaúDigital",
+          nome,
+          problema,
         });
       }
-    }
-
-    for (const chave of chavesAudios) {
-      const arquivo = await obterAudio(chave);
-
-      if (!arquivo) {
-        throw new Error(
-          `Áudio não encontrado no backup: ${chave}`
-        );
-      }
-
-      audiosBookDigitalIndexedDB[chave] =
-        await blobParaDataURL(arquivo);
     }
 
     // ============================================================
@@ -436,9 +518,11 @@ export async function exportarBackupApp() {
       exportadoEm:
         new Date().toISOString(),
 
+      pendencias,
+
       dados: {
         health: {
-          receitas: receitasPessoais,
+          receitas: receitasValidadas,
 
           listasCompras:
             Array.isArray(
@@ -456,7 +540,7 @@ export async function exportarBackupApp() {
 
         bookdigital: {
           temas: listaTemas,
-          itens: listaItens,
+          itens: itensValidados,
 
           capasIndexedDB:
             capasBookDigitalIndexedDB,
@@ -524,9 +608,11 @@ export async function exportarBackupApp() {
     return {
       sucesso: true,
 
+      pendencias,
+
       health: {
         receitas:
-          receitasPessoais.length,
+          receitasValidadas.length,
 
         listas:
           Array.isArray(
@@ -553,7 +639,7 @@ export async function exportarBackupApp() {
 
       bookdigital: {
         temas: listaTemas.length,
-        itens: listaItens.length,
+        itens: itensValidados.length,
 
         capas:
           Object.keys(

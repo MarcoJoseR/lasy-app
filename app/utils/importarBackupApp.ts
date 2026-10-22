@@ -27,6 +27,12 @@ type BackupGeralAppV1 = {
   versaoBackup: 1;
   exportadoEm: string;
 
+  pendencias?: {
+    modulo: "Health" | "BaúDigital";
+    nome: string;
+    problema: string;
+  }[];
+
   dados: {
     health: {
       receitas: unknown[];
@@ -158,6 +164,193 @@ function dataURLParaBlob(
       type: tipo,
     }
   );
+}
+
+// ============================================================
+// VERIFICAR INTEGRIDADE DOS ANEXOS DO BACKUP
+// ============================================================
+
+function verificarIntegridadeBackup(
+  backup: BackupGeralAppV1
+): string | null {
+  const health = backup.dados.health;
+
+  const imagemValida = (valor: unknown): boolean =>
+    typeof valor === "string" &&
+    /^data:image\/[^,]+;base64,/.test(valor);
+
+  for (const entrada of health.receitas) {
+    if (
+      !entrada ||
+      typeof entrada !== "object"
+    ) {
+      return "O backup contém uma receita inválida.";
+    }
+
+    const receita = entrada as {
+      nome?: string;
+      tipoConteudo?: string;
+      carrossel?: {
+        chaveImagens?: string;
+        quantidadeImagens?: number;
+      };
+      chavePrintsLegenda?: string;
+      quantidadePrintsLegenda?: number;
+      chaveImagemCapa?: string;
+    };
+
+    const nome = receita.nome || "Receita sem nome";
+
+    if (receita.tipoConteudo === "carrossel") {
+      const chave = receita.carrossel?.chaveImagens;
+      const imagens = chave
+        ? health.carrosseisIndexedDB?.[chave]
+        : undefined;
+
+      if (
+        !chave ||
+        !Array.isArray(imagens) ||
+        imagens.length === 0 ||
+        !imagens.every(imagemValida) ||
+        (
+          typeof receita.carrossel?.quantidadeImagens ===
+            "number" &&
+          receita.carrossel.quantidadeImagens > 0 &&
+          imagens.length !==
+            receita.carrossel.quantidadeImagens
+        )
+      ) {
+        return `Carrossel ausente ou inválido: ${nome}`;
+      }
+    }
+
+    if (receita.chavePrintsLegenda) {
+      const prints =
+        health.printsIndexedDB?.[
+          receita.chavePrintsLegenda
+        ];
+
+      if (
+        !Array.isArray(prints) ||
+        prints.length === 0 ||
+        !prints.every(imagemValida) ||
+        (
+          typeof receita.quantidadePrintsLegenda ===
+            "number" &&
+          receita.quantidadePrintsLegenda > 0 &&
+          prints.length !==
+            receita.quantidadePrintsLegenda
+        )
+      ) {
+        return `Prints ausentes ou inválidos: ${nome}`;
+      }
+    } else if (
+      typeof receita.quantidadePrintsLegenda ===
+        "number" &&
+      receita.quantidadePrintsLegenda > 0
+    ) {
+      return `Prints sem referência: ${nome}`;
+    }
+
+    if (receita.chaveImagemCapa) {
+      const capa =
+        health.capasIndexedDB?.[
+          receita.chaveImagemCapa
+        ];
+
+      if (!imagemValida(capa)) {
+        return `Capa ausente ou inválida: ${nome}`;
+      }
+    }
+  }
+
+  const bau = backup.dados.bookdigital;
+
+  for (const entrada of bau.itens) {
+    if (!entrada || typeof entrada !== "object") {
+      return "O backup contém um item inválido do BaúDigital.";
+    }
+
+    const item = entrada as {
+      titulo?: string;
+      chaveImagemCapa?: string;
+      chaveImagens?: string;
+      quantidadeImagens?: number;
+      documentos?: {
+        chaveDocumento?: string;
+        nomeDocumento?: string;
+      }[];
+    };
+
+    const nome = item.titulo || "Item sem título";
+
+    // CAPA
+    if (item.chaveImagemCapa) {
+      const capa =
+        bau.capasIndexedDB?.[item.chaveImagemCapa];
+
+      if (!imagemValida(capa)) {
+        return `Capa ausente ou inválida no BaúDigital: ${nome}`;
+      }
+    }
+
+    // IMAGENS
+    if (item.chaveImagens) {
+      const imagens =
+        bau.imagensIndexedDB?.[item.chaveImagens];
+
+      if (
+        !Array.isArray(imagens) ||
+        imagens.length === 0 ||
+        !imagens.every(imagemValida) ||
+        (
+          typeof item.quantidadeImagens === "number" &&
+          item.quantidadeImagens > 0 &&
+          imagens.length !== item.quantidadeImagens
+        )
+      ) {
+        return `Imagens ausentes ou inválidas no BaúDigital: ${nome}`;
+      }
+    } else if (
+      typeof item.quantidadeImagens === "number" &&
+      item.quantidadeImagens > 0
+    ) {
+      return `Imagens sem referência no BaúDigital: ${nome}`;
+    }
+
+    // DOCUMENTOS
+    if (item.documentos !== undefined) {
+      if (!Array.isArray(item.documentos)) {
+        return `Lista de documentos inválida: ${nome}`;
+      }
+
+      for (const documento of item.documentos) {
+        const chave = documento?.chaveDocumento;
+        const arquivo = chave
+          ? bau.documentosIndexedDB?.[chave]
+          : undefined;
+
+        if (
+          !chave ||
+          !arquivo ||
+          typeof arquivo.conteudo !== "string" ||
+          !/^data:[^,]+;base64,/.test(arquivo.conteudo)
+        ) {
+          return `Documento ausente ou inválido no BaúDigital: ${nome}`;
+        }
+
+        try {
+          if (dataURLParaBlob(arquivo.conteudo).size === 0) {
+            return `Documento vazio no BaúDigital: ${nome}`;
+          }
+        } catch {
+          return `Documento corrompido no BaúDigital: ${nome}`;
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 // ============================================================
@@ -383,6 +576,67 @@ export async function validarBackupApp(
       };
     }
 
+if (
+  Array.isArray(dados.pendencias) &&
+  dados.pendencias.length > 0
+) {
+  return {
+    valido: false,
+    mensagem:
+      "Este backup contém " +
+      dados.pendencias.length +
+      " pendência(s). Alguns conteúdos não foram incluídos. " +
+      "A restauração integral foi bloqueada para proteger os dados existentes.",
+
+    health: {
+      receitas: 0,
+      listas: 0,
+      carrosseis: 0,
+      prints: 0,
+      capas: 0,
+    },
+
+    bookdigital: {
+      temas: 0,
+      itens: 0,
+      capas: 0,
+      imagens: 0,
+      documentos: 0,
+    },
+  };
+}
+
+    const problemaIntegridade =
+      verificarIntegridadeBackup(
+        dados as BackupGeralAppV1
+      );
+
+    if (problemaIntegridade) {
+      return {
+        valido: false,
+        mensagem:
+          "O backup possui um problema de integridade: " +
+          problemaIntegridade +
+          ". Nenhum dado foi restaurado.",
+
+        health: {
+          receitas: 0,
+          listas: 0,
+          carrosseis: 0,
+          prints: 0,
+          capas: 0,
+        },
+
+        bookdigital: {
+          temas: 0,
+          itens: 0,
+          capas: 0,
+          imagens: 0,
+          documentos: 0,
+        },
+      };
+    }
+
     return {
       valido: true,
       mensagem:
@@ -512,14 +766,91 @@ export async function validarBackupApp(
   }
 }
 
+const CHAVE_RESTAURACAO_PENDENTE =
+  "healthRestauracaoGeralPendente";
+
+export function verificarRestauracaoPendente(): boolean {
+  try {
+    return (
+      localStorage.getItem(
+        CHAVE_RESTAURACAO_PENDENTE
+      ) !== null
+    );
+  } catch {
+    return true;
+  }
+}
+
+
 // ============================================================
 // RESTAURAR BACKUP GERAL
 // ============================================================
 
 export async function restaurarBackupApp(
-  backup: BackupGeralAppV1
+  backup: BackupGeralAppV1,
+  modo: "normal" | "recuperacao" = "normal"
 ) {
   try {
+    // Bloqueia backups que possuem conteúdos omitidos.
+    // A verificação ocorre antes de alterar qualquer dado.
+    if (
+      Array.isArray(backup.pendencias) &&
+      backup.pendencias.length > 0
+    ) {
+      return {
+        sucesso: false,
+        mensagem:
+          "Este backup possui conteúdos não incluídos " +
+          "e não pode ser restaurado integralmente. " +
+          "Os dados atuais do aplicativo foram preservados.",
+      };
+    }
+
+    // Confere todos os anexos antes de iniciar a restauração.
+    const problemaIntegridade =
+      verificarIntegridadeBackup(backup);
+
+    if (problemaIntegridade) {
+      return {
+        sucesso: false,
+        mensagem:
+          "Restauração bloqueada. " +
+          problemaIntegridade +
+          ". Nenhum dado foi alterado.",
+      };
+    }
+
+    // Registra o início antes da primeira gravação.
+    // Se não conseguir registrar, não inicia a restauração.
+
+    const restauracaoPendente =
+      verificarRestauracaoPendente();
+
+      if (modo === "normal" && restauracaoPendente) {
+        return {
+          sucesso: false,
+          mensagem:
+            "Existe uma restauração anterior não concluída. " +
+            "É necessário recuperar os dados antes " +
+            "de iniciar uma nova restauração.",
+        };
+      }
+
+      if (modo === "recuperacao" && !restauracaoPendente) {
+        return {
+          sucesso: false,
+          mensagem:
+            "Não existe restauração pendente para recuperar.",
+        };
+      }
+
+      if (modo === "normal") {
+        localStorage.setItem(
+          CHAVE_RESTAURACAO_PENDENTE,
+          new Date().toISOString()
+        );
+      }
+
     // ============================================================
     // 1. RESTAURA HEALTH
     // ============================================================
@@ -702,6 +1033,13 @@ export async function restaurarBackupApp(
         JSON.stringify(linksPendentes)
       );
     }
+
+    // Todas as gravações terminaram sem erro.
+    // A restauração não está mais pendente.
+
+    localStorage.removeItem(
+      CHAVE_RESTAURACAO_PENDENTE
+    );
 
     return {
       sucesso: true,

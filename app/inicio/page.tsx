@@ -10,6 +10,7 @@ import {
 import {
   validarBackupApp,
   restaurarBackupApp,
+  verificarRestauracaoPendente,
 } from "@/app/utils/importarBackupApp";
 
 export default function InicioPage() {
@@ -34,23 +35,47 @@ async function handleExportarBackupGeral() {
       return;
     }
 
+
+    const pendencias = resultado.pendencias ?? [];
+
+    const mensagemPendencias =
+      pendencias.length > 0
+        ? "\n\nPENDÊNCIAS DO BACKUP\n" +
+          pendencias
+            .map(
+              (pendencia, indice) =>
+                `${indice + 1}. ${pendencia.modulo} - ${pendencia.nome}\n` +
+                `   Problema: ${pendencia.problema}`
+            )
+            .join("\n\n") +
+          "\n\nOs conteúdos acima não foram incluídos no backup. " +
+          "Eles permanecem no aplicativo para correção ou substituição."
+        : "";
+
+    const titulo =
+      pendencias.length > 0
+        ? "Backup exportado com pendências.\n\n"
+        : "Backup geral exportado com sucesso.\n\n";
+
     alert(
-      `Backup geral exportado com sucesso.\n\n` +
+      titulo +
         `HEALTH\n` +
         `${resultado.health?.receitas ?? 0} receitas\n` +
         `${resultado.health?.listas ?? 0} listas\n` +
         `${resultado.health?.carrosseis ?? 0} carrosséis\n` +
         `${resultado.health?.prints ?? 0} conjuntos de prints\n` +
         `${resultado.health?.capas ?? 0} capas\n\n` +
-        `BOOKDIGITAL\n` +
+        `BAÚDIGITAL\n` +
         `${resultado.bookdigital?.temas ?? 0} temas\n` +
         `${resultado.bookdigital?.itens ?? 0} itens\n` +
         `${resultado.bookdigital?.capas ?? 0} capas\n` +
         `${resultado.bookdigital?.imagens ?? 0} conjuntos de imagens\n` +
         `${resultado.bookdigital?.documentos ?? 0} documentos\n\n` +
         `LINKS PENDENTES\n` +
-        `${resultado.linksPendentes ?? 0} links guardados`
+        `${resultado.linksPendentes ?? 0} links guardados` +
+        mensagemPendencias
     );
+
   } finally {
     setExportandoBackup(false);
   }
@@ -64,6 +89,28 @@ async function handleImportarBackupGeral(
     return;
   }
 
+  const recuperacaoPendente =
+    verificarRestauracaoPendente();
+
+  if (recuperacaoPendente) {
+    const confirmarRecuperacao = window.confirm(
+      "RECUPERAÇÃO DE RESTAURAÇÃO INTERROMPIDA\n\n" +
+      "Foi identificada uma restauração anterior " +
+      "que não terminou corretamente.\n\n" +
+      "Os dados atuais podem estar parcialmente restaurados.\n\n" +
+      "Para recuperar, é necessário utilizar o arquivo " +
+      "de segurança salvo ANTES da restauração interrompida.\n\n" +
+      "O arquivo já selecionado é essa cópia de segurança?\n\n" +
+      "OK: continuar a validação para recuperação.\n" +
+      "Cancelar: não modificar nenhum dado."
+    );
+
+    if (!confirmarRecuperacao) {
+      event.target.value = "";
+      return;
+    }
+  }
+
   try {
     setImportandoBackup(true);
 
@@ -75,6 +122,64 @@ async function handleImportarBackupGeral(
       event.target.value = "";
       return;
     }
+
+    // ============================================================
+    // PROTEÇÃO ANTES DA RESTAURAÇÃO
+    // ============================================================
+    if (!recuperacaoPendente) {
+
+    const criarBackupSeguranca = window.confirm(
+      "PROTEÇÃO DOS DADOS ATUAIS\n\n" +
+      "Antes de restaurar o arquivo selecionado, " +
+      "é necessário salvar uma cópia de segurança " +
+      "dos dados que estão atualmente no aplicativo.\n\n" +
+      "Clique em OK para gerar o backup de segurança.\n\n" +
+      "Cancelar interrompe a restauração."
+    );
+
+    if (!criarBackupSeguranca) {
+      event.target.value = "";
+      return;
+    }
+
+    const seguranca = await exportarBackupApp();
+
+    if (!seguranca.sucesso) {
+      alert(
+        "Não foi possível gerar o backup de segurança.\n\n" +
+        "A restauração foi cancelada. " +
+        "Nenhum dado foi substituído."
+      );
+
+      event.target.value = "";
+      return;
+    }
+
+    if ((seguranca.pendencias ?? []).length > 0) {
+      alert(
+        "O backup de segurança apresentou pendências.\n\n" +
+        "A restauração foi bloqueada para evitar " +
+        "a perda dos conteúdos que não foram exportados."
+      );
+
+      event.target.value = "";
+      return;
+    }
+
+    const backupConfirmado = window.confirm(
+      "CONFIRMAÇÃO DO BACKUP DE SEGURANÇA\n\n" +
+      "Verifique se o arquivo de segurança foi salvo " +
+      "na pasta de downloads do dispositivo.\n\n" +
+      "Clique em OK somente depois de confirmar " +
+      "que o arquivo está disponível.\n\n" +
+      "Cancelar interrompe a restauração."
+    );
+
+    if (!backupConfirmado) {
+      event.target.value = "";
+      return;
+    }
+  } // Fecha if (!recuperacaoPendente)
 
     const confirmar = window.confirm(
       `Backup geral válido.\n\n` +
@@ -114,7 +219,10 @@ async function handleImportarBackupGeral(
 
     const restauracao =
       await restaurarBackupApp(
-        resultado.backup
+        resultado.backup,
+        recuperacaoPendente
+          ? "recuperacao"
+          : "normal"
       );
 
     if (!restauracao.sucesso) {
@@ -124,7 +232,9 @@ async function handleImportarBackupGeral(
     }
 
     alert(
-      "Backup geral restaurado com sucesso."
+      recuperacaoPendente
+        ? "Recuperação concluída. O backup de segurança foi restaurado."
+        : "Backup geral restaurado com sucesso."
     );
 
     window.location.reload();

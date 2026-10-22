@@ -76,6 +76,16 @@ export default function MinhaReceitaPage() {
   const [chaveImagensCarrossel, setChaveImagensCarrossel] =
   useState("");
 
+  const [
+    erroCarregamentoCarrossel,
+    setErroCarregamentoCarrossel,
+  ] = useState(false);
+
+  const [
+    carregandoImagensCarrossel,
+    setCarregandoImagensCarrossel,
+  ] = useState(false);
+
   // ============================================================
   // PRINTS DA LEGENDA
   // ============================================================
@@ -326,14 +336,22 @@ function moverImagemCarrosselParaDireita(indice: number) {
   // ============================================================
 
   useEffect(() => {
-  if (!carregado || !receitaId) return;
+    if (!carregado || !receitaId) return;
 
-  async function carregarReceitaParaEdicao() {
+    let cancelado = false;
+
+    async function carregarReceitaParaEdicao() {
     const receitaEncontrada = receitas.find(
       (receita) => receita.id === receitaId
     );
 
     if (!receitaEncontrada) return;
+
+    if (receitaEncontrada.tipoConteudo === "carrossel") {
+      setCarregandoImagensCarrossel(true);
+    }
+
+    setErroCarregamentoCarrossel(false);
 
     console.log(
       "Receita carregada para edição:",
@@ -359,6 +377,8 @@ function moverImagemCarrosselParaDireita(indice: number) {
         );
       }
     }
+
+    if (cancelado) return;
 
     setImagem(capaCarregada);
 
@@ -440,19 +460,34 @@ setNomesPrintsLegenda([]);
       setChaveImagensCarrossel(chave);
 
       if (chave) {
+        setCarregandoImagensCarrossel(true);
+        setErroCarregamentoCarrossel(false);
+
         obterImagensCarrossel(chave)
           .then((imagens) => {
+            if (cancelado) return;
+
             setImagensCarrossel(imagens);
+            setErroCarregamentoCarrossel(false);
           })
           .catch((erro) => {
+            if (cancelado) return;
+
             console.error(
               "Erro ao carregar imagens do carrossel:",
               erro
             );
 
+            setErroCarregamentoCarrossel(true);
             setImagensCarrossel([]);
+          })
+          .finally(() => {
+            if (cancelado) return;
+
+            setCarregandoImagensCarrossel(false);
           });
-      } else {
+
+        } else {
         setImagensCarrossel(
           Array.isArray(receitaEncontrada.carrossel?.imagens)
             ? receitaEncontrada.carrossel.imagens
@@ -467,6 +502,10 @@ setNomesPrintsLegenda([]);
       }
 
       carregarReceitaParaEdicao();
+
+      return () => {
+        cancelado = true;
+      };
 
     }, [carregado, receitaId]);
     
@@ -640,6 +679,30 @@ useEffect(() => {
       return;
     }
 
+    if (
+      receitaId &&
+      tipoConteudo === "carrossel" &&
+      carregandoImagensCarrossel
+    ) {
+      window.alert(
+        "As imagens do carrossel ainda estão carregando. " +
+        "Aguarde a conclusão antes de salvar."
+      );
+      return;
+    }
+
+    if (
+      receitaId &&
+      tipoConteudo === "carrossel" &&
+      erroCarregamentoCarrossel
+    ) {
+      window.alert(
+        "Não foi possível recuperar as imagens originais do carrossel. " +
+        "O salvamento foi bloqueado para proteger seus dados."
+      );
+      return;
+    }
+
     console.log("salvarReceita executada", {
       nome,
       categoria,
@@ -717,6 +780,11 @@ useEffect(() => {
       }
     }
 
+      const novaChaveCarrossel =
+        tipoConteudo === "carrossel"
+          ? crypto.randomUUID()
+          : "";
+
       const receitaAtualizada = {
         ...montarReceita({
           id: receitaId,
@@ -761,7 +829,7 @@ useEffect(() => {
                 imagens: [],
                 titulo: nome,
                 origemUrl: origem,
-                chaveImagens: chaveImagensCarrossel,
+                chaveImagens: novaChaveCarrossel,
                 quantidadeImagens: imagensCarrossel.length,
               },
             }
@@ -796,13 +864,10 @@ useEffect(() => {
         }
       }
 
-    if (
-      tipoConteudo === "carrossel" &&
-      chaveImagensCarrossel
-    ) {
+    if (tipoConteudo === "carrossel") {
       try {
         await salvarImagensCarrossel(
-          chaveImagensCarrossel,
+          novaChaveCarrossel,
           imagensCarrossel
         );
 
