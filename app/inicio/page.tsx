@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -20,6 +20,57 @@ export default function InicioPage() {
 const [importandoBackup, setImportandoBackup] =
   useState(false);
 
+const [confirmacaoAberta, setConfirmacaoAberta] =
+  useState(false);
+
+const [tituloConfirmacao, setTituloConfirmacao] =
+  useState("");
+
+const [mensagemConfirmacao, setMensagemConfirmacao] =
+  useState("");
+
+const respostaConfirmacaoRef =
+  useRef<((resposta: boolean) => void) | null>(null);
+
+const recuperacaoEmAndamentoRef =
+  useRef(false);
+
+useEffect(() => {
+  return () => {
+    const resolver = respostaConfirmacaoRef.current;
+
+    respostaConfirmacaoRef.current = null;
+
+    resolver?.(false);
+  };
+}, []);
+
+function solicitarConfirmacao(
+  titulo: string,
+  mensagem: string
+): Promise<boolean> {
+  if (respostaConfirmacaoRef.current) {
+    return Promise.resolve(false);
+  }
+
+  return new Promise<boolean>((resolve) => {
+    respostaConfirmacaoRef.current = resolve;
+
+    setTituloConfirmacao(titulo);
+    setMensagemConfirmacao(mensagem);
+    setConfirmacaoAberta(true);
+  });
+}
+
+function responderConfirmacao(resposta: boolean) {
+  const resolver = respostaConfirmacaoRef.current;
+
+  respostaConfirmacaoRef.current = null;
+  setConfirmacaoAberta(false);
+
+  resolver?.(resposta);
+}
+
 async function handleExportarBackupGeral() {
   try {
     setExportandoBackup(true);
@@ -29,7 +80,8 @@ async function handleExportarBackupGeral() {
 
     if (!resultado.sucesso) {
       alert(
-        "Não foi possível gerar o backup geral."
+        "Não foi possível guardar seus dados.\n\n" +
+        "Tente novamente."
       );
 
       return;
@@ -40,22 +92,22 @@ async function handleExportarBackupGeral() {
 
     const mensagemPendencias =
       pendencias.length > 0
-        ? "\n\nPENDÊNCIAS DO BACKUP\n" +
+        ? "\n\nESTES DADOS FICARAM DE FORA:\n\n" +
           pendencias
             .map(
               (pendencia, indice) =>
                 `${indice + 1}. ${pendencia.modulo} - ${pendencia.nome}\n` +
-                `   Problema: ${pendencia.problema}`
+                `Motivo: ${pendencia.problema}`
             )
             .join("\n\n") +
-          "\n\nOs conteúdos acima não foram incluídos no backup. " +
-          "Eles permanecem no aplicativo para correção ou substituição."
+          "\n\nEsses dados continuam no aplicativo.\n" +
+          "Verifique os itens acima e faça outra cópia."
         : "";
 
     const titulo =
       pendencias.length > 0
-        ? "Backup exportado com pendências.\n\n"
-        : "Backup geral exportado com sucesso.\n\n";
+        ? "Atenção! Alguns dados não entraram na cópia.\n\n"
+        : "Sua cópia está pronta para baixar.\n\n";
 
     alert(
       titulo +
@@ -89,20 +141,27 @@ async function handleImportarBackupGeral(
     return;
   }
 
-  const recuperacaoPendente =
-    verificarRestauracaoPendente();
+    if (recuperacaoEmAndamentoRef.current) {
+    event.target.value = "";
+    return;
+  }
+
+  recuperacaoEmAndamentoRef.current = true;
+
+  try {
+    const recuperacaoPendente =
+      verificarRestauracaoPendente();
 
   if (recuperacaoPendente) {
-    const confirmarRecuperacao = window.confirm(
-      "RECUPERAÇÃO DE RESTAURAÇÃO INTERROMPIDA\n\n" +
-      "Foi identificada uma restauração anterior " +
-      "que não terminou corretamente.\n\n" +
-      "Os dados atuais podem estar parcialmente restaurados.\n\n" +
-      "Para recuperar, é necessário utilizar o arquivo " +
-      "de segurança salvo ANTES da restauração interrompida.\n\n" +
-      "O arquivo já selecionado é essa cópia de segurança?\n\n" +
-      "OK: continuar a validação para recuperação.\n" +
-      "Cancelar: não modificar nenhum dado."
+    const confirmarRecuperacao = await solicitarConfirmacao(
+      "Precisamos recuperar seus dados",
+      "A recuperação anterior não terminou.\n\n" +
+      "Alguns dados podem estar incompletos.\n\n" +
+      "Para corrigir isso, use a cópia de segurança " +
+      "que você guardou ANTES daquela recuperação.\n\n" +
+      "O arquivo que você escolheu agora é essa cópia?\n\n" +
+      "Se for, toque em Continuar.\n" +
+      "Se não tiver certeza, escolha Voltar."
     );
 
     if (!confirmarRecuperacao) {
@@ -128,13 +187,12 @@ async function handleImportarBackupGeral(
     // ============================================================
     if (!recuperacaoPendente) {
 
-    const criarBackupSeguranca = window.confirm(
-      "PROTEÇÃO DOS DADOS ATUAIS\n\n" +
-      "Antes de restaurar o arquivo selecionado, " +
-      "é necessário salvar uma cópia de segurança " +
-      "dos dados que estão atualmente no aplicativo.\n\n" +
-      "Clique em OK para gerar o backup de segurança.\n\n" +
-      "Cancelar interrompe a restauração."
+    const criarBackupSeguranca = await solicitarConfirmacao(
+      "Vamos proteger seus dados",
+      "Antes de recuperar sua cópia, o aplicativo precisa " +
+      "guardar os dados que estão aqui agora.\n\n" +
+      "Toque em Continuar para preparar essa cópia.\n\n" +
+      "Se escolher Voltar, seus dados não serão alterados."
     );
 
     if (!criarBackupSeguranca) {
@@ -166,13 +224,12 @@ async function handleImportarBackupGeral(
       return;
     }
 
-    const backupConfirmado = window.confirm(
-      "CONFIRMAÇÃO DO BACKUP DE SEGURANÇA\n\n" +
-      "Verifique se o arquivo de segurança foi salvo " +
-      "na pasta de downloads do dispositivo.\n\n" +
-      "Clique em OK somente depois de confirmar " +
-      "que o arquivo está disponível.\n\n" +
-      "Cancelar interrompe a restauração."
+    const backupConfirmado = await solicitarConfirmacao(
+      "Sua cópia foi guardada?",
+      "Confira se o navegador informou que o download terminou.\n\n" +
+      "Se o arquivo foi baixado, toque em Continuar.\n\n" +
+      "Se não tiver certeza, escolha Voltar. " +
+      "Seus dados não serão substituídos."
     );
 
     if (!backupConfirmado) {
@@ -181,26 +238,29 @@ async function handleImportarBackupGeral(
     }
   } // Fecha if (!recuperacaoPendente)
 
-    const confirmar = window.confirm(
-      `Backup geral válido.\n\n` +
-        `HEALTH\n` +
+    const confirmar = await solicitarConfirmacao(
+      "Deseja recuperar estes dados?",
+      `HEALTH\n` +
         `${resultado.health.receitas} receitas\n` +
         `${resultado.health.listas} listas\n` +
         `${resultado.health.carrosseis} carrosséis\n` +
         `${resultado.health.prints} conjuntos de prints\n` +
         `${resultado.health.capas} capas\n\n` +
-        `BOOKDIGITAL\n` +
+        `BAÚDIGITAL\n` +
         `${resultado.bookdigital.temas} temas\n` +
         `${resultado.bookdigital.itens} itens\n` +
         `${resultado.bookdigital.capas} capas\n` +
         `${resultado.bookdigital.imagens} conjuntos de imagens\n` +
         `${resultado.bookdigital.documentos} documentos\n\n` +
-        `LINKS PENDENTES\n` +
-        `${resultado.linksPendentes ?? 0} links guardados\n\n` +
-        `ATENÇÃO:\n` +
-                `Os dados pessoais atuais serão substituídos pelos dados deste backup.\n` +
-                `Exceção: se o backup antigo não contiver Links Pendentes, os links atuais serão preservados.\n\n` +
-                `Deseja continuar?`
+        `LINKS GUARDADOS\n` +
+        `${resultado.linksPendentes ?? 0} links\n\n` +
+        `ATENÇÃO\n` +
+        `Os dados pessoais que estão no aplicativo agora ` +
+        `serão substituídos pelos desta cópia.\n\n` +
+        `Se a cópia antiga não tiver links guardados, ` +
+        `os links atuais serão mantidos.\n\n` +
+        `Escolha Continuar para recuperar esses dados ` +
+        `ou Voltar para cancelar.`
     );
 
     if (!confirmar) {
@@ -238,14 +298,61 @@ async function handleImportarBackupGeral(
     );
 
     window.location.reload();
-  } finally {
+    } finally {
     setImportandoBackup(false);
     event.target.value = "";
+  }
+  } finally {
+    recuperacaoEmAndamentoRef.current = false;
   }
 }
 
   return (
     <main className="min-h-screen bg-black text-white">
+      {confirmacaoAberta && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-confirmacao"
+            aria-describedby="mensagem-confirmacao"
+            className="flex max-h-[90dvh] w-full max-w-md flex-col rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl"
+          >
+            <h2
+              id="titulo-confirmacao"
+              className="text-xl font-bold text-white"
+            >
+              {tituloConfirmacao}
+            </h2>
+
+            <p
+              id="mensagem-confirmacao"
+              className="mt-4 min-h-0 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-zinc-300"
+            >
+              {mensagemConfirmacao}
+            </p>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => responderConfirmacao(false)}
+                className="rounded-xl border border-zinc-600 px-4 py-3 font-semibold text-white"
+              >
+                Voltar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => responderConfirmacao(true)}
+                className="rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl px-4 py-10">
         
         {/* APRESENTAÇÃO */}
@@ -350,43 +457,59 @@ async function handleImportarBackupGeral(
             </div>
 
         {/* DADOS / BACKUP */}
-        <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-          <p className="text-sm font-semibold text-zinc-300">
+        <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+          <h2 className="text-lg font-bold text-white">
             🛡️ Seus dados
-          </p>
+          </h2>
 
-          <p className="mt-2 text-sm text-zinc-500">
-            Exporte um backup completo dos seus conteúdos ou restaure
-            seus dados a partir de um backup anterior.
-          </p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {/* GUARDAR DADOS */}
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportarBackupGeral}
+                disabled={exportandoBackup}
+                className="w-full rounded-xl bg-blue-600 px-3 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {exportandoBackup
+                  ? "Guardando..."
+                  : "Guardar dados"}
+              </button>
+
+              <p className="text-center text-xs text-zinc-400">
+                Guarde uma cópia das suas receitas e dos itens do BaúDigital.
+              </p>
+            </div>
+
+            {/* RECUPERAR DADOS */}
+            <div className="flex flex-col items-center gap-2">
+              <label
+                className={`block w-full rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-semibold text-white transition ${
+                  importandoBackup
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer hover:bg-blue-500"
+                }`}
+              >
+                {importandoBackup
+                  ? "Recuperando..."
+                  : "Recuperar dados"}
+
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleImportarBackupGeral}
+                  disabled={importandoBackup}
+                  className="hidden"
+                />
+              </label>
+
+              <p className="text-center text-xs text-zinc-400">
+                Use uma cópia guardada anteriormente para recuperar seus dados.
+              </p>
+            </div>
+          </div>
         </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={handleExportarBackupGeral}
-              disabled={exportandoBackup}
-              className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {exportandoBackup
-                ? "Gerando backup..."
-                : "Exportar backup geral"}
-            </button>
-
-            <label className="cursor-pointer rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-500">
-              {importandoBackup
-                ? "Restaurando backup..."
-                : "Restaurar backup geral"}
-
-              <input
-                type="file"
-                accept=".json,application/json"
-                onChange={handleImportarBackupGeral}
-                disabled={importandoBackup}
-                className="hidden"
-              />
-            </label>
-          </div>
 
         {/* RODAPÉ */}
         <p className="mt-10 text-center text-xs text-zinc-600">
