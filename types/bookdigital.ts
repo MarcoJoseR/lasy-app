@@ -31,6 +31,7 @@ export interface ItemBiblioteca {
   origem?: string;
   video?: string;
   links?: string[];
+  pastaLocal?: string;
   
   chaveAudio?: string;
   chavesAudios?: string[];

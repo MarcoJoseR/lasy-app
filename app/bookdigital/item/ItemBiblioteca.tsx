@@ -2136,6 +2136,29 @@ useEffect(() => {
       </div>
     )}
 
+        {/* Pasta local do Desktop */}
+        {item.pastaLocal && (
+          <div className="mt-4">
+            <p className="text-xs uppercase text-zinc-500">
+              Pasta local (Desktop)
+            </p>
+
+            <p className="mt-1 break-all text-sm text-zinc-300">
+              {item.pastaLocal}
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigator.clipboard.writeText(item.pastaLocal!)
+              }
+              className="mt-2 rounded-lg border border-zinc-700 px-3 py-2 text-sm text-violet-400 hover:bg-zinc-800"
+            >
+              Copiar endereço
+            </button>
+          </div>
+        )}
+
         {item.favorito && (
           <div className="mt-6 text-sm font-medium text-yellow-400">
             ★ Favoritado

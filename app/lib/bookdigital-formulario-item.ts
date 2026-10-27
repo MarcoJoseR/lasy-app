@@ -5,6 +5,7 @@ export interface DadosFormularioItem {
   origem: string;
   video: string;
   links: string[];
+  pastaLocal: string;
 }
 
 export function prepararDadosFormularioItem(
@@ -31,5 +32,7 @@ export function prepararDadosFormularioItem(
     video:
       dados.video.trim() || undefined,
     links,
+    pastaLocal:
+      dados.pastaLocal.trim() || undefined,
   };
 }

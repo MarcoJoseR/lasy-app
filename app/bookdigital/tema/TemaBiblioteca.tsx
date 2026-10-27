@@ -226,6 +226,7 @@ useEffect(() => {
   const [todosTemas, setTodosTemas] = useState<Tema[]>([]);
 
   const [links, setLinks] = useState<string[]>([""]);
+  const [pastaLocal, setPastaLocal] = useState("");
 
   const [ordenacao, setOrdenacao] = useState<
     "recentes" | "antigos" | "titulo"
@@ -244,6 +245,7 @@ function iniciarNovoItem(
   setOrigem(linkInicial);
   setVideo("");
   setLinks([""]);
+  setPastaLocal("");
 
   setImagemCapa("");
   setImagemCapaAtual("");
@@ -908,15 +910,16 @@ async function carregarCapas(
       return;
     }
 
-      const dadosFormulario =
-        prepararDadosFormularioItem({
-          titulo,
-          descricao,
-          palavrasChave,
-          origem,
-          video,
-          links,
-        });
+    const dadosFormulario =
+      prepararDadosFormularioItem({
+        titulo,
+        descricao,
+        palavrasChave,
+        origem,
+        video,
+        links,
+        pastaLocal,
+      });
 
       if (!dadosFormulario.titulo) {
         setErro("Informe um título para o item.");
@@ -1004,6 +1007,7 @@ if (audioGravado) {
         origem: dadosFormulario.origem,
         video: dadosFormulario.video,
         links: dadosFormulario.links,
+        pastaLocal: dadosFormulario.pastaLocal,
 
         // ÁUDIO DO NOVO ITEM
         chaveAudio: chaveAudioSalvo,
@@ -1199,6 +1203,8 @@ function iniciarEdicao(item: ItemBiblioteca) {
     ? item.links.slice(0, 5)
     : [""]
 );
+  setPastaLocal(item.pastaLocal ?? "");
+
   setTemaDestinoId(item.temaId);
 
   setImagemCapa("");
@@ -1261,6 +1267,7 @@ async function salvarDadosEdicaoAtual() {
       origem,
       video,
       links,
+      pastaLocal,
     });
 
   if (!dadosFormulario.titulo) {
@@ -1400,6 +1407,7 @@ async function salvarDadosEdicaoAtual() {
       origem: dadosFormulario.origem,
       video: dadosFormulario.video,
       links: dadosFormulario.links,
+      pastaLocal: dadosFormulario.pastaLocal,
 
       // ÁUDIOS DO ITEM
       chaveAudio:
@@ -1748,7 +1756,7 @@ const itensOrdenados =
 
       <div className="space-y-3">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-300">
+          <h3 className="text-sm font-semibold text-white">
             Links externos
           </h3>
 
@@ -1794,6 +1802,25 @@ const itensOrdenados =
             + Adicionar link
           </button>
         )}
+      </div>
+
+      {/* Pasta local do Desktop */}
+      <div className="pt-5 space-y-2">
+        <label className="block text-sm font-semibold text-white">
+          Pasta local (Desktop)
+        </label>
+
+        <p className="text-xs text-zinc-400">
+          Endereço da pasta onde estão os documentos originais.
+        </p>
+
+        <input
+          type="text"
+          value={pastaLocal}
+          onChange={(e) => setPastaLocal(e.target.value)}
+          placeholder="C:\Users\Usuario\Desktop\Clientes"
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-white"
+        />
       </div>
 
             <label className="mt-4 block text-sm font-medium">
