@@ -1643,7 +1643,7 @@ const itensOrdenados =
 
             router.push("/bookdigital");
           }}
-          className="mb-6 text-sm text-zinc-400 hover:text-white"
+          className="mb-6 text-sm text-zinc-300 hover:text-white"
         >
           ← Voltar
         </button>
@@ -1652,7 +1652,7 @@ const itensOrdenados =
           {tema.nome}
         </h1>
 
-        <p className="mt-2 text-sm text-zinc-400">
+        <p className="mt-2 text-sm text-zinc-300">
           Biblioteca do tema
         </p>
           <button
@@ -2465,7 +2465,7 @@ const itensOrdenados =
                   </h2>
 
                 {item.descricao && (
-                  <p className="mt-2 line-clamp-2 whitespace-pre-line break-words text-sm text-zinc-400">
+                  <p className="mt-2 line-clamp-2 whitespace-pre-line break-words text-sm text-zinc-300">
                     {item.descricao}
                   </p>
                 )}
