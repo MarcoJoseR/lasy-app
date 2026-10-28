@@ -1907,7 +1907,7 @@ const itensOrdenados =
                 Imagens do item
               </p>
 
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="mt-1 text-sm text-zinc-300">
                 Selecione até 20 imagens.
               </p>
 
@@ -1919,7 +1919,7 @@ const itensOrdenados =
                 className="mt-3 block w-full rounded-lg bg-zinc-800 p-3"
               />
 
-              <p className="mt-2 text-xs text-zinc-400">
+              <p className="mt-2 text-xs text-zinc-300">
                 {imagensItem.length}/20 imagens
               </p>
 
@@ -2040,7 +2040,7 @@ const itensOrdenados =
                           {arquivo.name}
                         </p>
 
-                        <p className="mt-1 text-xs text-zinc-400">
+                        <p className="mt-1 text-xs text-zinc-300">
                           Documento {indice + 1} de {documentos.length}
                         </p>
                       </div>
@@ -2086,7 +2086,7 @@ const itensOrdenados =
             ao seu item.
           </p>
 
-          <p className="mt-3 text-xs text-zinc-500">
+          <p className="mt-3 text-xs text-zinc-300">
             Gravações armazenadas no dispositivo.
           </p>
 
@@ -2234,7 +2234,7 @@ const itensOrdenados =
 
             {audioGravado && urlAudioGravado && !finalizandoAudio && (
               <div className="mt-3 space-y-3">
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-300">
                   Nova gravação
                 </p>
 

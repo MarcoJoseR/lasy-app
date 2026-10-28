@@ -1895,7 +1895,7 @@ useEffect(() => {
       Palavras-chave
     </p>
 
-    <p className="mt-2 text-sm text-zinc-500">
+    <p className="mt-2 text-sm text-zinc-300">
       {item.palavrasChave.join(" • ")}
     </p>
   </div>
@@ -1926,7 +1926,7 @@ useEffect(() => {
                     : atual - 1
                 )
               }
-              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-xl text-white hover:bg-black"
+              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-3xl text-white hover:bg-black"
               aria-label="Imagem anterior"
             >
               ‹
@@ -1941,7 +1941,7 @@ useEffect(() => {
                     : atual + 1
                 )
               }
-              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-xl text-white hover:bg-black"
+              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-3xl text-white hover:bg-black"
               aria-label="Próxima imagem"
             >
               ›
@@ -1950,7 +1950,7 @@ useEffect(() => {
         )}
       </div>
 
-      <div className="border-t border-zinc-800 px-4 py-2 text-center text-xs text-zinc-500">
+      <div className="border-t border-zinc-800 px-4 py-2 text-center text-xs text-zinc-300">
         {indiceImagem + 1} / {imagensItem.length}
       </div>
     </div>
@@ -2080,7 +2080,7 @@ useEffect(() => {
 
     {item.origem && (
       <div className="mt-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-300">
           Origem
         </p>
 
@@ -2097,7 +2097,7 @@ useEffect(() => {
 
     {item.video && (
       <div className="mt-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-300">
           Vídeo
         </p>
 
@@ -2166,7 +2166,7 @@ useEffect(() => {
         )}
 
         <div className="mt-8 border-t border-zinc-800 pt-4">
-          <div className="space-y-1 text-xs text-zinc-500">
+          <div className="space-y-1 text-xs text-zinc-300">
             <p>
               Criado em: {formatarData(item.criadoEm)}
             </p>
