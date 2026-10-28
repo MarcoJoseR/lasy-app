@@ -367,14 +367,14 @@ async function handleImportarBackupGeral(
             Encontre quando precisar.
           </h1>
 
-          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-zinc-400 md:text-base">
+          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base">
             Saúde, receitas, documentos, imagens, vídeos e referências
             pessoais organizados em um único ambiente.
           </p>
         </header>
 
         {/* MÓDULOS */}
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
 
             {/* HEALTH */}
             <div className="flex min-h-[240px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-lg">
@@ -387,7 +387,7 @@ async function handleImportarBackupGeral(
                   Seu espaço para cuidar da sua saúde
                 </h2>
 
-                <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+                <p className="mt-4 text-sm leading-relaxed text-zinc-300">
                   Receitas, organização alimentar e recursos para o seu
                   dia a dia.
                 </p>
@@ -412,7 +412,7 @@ async function handleImportarBackupGeral(
                   Seu espaço para organizar o que importa
                 </h2>
 
-                <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+                <p className="mt-4 text-sm leading-relaxed text-zinc-300">
                   Imagens, documentos, vídeos, links e referências
                   pessoais organizadas por temas.
                 </p>
@@ -434,7 +434,7 @@ async function handleImportarBackupGeral(
                 📌 Captura Rápida
               </h2>
 
-              <p className="mt-2 text-sm text-zinc-400">
+              <p className="mt-2 text-sm text-zinc-300">
                 Encontrou algo interessante? Guarde o link agora
                 e organize depois.
               </p>
@@ -476,7 +476,7 @@ async function handleImportarBackupGeral(
                   : "Guardar dados"}
               </button>
 
-              <p className="text-center text-xs text-zinc-400">
+              <p className="text-center text-xs text-zinc-300">
                 Guarde uma cópia das suas receitas e dos itens do BaúDigital.
               </p>
 
@@ -510,7 +510,7 @@ async function handleImportarBackupGeral(
                 />
               </label>
 
-              <p className="text-center text-xs text-zinc-400">
+              <p className="text-center text-xs text-zinc-300">
                 Use uma cópia guardada anteriormente para recuperar seus dados.
               </p>
             </div>
@@ -519,7 +519,7 @@ async function handleImportarBackupGeral(
 
 
         {/* RODAPÉ */}
-        <p className="mt-10 text-center text-xs text-zinc-600">
+        <p className="mt-10 text-center text-xs text-zinc-300">
           Organize hoje. Encontre quando precisar.
         </p>
       </div>
