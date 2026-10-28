@@ -479,6 +479,13 @@ async function handleImportarBackupGeral(
               <p className="text-center text-xs text-zinc-400">
                 Guarde uma cópia das suas receitas e dos itens do BaúDigital.
               </p>
+
+              <p className="text-center text-xs leading-relaxed text-amber-400">
+                ⚠️ Atenção: limpar "Cookies e dados de sites"
+                no navegador pode apagar suas receitas,
+                imagens, documentos e áudios.
+                Faça um backup antes dessa limpeza.
+              </p>
             </div>
 
             {/* RECUPERAR DADOS */}

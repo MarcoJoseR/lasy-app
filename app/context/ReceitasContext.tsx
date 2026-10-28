@@ -8,8 +8,6 @@ import {
   ReactNode,
 } from "react";
 
-import { backupCompletoLocalStorage } from "@/app/utils/backupCompletoLocalStorage";
-
 import { gerarId } from "@/app/utils/gerarId";
 
 import { RECEITAS_INICIAIS } from "@/app/data/dadosIniciais";
@@ -393,55 +391,6 @@ useEffect(() => {
     return false;
   }
 }
-
-useEffect(() => {
-  if (!carregado) return;
-
-  const verificarBackupDiario = async () => {
-    const agora = new Date();
-
-    if (agora.getHours() < 21) return;
-
-    const hoje =
-      agora.getFullYear() +
-      "-" +
-      String(agora.getMonth() + 1).padStart(2, "0") +
-      "-" +
-      String(agora.getDate()).padStart(2, "0");
-
-    const chaveControle = "ultimoBackupCompletoAutomatico";
-
-    const ultimoBackup = localStorage.getItem(chaveControle);
-
-    if (ultimoBackup === hoje) return;
-
-    const resultado = await backupCompletoLocalStorage();
-
-    if (resultado.sucesso) {
-      localStorage.setItem(chaveControle, hoje);
-
-      console.log(
-        "Backup completo automático realizado:",
-        resultado.nomeArquivo
-      );
-    } else {
-      console.error(
-        "Não foi possível realizar o backup completo automático."
-      );
-    }
-  };
-
-  verificarBackupDiario();
-
-  const intervalo = window.setInterval(
-    verificarBackupDiario,
-    60 * 1000
-  );
-
-  return () => {
-    window.clearInterval(intervalo);
-  };
-}, [carregado]);
 
 function adicionarReceitaOficial(
   receita: Omit<Receita, "id" | "tipo" | "criadoEm" | "atualizadoEm">
