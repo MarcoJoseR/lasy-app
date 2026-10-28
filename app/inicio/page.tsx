@@ -374,8 +374,7 @@ async function handleImportarBackupGeral(
         </header>
 
         {/* MÓDULOS */}
-          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-
+          <div className="mt-2 grid grid-cols-1 gap-3 md:mt-6 md:grid-cols-2 md:gap-6">
             {/* HEALTH */}
             <div className="flex min-h-[240px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-lg">
               <div className="flex-1">
@@ -429,7 +428,7 @@ async function handleImportarBackupGeral(
         
 
             {/* CAPTURA RÁPIDA DE LINKS */}
-            <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+            <div className="mt-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
               <h2 className="text-lg font-bold text-white">
                 📌 Captura Rápida
               </h2>
