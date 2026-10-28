@@ -621,7 +621,7 @@ const temPrintsLegenda = printsLegenda.length > 0;
 
         {/* DATAS */}
         {(receita.criadoEm || receita.atualizadoEm) && (
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-400">
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-300">
             {receita.criadoEm && (
               <p>
                 Criada em:{" "}
