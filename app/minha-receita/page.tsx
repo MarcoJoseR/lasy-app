@@ -108,6 +108,12 @@ export default function MinhaReceitaPage() {
   const searchParams = useSearchParams();
   const receitaId = searchParams.get("id");
 
+  const [paginaMontada, setPaginaMontada] = useState(false);
+
+  useEffect(() => {
+    setPaginaMontada(true);
+  }, []);
+
 // ============================================================
 // REDUZIR PRINT ANTES DE ARMAZENAR
 // ============================================================
@@ -1054,7 +1060,9 @@ printsLegenda.length > 0
       <div className="mx-auto max-w-4xl px-4 py-8">
         <BotaoVoltar />
 
-        <BlocoCriarReceita editando={receitaId !== null}>
+        <BlocoCriarReceita
+          editando={paginaMontada && receitaId !== null}
+        >
           <div className="mb-6 grid grid-cols-2 gap-3">
             <button
               type="button"
