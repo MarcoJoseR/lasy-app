@@ -9,7 +9,7 @@ interface Props {
   handleVer?: (r: Receita) => void;
   handleFavorito: (r: Receita) => void;
   handleRemover: (r: Receita) => void;
-  iniciarEdicao: (r: Receita) => void;
+  iniciarEdicao?: (r: Receita) => void;
   editandoId: string | null;
 }
 

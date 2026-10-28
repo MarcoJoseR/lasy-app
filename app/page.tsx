@@ -351,11 +351,6 @@ function handleVer(receita: Receita) {
   );
 }
 
-// ===== INÍCIO DA ALTERAÇÃO =====
-function iniciarEdicao(r: Receita) {
-  router.push(`/administracao?id=${r.id}`);
-}
-
 // ===== FIM DA ALTERAÇÃO =====
   return (
     <div className="min-h-screen bg-black p-4 text-white">
@@ -396,7 +391,6 @@ function iniciarEdicao(r: Receita) {
   handleVer={handleVer}
   handleFavorito={handleFavorito}
   handleRemover={handleRemover}
-  iniciarEdicao={iniciarEdicao}
   editandoId={null}
 />
   

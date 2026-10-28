@@ -193,13 +193,15 @@ useEffect(() => {
         </BotaoLink>
       
         <div className="flex gap-2">
-          <button
-            onClick={() => onEditar?.(receita)}
-            className="rounded-lg bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
-            title="Editar receita"
-          >
-            ✏️
-          </button>
+          {onEditar && (
+            <button
+              onClick={() => onEditar(receita)}
+              className="rounded-lg bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
+              title="Editar receita"
+            >
+              ✏️
+            </button>
+          )}
 
           <button
             onClick={() => onRemover?.(receita)}
