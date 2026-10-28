@@ -15,7 +15,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-zinc-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
+    <nav className="bg-zinc-900 text-white px-3 py-4 flex items-center gap-2 shadow-md">
 
       <Link href="/recepcao">
         <h1 className="text-xl font-bold cursor-pointer">
@@ -23,7 +23,7 @@ export default function Navbar() {
         </h1>
       </Link>
 
-      <div className="flex gap-3">
+      <div className="flex min-w-0 flex-1 items-stretch gap-2">
         <Link href="/recepcao">
           <button
             className={
