@@ -1212,7 +1212,7 @@ useEffect(() => {
                 Preparar compartilhamento
               </h2>
 
-              <p className="mt-2 text-sm text-zinc-400">
+              <p className="mt-2 text-sm text-zinc-300">
                 Escolha os conteúdos que deseja enviar.
                 Os dados originais serão preservados.
               </p>
@@ -1625,7 +1625,7 @@ useEffect(() => {
                   Revisar compartilhamento
                 </h2>
 
-                <p className="mt-2 text-sm text-zinc-400">
+                <p className="mt-2 text-sm text-zinc-300">
                   Confira os conteúdos selecionados antes de enviar.
                 </p>
 
