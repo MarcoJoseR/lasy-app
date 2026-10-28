@@ -19,7 +19,7 @@ export default function Navbar() {
 
       <Link href="/recepcao">
         <h1 className="text-xl font-bold cursor-pointer">
-          🍳 Health Receitas
+          🍳 Health
         </h1>
       </Link>
 
@@ -33,7 +33,7 @@ export default function Navbar() {
                 : "border-transparent bg-green-700 text-white hover:bg-green-800")
             }
           >
-            🍳 Home
+            🍳 Home Health
           </button>
         </Link>
 
