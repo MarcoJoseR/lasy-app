@@ -9,7 +9,7 @@ export default function PainelOrdenacao({
 }: PainelOrdenacaoProps) {
   return (
     <div className="mt-4">
-      <label className="block text-sm text-gray-300 mb-1">
+      <label className="mb-2 block text-lg font-semibold text-white">
         Ordenar por
       </label>
 
