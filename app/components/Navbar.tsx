@@ -27,7 +27,7 @@ export default function Navbar() {
         <Link href="/recepcao">
           <button
             className={
-              "px-3 py-2 rounded border transition " +
+              "min-h-[80px] px-3 py-2 rounded border transition " +
               (pathname === "/recepcao"
                 ? "border-white bg-green-900 text-white"
                 : "border-transparent bg-green-700 text-white hover:bg-green-800")
@@ -40,7 +40,7 @@ export default function Navbar() {
         <Link href="/">
           <button
             className={
-              "px-3 py-2 rounded border transition " +
+              "min-h-[80px] px-3 py-2 rounded border transition " +
               (pathname === "/"
                 ? "border-white bg-green-900 text-white"
                 : "border-transparent bg-green-700 text-white hover:bg-green-800")
@@ -53,7 +53,7 @@ export default function Navbar() {
         <Link href="/favoritos">
           <button
             className={
-              "px-3 py-2 rounded border transition " +
+              "min-h-[80px] px-3 py-2 rounded border transition " +
               (pathname === "/favoritos"
                 ? "border-white bg-green-900 text-white"
                 : "border-transparent bg-green-800 text-white hover:bg-green-700")
