@@ -353,7 +353,7 @@ useEffect(() => {
               Buscar no BaúDigital
             </h2>
 
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-zinc-300">
               Encontre informações armazenadas em qualquer Tema.
             </p>
 
