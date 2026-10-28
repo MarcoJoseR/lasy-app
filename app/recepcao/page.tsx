@@ -163,7 +163,7 @@ return (
               Como você quer pesquisar?
             </h2>
 
-            <p className="mt-1 text-sm text-gray-400">
+            <p className="mt-1 text-sm text-gray-300">
               Escolha o caminho mais fácil para decidir o que preparar.
             </p>
           </div>
@@ -207,7 +207,7 @@ return (
         Coleção Inicial
       </h2>
 
-      <p className="mt-1 text-sm text-gray-400">
+      <p className="mt-1 text-sm text-gray-300">
         Algumas sugestões para você começar.
       </p>
     </div>
@@ -251,7 +251,7 @@ return (
               {receita.nome}
             </h3>
 
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-gray-300">
               {receita.categoria}
             </p>
           </div>
@@ -268,7 +268,7 @@ return (
       Categorias
     </h2>
 
-    <p className="mt-1 text-sm text-gray-400">
+    <p className="mt-1 text-sm text-gray-300">
       Escolha uma categoria para explorar.
     </p>
   </div>
@@ -301,7 +301,7 @@ return (
               Recursos da sua cozinha
             </h2>
 
-            <p className="mt-1 text-sm text-gray-400">
+            <p className="mt-1 text-sm text-gray-300">
               Consulte seus acervos para encontrar, organizar ou escolher
               receitas.
             </p>
@@ -316,7 +316,7 @@ return (
                 📚 Minha Biblioteca
               </h2>
 
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-gray-300">
                 Consulte e organize suas receitas.
               </p>
             </Link>
@@ -329,7 +329,7 @@ return (
                 🔎 Pesquisar Receitas
               </h2>
 
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-gray-300">
                 Utilize todos os recursos disponíveis para pesquisar e escolher receitas.
               </p>
             </Link>
@@ -345,7 +345,7 @@ return (
                 📤 Exportar Minha Biblioteca
               </h2>
 
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-gray-300">
                 Salve uma cópia das suas receitas e listas de compras.
               </p>
             </button>
@@ -357,7 +357,7 @@ return (
                 📥 Importar Minha Biblioteca
               </h2>
 
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-gray-300">
                 Selecione um backup do Receitas Health para verificar os dados.
               </p>
 

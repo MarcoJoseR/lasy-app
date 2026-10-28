@@ -42,8 +42,8 @@ export default function DataHoraAtual() {
   });
 
   return (
-    <div className="mb-2 text-center text-sm text-gray-400">
-      <div className="capitalize leading-tight">{data}</div>
+  <div className="mb-2 text-center text-sm text-gray-300">
+    <div className="leading-tight">{data}</div>
 
       <div className="mt-0.5 text-base font-semibold leading-tight text-white">
         {hora}
