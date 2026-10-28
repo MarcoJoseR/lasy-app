@@ -1224,7 +1224,7 @@ printsLegenda.length > 0
             📄 Prints da legenda
           </p>
 
-          <p className="mb-3 text-sm text-zinc-400">
+          <p className="mb-3 text-sm text-zinc-300">
             Se a receita estiver escrita na legenda da publicação,
             faça prints do texto e anexe aqui. Você pode selecionar
             até 4 imagens.
