@@ -361,7 +361,7 @@ async function handleImportarBackupGeral(
             Seu espaço pessoal
           </p>
 
-          <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
+          <h1 className="mt-4 text-[35px] font-bold tracking-tight md:text-5xl">
             Guarde o que importa.
             <br />
             Encontre quando precisar.
@@ -394,7 +394,7 @@ async function handleImportarBackupGeral(
 
               <Link
                 href="/recepcao"
-                className="mt-6 block rounded-xl bg-green-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-green-500"
+                className="mt-6 block rounded-xl bg-green-600 px-5 py-3 text-center text-base font-semibold text-white transition hover:bg-green-500"
               >
                 Entrar no Health
               </Link>
@@ -419,7 +419,7 @@ async function handleImportarBackupGeral(
 
               <Link
                 href="/bookdigital"
-                className="mt-6 block rounded-xl bg-purple-700 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-purple-600"
+                className="mt-6 block rounded-xl bg-purple-700 px-5 py-3 text-center text-base font-semibold text-white transition hover:bg-purple-600"
               >
                 Entrar no BaúDigital
               </Link>
@@ -479,12 +479,6 @@ async function handleImportarBackupGeral(
                 Guarde uma cópia das suas receitas e dos itens do BaúDigital.
               </p>
 
-              <p className="text-center text-xs leading-relaxed text-amber-400">
-                ⚠️ Atenção: limpar "Cookies e dados de sites"
-                no navegador pode apagar suas receitas,
-                imagens, documentos e áudios.
-                Faça um backup antes dessa limpeza.
-              </p>
             </div>
 
             {/* RECUPERAR DADOS */}
@@ -514,8 +508,17 @@ async function handleImportarBackupGeral(
               </p>
             </div>
           </div>
-        </div>
 
+      {/* ALERTA DE SEGURANÇA */}
+          <div className="mt-3 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2">
+            <p className="text-xs leading-relaxed text-amber-400">
+              ⚠️ <strong>ATENÇÃO:</strong> Limpar “cookies e dados de sites”
+              no histórico do navegador pode apagar todos os dados
+              do aplicativo. Faça um backup antes dessa operação
+              de limpeza.
+            </p>
+          </div>
+        </div>
 
         {/* RODAPÉ */}
         <p className="mt-10 text-center text-xs text-zinc-300">
