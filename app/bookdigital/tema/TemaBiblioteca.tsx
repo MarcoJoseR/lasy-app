@@ -1726,7 +1726,7 @@ const itensOrdenados =
               className="mt-2 w-full rounded-lg border border-zinc-700 bg-white p-3 text-base font-medium text-black"
             />
 
-            <p className="mt-1 text-xs text-zinc-400">
+            <p className="mt-1 text-xs text-zinc-300">
               Separe as palavras por vírgulas.
             </p>
 
@@ -1760,7 +1760,7 @@ const itensOrdenados =
             Links externos
           </h3>
 
-          <p className="mt-1 text-xs text-zinc-400">
+          <p className="mt-1 text-xs text-zinc-300">
             Até 5 links externos
           </p>
         </div>
@@ -1810,7 +1810,7 @@ const itensOrdenados =
           Pasta local (Desktop)
         </label>
 
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-zinc-300">
           Endereço da pasta onde estão os documentos originais.
         </p>
 
@@ -1999,7 +1999,7 @@ const itensOrdenados =
                 Documentos
               </p>
 
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="mt-1 text-sm text-zinc-300">
                 Anexe até 3 documentos ao item.
               </p>
 
@@ -2081,7 +2081,7 @@ const itensOrdenados =
             Áudio do item
           </p>
 
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="mt-1 text-sm text-zinc-300">
             Grave informações e acrescente complementos
             ao seu item.
           </p>
