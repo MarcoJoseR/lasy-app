@@ -222,7 +222,7 @@ useEffect(() => {
             onClick={() => router.push("/inicio")}
             className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-300 hover:bg-zinc-900"
           >
-            ← Início
+            ← Início Geral
           </button>
         </div>
 
