@@ -314,6 +314,11 @@ useEffect(() => {
           ✓ Lista de Acompanhamento
         </button>
 
+        {/* CONTADOR GERAL DE ITENS */}
+        <p className="mt-4 text-left text-sm font-semibold text-amber-400">
+          📚 {itensBiblioteca.length} itens disponíveis
+        </p>
+
         {temas.length < 9 && (
           <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
             <label className="block text-sm font-medium">
