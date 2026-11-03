@@ -169,33 +169,33 @@ return (
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Link
-              href="/recepcao/o-que-tenho"
-              className="rounded-lg border border-gray-700 bg-gray-900 p-6 transition hover:border-green-500 hover:bg-gray-800"
-            >
-              <h2 className="mb-2 text-xl font-bold text-violet-300">
+            <div>
+              <Link
+                href="/recepcao/o-que-tenho"
+                className="block rounded-xl bg-green-600 px-5 py-3 text-center text-base font-semibold text-white transition hover:bg-green-500"
+              >
                 🥕 Os ingredientes que tenho
-              </h2>
+              </Link>
 
-              <p className="text-gray-300">
+              <p className="mt-2 text-sm text-gray-300">
                 Informe os ingredientes disponíveis e descubra
                 quais receitas você pode preparar agora.
               </p>
-            </Link>
+            </div>
 
-            <Link
-              href="/"
-              className="rounded-lg border border-gray-700 bg-gray-900 p-6 transition hover:border-yellow-500 hover:bg-gray-800"
-            >
-              <h2 className="mb-2 text-xl font-bold text-violet-300">
+            <div>
+              <Link
+                href="/"
+                className="block rounded-xl bg-green-600 px-5 py-3 text-center text-base font-semibold text-white transition hover:bg-green-500"
+              >
                 🔎 Pesquisar receitas
-              </h2>
+              </Link>
 
-              <p className="text-gray-300">
+              <p className="mt-2 text-sm text-gray-300">
                 Encontre uma receita e depois providencie os
                 ingredientes faltantes.
               </p>
-            </Link>
+            </div>
           </div>
         </section>
 
